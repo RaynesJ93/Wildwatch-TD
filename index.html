@@ -268,7 +268,7 @@ closePack.onclick=()=>packModal.classList.remove("show");
 const canvas=document.getElementById("game"), ctx=canvas.getContext("2d");
 const W=canvas.width,H=canvas.height;
 const mapArt=new Image();
-mapArt.src="assets/wildwatch-v2-sheet.jpg";
+mapArt.src="assets/forest_map_hd.jpg?v=4";
 const spriteArt=new Image();
 spriteArt.src="assets/wildwatch-realistic-sprites.jpg";
 const spriteSrc={
@@ -387,7 +387,7 @@ function draw(){
   ctx.imageSmoothingQuality="high";
   if(mapArt.complete && mapArt.naturalWidth){
     // Crop only the battlefield from the V2 concept art so the in-game route matches the artwork.
-    ctx.drawImage(mapArt,0,120,420,510,0,0,W,H);
+    ctx.drawImage(mapArt,0,0,mapArt.naturalWidth,mapArt.naturalHeight,0,0,W,H);
   }else{
     ctx.fillStyle="#16241b";ctx.fillRect(0,0,W,H);
   }
