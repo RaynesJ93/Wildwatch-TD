@@ -34,7 +34,7 @@
     .card{position:relative;background:linear-gradient(145deg,#214c39,#173628);border:2px solid #46735f;border-radius:18px;padding:11px;min-height:150px;box-shadow:0 10px 20px #0003;overflow:hidden}
     .card.locked{filter:grayscale(1);opacity:.55}.card.selected{outline:3px solid var(--gold);transform:translateY(-2px)}
     .rarity{position:absolute;right:8px;top:8px;font-size:10px;font-weight:1000;padding:4px 7px;border-radius:999px;background:#0c1c15aa}
-    .animal{font-size:44px;line-height:1;margin:6px 0}.card h3{margin:5px 0 2px}.small{font-size:12px;color:var(--muted)}
+    .animal{font-size:44px;line-height:1;margin:6px 0}.animal-portrait{width:74px;height:74px;margin:4px auto 8px;border-radius:16px;background-image:url("assets/wildwatch-v2-sheet.jpg");background-repeat:no-repeat;background-size:420px 900px;box-shadow:0 8px 18px #0008,inset 0 0 0 2px #ffffff33;background-color:#18251f}.mini-portrait{display:block;width:42px;height:42px;margin:0 auto 4px;border-radius:50%;background-image:url("assets/wildwatch-v2-sheet.jpg");background-repeat:no-repeat;background-size:238px 510px;box-shadow:0 4px 10px #0008,inset 0 0 0 1px #ffffff44;background-color:#18251f}.reward-portrait{width:110px;height:110px;margin:4px auto 12px;border-radius:24px;background-image:url("assets/wildwatch-v2-sheet.jpg");background-repeat:no-repeat;background-size:624px 1337px;box-shadow:0 14px 30px #0009,inset 0 0 0 2px #ffffff44;background-color:#18251f}.card h3{margin:5px 0 2px}.small{font-size:12px;color:var(--muted)}
     .statrow{display:flex;gap:7px;flex-wrap:wrap;font-size:11px;margin-top:8px}.statrow span{background:#0d2219;padding:4px 6px;border-radius:8px}
     .deckbar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
     .deckslot{background:#0c1a14;border:1px dashed #4d7965;border-radius:14px;min-height:68px;display:grid;place-items:center;text-align:center;font-size:11px;padding:4px}
@@ -166,6 +166,22 @@ const animals = {
   lion:{name:"Lion", emoji:"🦁", rarity:"Legendary", cost:160, range:145, rate:.65, dmg:31, aura:1.15, color:"#d99c35", desc:"Powerful attacker that inspires nearby towers."}
 };
 const rarityOrder={Common:1,Rare:2,Epic:3,Legendary:4};
+const portraitPos={
+  monkey:"-5px -382px",
+  frog:"-50px -382px",
+  owl:"-95px -382px",
+  snake:"-142px -382px"
+};
+const portraitPosLarge={
+  monkey:"-12px -1003px",
+  frog:"-131px -1003px",
+  owl:"-250px -1003px",
+  snake:"-372px -1003px"
+};
+function animalVisual(k, cls="mini-portrait"){
+  const p=portraitPos[k];
+  return p ? `<span class="${cls}" style="background-position:${p}"></span>` : `<span class="animal">${animals[k].emoji}</span>`;
+}
 
 const defaults = {
   metaCoins:0, level:1, xp:0, packTokens:1, bestWave:0,
@@ -209,13 +225,13 @@ function levelCheck(){
   while(save.xp>=need){save.xp-=need;save.level++;save.packTokens++;need=100+save.level*35;}
 }
 function renderDecks(){
-  const draw=(el)=>{el.innerHTML=""; for(let i=0;i<4;i++){const k=save.deck[i], d=document.createElement("div");d.className="deckslot";d.innerHTML=k?`<div><b>${animals[k].emoji}</b>${animals[k].name}</div>`:"Empty";el.appendChild(d)}}
+  const draw=(el)=>{el.innerHTML=""; for(let i=0;i<4;i++){const k=save.deck[i], d=document.createElement("div");d.className="deckslot";d.innerHTML=k?`<div>${animalVisual(k)}${animals[k].name}</div>`:"Empty";el.appendChild(d)}}
   draw(homeDeck); draw(collectionDeck);
   battleDeck.innerHTML="";
   save.deck.forEach(k=>{
     const a=animals[k], b=document.createElement("button");b.className="battle-card";b.dataset.key=k;
     const pos={monkey:"-8px -675px",frog:"-88px -675px",owl:"-168px -675px",snake:"-250px -675px"};
-    b.innerHTML=pos[k]?`<div class="portrait" style="background-position:${pos[k]}"></div><b>${a.name}</b><div class="cost">🪙 ${a.cost}</div>`:`<div class="emoji">${a.emoji}</div><b>${a.name}</b><div class="cost">🪙 ${a.cost}</div>`;
+    b.innerHTML=pos[k]?`<div class="portrait" style="background-position:${pos[k]}"></div><b>${a.name}</b><div class="cost">🪙 ${a.cost}</div>`:`${animalVisual(k)}<b>${a.name}</b><div class="cost">🪙 ${a.cost}</div>`;
     b.onclick=()=>{selectedCard=k; document.querySelectorAll(".battle-card").forEach(x=>x.classList.toggle("active",x.dataset.key===k)); message.textContent=`${a.name} selected — tap a free tower pad.`};
     battleDeck.appendChild(b);
   });
@@ -224,7 +240,7 @@ function renderCollection(){
   collectionCards.innerHTML="";
   Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).forEach(([k,a])=>{
     const unlocked=save.unlocked.includes(k), d=document.createElement("div"); d.className="card "+(!unlocked?"locked":"")+(save.deck.includes(k)?" selected":"");
-    d.innerHTML=`<span class="rarity">${a.rarity}</span><div class="animal">${unlocked?a.emoji:"❔"}</div><h3>${unlocked?a.name:"Unknown"}</h3><div class="small">${unlocked?a.desc:"Find this animal in Wild Packs."}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div>`:""}`;
+    d.innerHTML=`<span class="rarity">${a.rarity}</span>${unlocked?animalVisual(k,"animal-portrait"):`<div class="animal">❔</div>`}<h3>${unlocked?a.name:"Unknown"}</h3><div class="small">${unlocked?a.desc:"Find this animal in Wild Packs."}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div>`:""}`;
     if(unlocked)d.onclick=()=>toggleDeck(k); collectionCards.appendChild(d);
   });
 }
@@ -250,7 +266,7 @@ openPackBtn.onclick=()=>{
   let key, fresh=false;
   if(locked.length && Math.random()<.62){ key=locked[Math.floor(Math.random()*locked.length)]; save.unlocked.push(key); fresh=true; }
   else { key=save.unlocked[Math.floor(Math.random()*save.unlocked.length)]; save.shards[key]=(save.shards[key]||0)+5; }
-  const a=animals[key]; packEmoji.textContent=a.emoji; packTitle.textContent=fresh?`New ${a.name}!`:`${a.name} shards!`; packDesc.textContent=fresh?`${a.rarity} card unlocked. Add it to your deck from the Cards screen.`:`You received 5 ${a.name} shards. Upgrades will use shards in a later version.`;
+  const a=animals[key]; if(portraitPosLarge[key]){packEmoji.textContent="";packEmoji.className="reward-portrait";packEmoji.style.backgroundPosition=portraitPosLarge[key]}else{packEmoji.className="reward";packEmoji.style.backgroundPosition="";packEmoji.textContent=a.emoji} packTitle.textContent=fresh?`New ${a.name}!`:`${a.name} shards!`; packDesc.textContent=fresh?`${a.rarity} card unlocked. Add it to your deck from the Cards screen.`:`You received 5 ${a.name} shards. Upgrades will use shards in a later version.`;
   packModal.classList.add("show"); persist();
 };
 closePack.onclick=()=>packModal.classList.remove("show");
@@ -306,11 +322,11 @@ canvas.addEventListener("pointerdown",ev=>{
   if(!selectedCard){message.textContent="Choose an animal card first.";return}
   const a=animals[selectedCard]; if(battle.coins<a.cost){message.textContent="Not enough coins.";return}
   battle.coins-=a.cost; battle.towers.push({key:selectedCard,x:pads[pi][0],y:pads[pi][1],pad:pi,cd:0,level:1,spent:a.cost});
-  message.textContent=`${a.emoji} ${a.name} placed!`;updateHud();
+  message.textContent=`${a.name} placed!`;updateHud();
 });
 function openTowerModal(){
   const t=selectedTower,a=animals[t.key], up=Math.floor(a.cost*.7*t.level);
-  towerName.textContent=`${a.emoji} ${a.name} • Level ${t.level}`;
+  towerName.textContent=`${a.name} • Level ${t.level}`;
   towerInfo.textContent=`Damage ${Math.round(a.dmg*(1+(t.level-1)*.35))} • Range ${Math.round(a.range*(1+(t.level-1)*.06))} • Upgrade cost ${up}`;
   upgradeTower.textContent=`Upgrade • 🪙 ${up}`; towerModal.classList.add("show");
 }
