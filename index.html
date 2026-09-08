@@ -40,12 +40,12 @@
     .deckslot{background:#0c1a14;border:1px dashed #4d7965;border-radius:14px;min-height:68px;display:grid;place-items:center;text-align:center;font-size:11px;padding:4px}
     .deckslot b{font-size:28px;display:block}
     .map-wrap{position:relative;background:#172018;border:3px solid #5f665c;border-radius:18px;overflow:hidden;box-shadow:0 22px 45px #0008,inset 0 0 0 1px #ffffff18}
-    #game{display:block;width:100%;height:auto;aspect-ratio:16/11;touch-action:none}
+    #game{display:block;width:100%;height:auto;aspect-ratio:14/17;touch-action:none}
     .battle-ui{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0}
     .battle-deck{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
     .battle-card{position:relative;background:linear-gradient(180deg,#27302b,#101714);border:2px solid #6f756e;border-radius:12px;padding:7px 4px;text-align:center;min-height:78px;box-shadow:0 8px 16px #0007,inset 0 0 0 1px #ffffff12}
     .battle-card.active{border-color:var(--gold);box-shadow:0 0 0 2px #ffd65a33}.battle-card.disabled{opacity:.45}
-    .battle-card .emoji{font-size:29px}.cost{font-size:11px;color:var(--gold);font-weight:900}
+    .battle-card .emoji{font-size:29px}.battle-card .portrait{width:48px;height:48px;margin:0 auto 3px;border-radius:10px;background-image:url("assets/wildwatch-v2-sheet.jpg");background-repeat:no-repeat;background-size:420px 900px;box-shadow:0 5px 12px #0008,inset 0 0 0 1px #ffffff44}.cost{font-size:11px;color:var(--gold);font-weight:900}
     .message{text-align:center;color:var(--muted);font-size:13px;min-height:18px;margin:6px}
     .nav{position:fixed;z-index:50;left:0;right:0;bottom:0;background:#0a1712ee;border-top:1px solid #315142;display:grid;grid-template-columns:repeat(4,1fr);padding:7px 8px calc(7px + env(safe-area-inset-bottom));backdrop-filter:blur(12px)}
     .nav button{background:none;border:0;padding:6px 2px;color:#a9c6b5;font-size:11px;font-weight:800}.nav button.active{color:var(--gold)}.nav .ico{font-size:24px;display:block}
@@ -92,7 +92,7 @@
       <div class="pill">🌊 <span id="wave">1</span></div>
       <button class="secondary" id="startWave">Start wave</button>
     </div>
-    <div class="map-wrap"><canvas id="game" width="960" height="660"></canvas></div>
+    <div class="map-wrap"><canvas id="game" width="840" height="1020"></canvas></div>
     <div class="message" id="message">Choose an animal card, then tap a glowing tower pad.</div>
     <div class="battle-deck" id="battleDeck"></div>
     <div style="display:flex;gap:8px;margin-top:8px">
@@ -214,7 +214,8 @@ function renderDecks(){
   battleDeck.innerHTML="";
   save.deck.forEach(k=>{
     const a=animals[k], b=document.createElement("button");b.className="battle-card";b.dataset.key=k;
-    b.innerHTML=`<div class="emoji">${a.emoji}</div><b>${a.name}</b><div class="cost">🪙 ${a.cost}</div>`;
+    const pos={monkey:"-8px -675px",frog:"-88px -675px",owl:"-168px -675px",snake:"-250px -675px"};
+    b.innerHTML=pos[k]?`<div class="portrait" style="background-position:${pos[k]}"></div><b>${a.name}</b><div class="cost">🪙 ${a.cost}</div>`:`<div class="emoji">${a.emoji}</div><b>${a.name}</b><div class="cost">🪙 ${a.cost}</div>`;
     b.onclick=()=>{selectedCard=k; document.querySelectorAll(".battle-card").forEach(x=>x.classList.toggle("active",x.dataset.key===k)); message.textContent=`${a.name} selected — tap a free tower pad.`};
     battleDeck.appendChild(b);
   });
@@ -258,9 +259,15 @@ closePack.onclick=()=>packModal.classList.remove("show");
 const canvas=document.getElementById("game"), ctx=canvas.getContext("2d");
 const W=canvas.width,H=canvas.height;
 const mapArt=new Image();
-mapArt.src="assets/wildwatch-map.jpg";
-const path=[[-40,95],[125,95],[125,250],[315,250],[315,120],[520,120],[520,360],[705,360],[705,205],[860,205],[860,520],[1000,520]];
-const pads=[[90,185],[220,170],[230,340],[400,215],[420,420],[610,255],[620,475],[790,300],[785,585],[900,410],[525,540],[105,455]];
+mapArt.src="assets/wildwatch-v2-sheet.jpg";
+const portraitSrc={
+  monkey:[8,675,74,72],
+  frog:[88,675,74,72],
+  owl:[168,675,76,72],
+  snake:[250,675,74,72]
+};
+const path=[[-40,245],[120,250],[250,265],[350,310],[430,390],[420,510],[345,625],[280,720],[410,785],[555,790],[665,825],[725,900],[790,1010],[880,1070]];
+const pads=[[300,365],[570,520],[170,560],[245,710],[445,690],[610,720],[255,845],[520,865],[675,650],[710,930],[385,535],[135,790]];
 let battle={}, selectedCard=null, selectedTower=null, raf=0, last=performance.now(), speed=1;
 
 function resetBattle(){
@@ -366,21 +373,27 @@ function update(dt){
 }
 function draw(){
   ctx.clearRect(0,0,W,H);
-  if(mapArt.complete) ctx.drawImage(mapArt,0,0,W,H);
-  else {ctx.fillStyle="#263828";ctx.fillRect(0,0,W,H)}
-  ctx.fillStyle="#0003";ctx.fillRect(0,0,W,H);
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality="high";
+  if(mapArt.complete && mapArt.naturalWidth){
+    // Crop only the battlefield from the V2 concept art so the in-game route matches the artwork.
+    ctx.drawImage(mapArt,0,120,420,510,0,0,W,H);
+  }else{
+    ctx.fillStyle="#16241b";ctx.fillRect(0,0,W,H);
+  }
+  ctx.fillStyle="#00000014";ctx.fillRect(0,0,W,H);
   ctx.textAlign="center";ctx.textBaseline="middle";
 
   pads.forEach((p,i)=>{
     const occupied=battle.towers?.some(t=>t.pad===i);
     ctx.save();
-    ctx.shadowColor="#000b";ctx.shadowBlur=12;ctx.shadowOffsetY=8;
-    ctx.beginPath();ctx.ellipse(p[0],p[1]+7,35,19,0,0,Math.PI*2);ctx.fillStyle="#0006";ctx.fill();
+    ctx.shadowColor="#000c";ctx.shadowBlur=14;ctx.shadowOffsetY=8;
+    ctx.beginPath();ctx.ellipse(p[0],p[1]+7,38,23,0,0,Math.PI*2);ctx.fillStyle="#0007";ctx.fill();
     ctx.shadowColor="transparent";
-    ctx.beginPath();ctx.ellipse(p[0],p[1],33,24,0,0,Math.PI*2);
-    ctx.fillStyle=occupied?"#454d45dd":"#8f8d7fd9";ctx.fill();
-    ctx.lineWidth=3;ctx.strokeStyle=occupied?"#242b26":"#ddd4b6";ctx.stroke();
-    if(!occupied){ctx.fillStyle="#f0e5bd";ctx.font="bold 23px system-ui";ctx.fillText("+",p[0],p[1]-1)}
+    ctx.beginPath();ctx.ellipse(p[0],p[1],36,27,0,0,Math.PI*2);
+    ctx.fillStyle=occupied?"#3f4741e8":"#8b8879d9";ctx.fill();
+    ctx.lineWidth=3;ctx.strokeStyle=occupied?"#222923":"#e4d8b7";ctx.stroke();
+    if(!occupied){ctx.fillStyle="#f7e9bc";ctx.font="bold 25px system-ui";ctx.fillText("+",p[0],p[1]-1)}
     ctx.restore();
   });
 
@@ -388,32 +401,42 @@ function draw(){
     const a=animals[t.key];
     if(selectedCard===t.key){
       ctx.beginPath();ctx.arc(t.x,t.y,a.range*(1+(t.level-1)*.06),0,Math.PI*2);
-      ctx.strokeStyle="#ffd65a55";ctx.lineWidth=3;ctx.stroke();
+      ctx.strokeStyle="#ffd65a66";ctx.lineWidth=3;ctx.stroke();
     }
     ctx.save();
-    ctx.shadowColor="#000c";ctx.shadowBlur=13;ctx.shadowOffsetY=8;
-    ctx.beginPath();ctx.ellipse(t.x,t.y+19,28,12,0,0,Math.PI*2);ctx.fillStyle="#0007";ctx.fill();
+    ctx.shadowColor="#000d";ctx.shadowBlur=14;ctx.shadowOffsetY=9;
+    ctx.beginPath();ctx.ellipse(t.x,t.y+22,31,14,0,0,Math.PI*2);ctx.fillStyle="#0008";ctx.fill();
     ctx.shadowColor="transparent";
-    ctx.beginPath();ctx.ellipse(t.x,t.y+12,26,14,0,0,Math.PI*2);ctx.fillStyle="#6b6658";ctx.fill();
-    ctx.strokeStyle="#b7aa8a";ctx.lineWidth=2;ctx.stroke();
-    ctx.font="46px serif";ctx.fillText(a.emoji,t.x,t.y-8);
-    ctx.fillStyle="#f6e6ad";ctx.font="bold 12px system-ui";ctx.fillText("Lv "+t.level,t.x,t.y+32);
+    ctx.beginPath();ctx.ellipse(t.x,t.y+13,29,16,0,0,Math.PI*2);ctx.fillStyle="#6a6455";ctx.fill();
+    ctx.strokeStyle="#b5aa8d";ctx.lineWidth=2;ctx.stroke();
+
+    const src=portraitSrc[t.key];
+    if(src && mapArt.complete){
+      ctx.save();
+      ctx.beginPath();ctx.arc(t.x,t.y-12,30,0,Math.PI*2);ctx.clip();
+      ctx.drawImage(mapArt,src[0],src[1],src[2],src[3],t.x-32,t.y-44,64,64);
+      ctx.restore();
+      ctx.beginPath();ctx.arc(t.x,t.y-12,30,0,Math.PI*2);ctx.lineWidth=2;ctx.strokeStyle="#d6c7a2";ctx.stroke();
+    }else{
+      ctx.font="48px serif";ctx.fillText(a.emoji,t.x,t.y-10);
+    }
+    ctx.fillStyle="#f6e6ad";ctx.font="bold 12px system-ui";ctx.fillText("Lv "+t.level,t.x,t.y+38);
     ctx.restore();
   });
 
   battle.enemies?.forEach(e=>{
     ctx.save();
-    ctx.beginPath();ctx.ellipse(e.x,e.y+13,18,8,0,0,Math.PI*2);ctx.fillStyle="#0008";ctx.fill();
-    ctx.font=(e.size*2)+"px serif";ctx.fillText(e.emoji,e.x,e.y-3);
-    const bw=42,bh=6;
-    ctx.fillStyle="#2b0d0ddd";ctx.fillRect(e.x-bw/2,e.y-34,bw,bh);
-    ctx.fillStyle="#62df72";ctx.fillRect(e.x-bw/2,e.y-34,bw*Math.max(0,e.hp/e.maxHp),bh);
+    ctx.beginPath();ctx.ellipse(e.x,e.y+16,20,9,0,0,Math.PI*2);ctx.fillStyle="#0009";ctx.fill();
+    ctx.font=(e.size*2.2)+"px serif";ctx.fillText(e.emoji,e.x,e.y-2);
+    const bw=44,bh=7;
+    ctx.fillStyle="#2c0d0ddd";ctx.fillRect(e.x-bw/2,e.y-38,bw,bh);
+    ctx.fillStyle="#57dc69";ctx.fillRect(e.x-bw/2,e.y-38,bw*Math.max(0,e.hp/e.maxHp),bh);
     ctx.restore();
   });
 
   battle.shots?.forEach(s=>{
-    ctx.save();ctx.shadowColor="#fff";ctx.shadowBlur=10;ctx.strokeStyle="#fff";ctx.lineWidth=3;
-    ctx.beginPath();ctx.moveTo(s.x,s.y-8);ctx.lineTo(s.tx,s.ty);ctx.stroke();ctx.restore();
+    ctx.save();ctx.shadowColor="#fff";ctx.shadowBlur=12;ctx.strokeStyle="#fff";ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(s.x,s.y-12);ctx.lineTo(s.tx,s.ty);ctx.stroke();ctx.restore();
   });
 }
 let lastAutoSave=0;
