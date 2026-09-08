@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#153c2f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Wildwatch TD" />
+  
+  <title>Wildwatch TD</title>
+  <style>
+    :root{
+      --bg:#0f211a; --panel:#17382b; --panel2:#204a38; --line:#376651;
+      --text:#f4fff8; --muted:#b9d3c4; --gold:#ffd65a; --danger:#ff7468;
+      --ok:#6ee7a2; --purple:#b78cff;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;min-height:100%;background:linear-gradient(#102a20,#09140f);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow-x:hidden}
+    button{font:inherit;color:inherit}
+    #app{max-width:900px;margin:auto;min-height:100vh;padding:env(safe-area-inset-top) 10px calc(84px + env(safe-area-inset-bottom))}
+    .topbar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 2px}
+    .brand{display:flex;align-items:center;gap:8px;font-weight:900;font-size:18px}
+    .stats{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+    .pill{background:#0b1913;border:1px solid #315a49;border-radius:999px;padding:6px 9px;font-weight:800;font-size:13px}
+    .screen{display:none}.screen.active{display:block}
+    .hero{background:linear-gradient(145deg,#1d513b,#112d22);border:1px solid #3d765c;border-radius:20px;padding:18px;box-shadow:0 16px 40px #0005}
+    .hero h1{margin:0 0 5px;font-size:29px}.hero p{margin:0;color:var(--muted)}
+    .primary,.secondary,.danger{border:0;border-radius:14px;padding:13px 16px;font-weight:900;cursor:pointer}
+    .primary{background:var(--gold);color:#352700}.secondary{background:#285842;border:1px solid #4b8469}.danger{background:#7b2f2c}
+    .section-title{font-weight:900;font-size:18px;margin:18px 3px 9px}
+    .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    @media(min-width:650px){.cards{grid-template-columns:repeat(4,minmax(0,1fr))}}
+    .card{position:relative;background:linear-gradient(145deg,#214c39,#173628);border:2px solid #46735f;border-radius:18px;padding:11px;min-height:150px;box-shadow:0 10px 20px #0003;overflow:hidden}
+    .card.locked{filter:grayscale(1);opacity:.55}.card.selected{outline:3px solid var(--gold);transform:translateY(-2px)}
+    .rarity{position:absolute;right:8px;top:8px;font-size:10px;font-weight:1000;padding:4px 7px;border-radius:999px;background:#0c1c15aa}
+    .animal{font-size:44px;line-height:1;margin:6px 0}.card h3{margin:5px 0 2px}.small{font-size:12px;color:var(--muted)}
+    .statrow{display:flex;gap:7px;flex-wrap:wrap;font-size:11px;margin-top:8px}.statrow span{background:#0d2219;padding:4px 6px;border-radius:8px}
+    .deckbar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+    .deckslot{background:#0c1a14;border:1px dashed #4d7965;border-radius:14px;min-height:68px;display:grid;place-items:center;text-align:center;font-size:11px;padding:4px}
+    .deckslot b{font-size:28px;display:block}
+    .map-wrap{position:relative;background:#5c8c52;border:3px solid #274f35;border-radius:18px;overflow:hidden;box-shadow:0 16px 30px #0004}
+    #game{display:block;width:100%;height:auto;aspect-ratio:16/11;touch-action:none}
+    .battle-ui{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0}
+    .battle-deck{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+    .battle-card{position:relative;background:#173c2c;border:2px solid #35614f;border-radius:14px;padding:7px 4px;text-align:center;min-height:74px}
+    .battle-card.active{border-color:var(--gold);box-shadow:0 0 0 2px #ffd65a33}.battle-card.disabled{opacity:.45}
+    .battle-card .emoji{font-size:29px}.cost{font-size:11px;color:var(--gold);font-weight:900}
+    .message{text-align:center;color:var(--muted);font-size:13px;min-height:18px;margin:6px}
+    .nav{position:fixed;z-index:50;left:0;right:0;bottom:0;background:#0a1712ee;border-top:1px solid #315142;display:grid;grid-template-columns:repeat(4,1fr);padding:7px 8px calc(7px + env(safe-area-inset-bottom));backdrop-filter:blur(12px)}
+    .nav button{background:none;border:0;padding:6px 2px;color:#a9c6b5;font-size:11px;font-weight:800}.nav button.active{color:var(--gold)}.nav .ico{font-size:24px;display:block}
+    .modal{position:fixed;z-index:90;inset:0;background:#000b;display:none;align-items:flex-end;justify-content:center;padding:14px}.modal.show{display:flex}
+    .sheet{width:min(650px,100%);max-height:85vh;overflow:auto;background:#143326;border:1px solid #46705e;border-radius:24px 24px 16px 16px;padding:16px}
+    .sheet h2{margin-top:0}.reward{font-size:70px;text-align:center}.center{text-align:center}
+    .progress{height:10px;background:#09160f;border-radius:999px;overflow:hidden}.progress i{display:block;height:100%;background:var(--gold)}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.info-box{background:#11291f;border:1px solid #315b47;border-radius:15px;padding:12px}
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand"><span>🛡️</span><span>Wildwatch TD</span></div>
+    <div class="stats">
+      <div class="pill">🪙 <span id="metaCoins">0</span></div>
+      <div class="pill">⭐ <span id="playerLevel">1</span></div>
+    </div>
+  </div>
+
+  <section id="homeScreen" class="screen active">
+    <div class="hero">
+      <h1>Build your animal squad.</h1>
+      <p>Collect animal cards, make a 4-card deck, and defend the Wildwood from invading critters.</p>
+      <div style="height:14px"></div>
+      <button class="primary" id="playBtn">▶ Play Forest Trail</button>
+    </div>
+
+    <div class="section-title">Current deck</div>
+    <div class="deckbar" id="homeDeck"></div>
+
+    <div class="section-title">Progress</div>
+    <div class="info-grid">
+      <div class="info-box"><b>🏆 Best wave</b><div style="font-size:26px;font-weight:1000" id="bestWave">0</div></div>
+      <div class="info-box"><b>🃏 Cards owned</b><div style="font-size:26px;font-weight:1000" id="ownedCount">0/8</div></div>
+    </div>
+  </section>
+
+  <section id="battleScreen" class="screen">
+    <div class="battle-ui">
+      <div class="pill">❤️ <span id="lives">20</span></div>
+      <div class="pill">🪙 <span id="battleCoins">120</span></div>
+      <div class="pill">🌊 <span id="wave">1</span></div>
+      <button class="secondary" id="startWave">Start wave</button>
+    </div>
+    <div class="map-wrap"><canvas id="game" width="960" height="660"></canvas></div>
+    <div class="message" id="message">Choose an animal card, then tap a glowing tower pad.</div>
+    <div class="battle-deck" id="battleDeck"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="secondary" style="flex:1" id="speedBtn">⏩ Speed: 1×</button>
+      <button class="danger" id="quitBtn">Quit</button>
+    </div>
+  </section>
+
+  <section id="collectionScreen" class="screen">
+    <div class="hero">
+      <h1>Animal Collection</h1>
+      <p>Tap unlocked cards to add or remove them from your 4-card battle deck.</p>
+    </div>
+    <div class="section-title">Your deck <span class="small">(choose 4)</span></div>
+    <div class="deckbar" id="collectionDeck"></div>
+    <div class="section-title">Cards</div>
+    <div class="cards" id="collectionCards"></div>
+  </section>
+
+  <section id="packsScreen" class="screen">
+    <div class="hero center">
+      <div style="font-size:70px">🎁</div>
+      <h1>Wild Packs</h1>
+      <p>Earn pack tokens by surviving waves. Packs can unlock new animals or give duplicate shards.</p>
+      <div style="height:14px"></div>
+      <button class="primary" id="openPackBtn">Open Pack • 🎟️ <span id="packTokens">0</span></button>
+    </div>
+    <div class="section-title">Next player level</div>
+    <div class="progress"><i id="xpBar" style="width:0%"></i></div>
+    <div class="small" id="xpText" style="margin-top:6px"></div>
+  </section>
+</div>
+
+<nav class="nav">
+  <button data-screen="homeScreen" class="active"><span class="ico">🏕️</span>Home</button>
+  <button data-screen="battleScreen"><span class="ico">⚔️</span>Battle</button>
+  <button data-screen="collectionScreen"><span class="ico">🃏</span>Cards</button>
+  <button data-screen="packsScreen"><span class="ico">🎁</span>Packs</button>
+</nav>
+
+<div class="modal" id="packModal">
+  <div class="sheet center">
+    <div class="reward" id="packEmoji">🦊</div>
+    <h2 id="packTitle">New animal!</h2>
+    <p id="packDesc"></p>
+    <button class="primary" id="closePack">Awesome</button>
+  </div>
+</div>
+
+<div class="modal" id="towerModal">
+  <div class="sheet">
+    <h2 id="towerName">Animal</h2>
+    <p id="towerInfo" class="small"></p>
+    <div style="display:flex;gap:8px">
+      <button class="primary" id="upgradeTower" style="flex:1">Upgrade</button>
+      <button class="secondary" id="sellTower">Sell</button>
+      <button class="danger" id="closeTower">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const animals = {
+  monkey:{name:"Monkey", emoji:"🐒", rarity:"Common", cost:55, range:125, rate:.58, dmg:10, color:"#9b6c3e", desc:"Fast fruit-slinger. Great starter tower."},
+  frog:{name:"Frog", emoji:"🐸", rarity:"Common", cost:65, range:105, rate:.9, dmg:15, splash:42, color:"#4cae59", desc:"Splash damage hits grouped enemies."},
+  owl:{name:"Owl", emoji:"🦉", rarity:"Rare", cost:85, range:185, rate:1.1, dmg:24, color:"#b69069", desc:"Long-range precision attacker."},
+  snake:{name:"Snake", emoji:"🐍", rarity:"Rare", cost:75, range:115, rate:.8, dmg:8, poison:5, color:"#54a55a", desc:"Poisons enemies for damage over time."},
+  rhino:{name:"Rhino", emoji:"🦏", rarity:"Epic", cost:110, range:95, rate:1.45, dmg:43, color:"#829099", desc:"Heavy hitter with huge single-target damage."},
+  eagle:{name:"Eagle", emoji:"🦅", rarity:"Epic", cost:120, range:215, rate:.88, dmg:27, color:"#b68142", desc:"Extreme range and strong damage."},
+  panda:{name:"Panda", emoji:"🐼", rarity:"Legendary", cost:145, range:125, rate:.72, dmg:23, slow:.55, color:"#eee", desc:"Bamboo blasts slow enemies."},
+  lion:{name:"Lion", emoji:"🦁", rarity:"Legendary", cost:160, range:145, rate:.65, dmg:31, aura:1.15, color:"#d99c35", desc:"Powerful attacker that inspires nearby towers."}
+};
+const rarityOrder={Common:1,Rare:2,Epic:3,Legendary:4};
+
+const defaults = {
+  metaCoins:0, level:1, xp:0, packTokens:1, bestWave:0,
+  unlocked:["monkey","frog","owl","snake"],
+  shards:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0},
+  cardLevels:{monkey:1,frog:1,owl:1,snake:1,rhino:1,eagle:1,panda:1,lion:1},
+  deck:["monkey","frog","owl","snake"]
+};
+let save;
+try { save={...defaults,...JSON.parse(localStorage.getItem("wildwatchSave")||"{}")}; } catch { save={...defaults}; }
+save.shards={...defaults.shards,...save.shards};
+save.cardLevels={...defaults.cardLevels,...save.cardLevels};
+function persist(){localStorage.setItem("wildwatchSave",JSON.stringify(save)); renderMeta();}
+
+function renderMeta(){
+  metaCoins.textContent=save.metaCoins;
+  playerLevel.textContent=save.level;
+  bestWave.textContent=save.bestWave;
+  ownedCount.textContent=`${save.unlocked.length}/8`;
+  packTokens.textContent=save.packTokens;
+  const need=100+save.level*35, pct=Math.min(100,save.xp/need*100);
+  xpBar.style.width=pct+"%"; xpText.textContent=`${save.xp} / ${need} XP`;
+  renderDecks(); renderCollection();
+}
+function levelCheck(){
+  let need=100+save.level*35;
+  while(save.xp>=need){save.xp-=need;save.level++;save.packTokens++;need=100+save.level*35;}
+}
+function renderDecks(){
+  const draw=(el)=>{el.innerHTML=""; for(let i=0;i<4;i++){const k=save.deck[i], d=document.createElement("div");d.className="deckslot";d.innerHTML=k?`<div><b>${animals[k].emoji}</b>${animals[k].name}</div>`:"Empty";el.appendChild(d)}}
+  draw(homeDeck); draw(collectionDeck);
+  battleDeck.innerHTML="";
+  save.deck.forEach(k=>{
+    const a=animals[k], b=document.createElement("button");b.className="battle-card";b.dataset.key=k;
+    b.innerHTML=`<div class="emoji">${a.emoji}</div><b>${a.name}</b><div class="cost">🪙 ${a.cost}</div>`;
+    b.onclick=()=>{selectedCard=k; document.querySelectorAll(".battle-card").forEach(x=>x.classList.toggle("active",x.dataset.key===k)); message.textContent=`${a.name} selected — tap a free tower pad.`};
+    battleDeck.appendChild(b);
+  });
+}
+function renderCollection(){
+  collectionCards.innerHTML="";
+  Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).forEach(([k,a])=>{
+    const unlocked=save.unlocked.includes(k), d=document.createElement("div"); d.className="card "+(!unlocked?"locked":"")+(save.deck.includes(k)?" selected":"");
+    d.innerHTML=`<span class="rarity">${a.rarity}</span><div class="animal">${unlocked?a.emoji:"❔"}</div><h3>${unlocked?a.name:"Unknown"}</h3><div class="small">${unlocked?a.desc:"Find this animal in Wild Packs."}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div>`:""}`;
+    if(unlocked)d.onclick=()=>toggleDeck(k); collectionCards.appendChild(d);
+  });
+}
+function toggleDeck(k){
+  if(save.deck.includes(k)){ if(save.deck.length<=1)return; save.deck=save.deck.filter(x=>x!==k);}
+  else { if(save.deck.length>=4){alert("Your deck already has 4 animals. Remove one first.");return;} save.deck.push(k);}
+  persist();
+}
+
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>showScreen(b.dataset.screen));
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===id));
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen===id));
+  if(id==="battleScreen" && !battle.started) resetBattle();
+}
+playBtn.onclick=()=>showScreen("battleScreen");
+
+openPackBtn.onclick=()=>{
+  if(save.packTokens<1){alert("You need a pack token. Survive more waves to earn one!");return}
+  save.packTokens--;
+  const locked=Object.keys(animals).filter(k=>!save.unlocked.includes(k));
+  let key, fresh=false;
+  if(locked.length && Math.random()<.62){ key=locked[Math.floor(Math.random()*locked.length)]; save.unlocked.push(key); fresh=true; }
+  else { key=save.unlocked[Math.floor(Math.random()*save.unlocked.length)]; save.shards[key]=(save.shards[key]||0)+5; }
+  const a=animals[key]; packEmoji.textContent=a.emoji; packTitle.textContent=fresh?`New ${a.name}!`:`${a.name} shards!`; packDesc.textContent=fresh?`${a.rarity} card unlocked. Add it to your deck from the Cards screen.`:`You received 5 ${a.name} shards. Upgrades will use shards in a later version.`;
+  packModal.classList.add("show"); persist();
+};
+closePack.onclick=()=>packModal.classList.remove("show");
+
+// ---- Battle engine ----
+const canvas=document.getElementById("game"), ctx=canvas.getContext("2d");
+const W=canvas.width,H=canvas.height;
+const path=[[-40,95],[125,95],[125,250],[315,250],[315,120],[520,120],[520,360],[705,360],[705,205],[860,205],[860,520],[1000,520]];
+const pads=[[90,185],[220,170],[230,340],[400,215],[420,420],[610,255],[620,475],[790,300],[785,585],[900,410],[525,540],[105,455]];
+let battle={}, selectedCard=null, selectedTower=null, raf=0, last=performance.now(), speed=1;
+
+function resetBattle(){
+  cancelAnimationFrame(raf);
+  battle={started:true,coins:130,lives:20,wave:1,enemies:[],towers:[],shots:[],spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false};
+  selectedCard=null; selectedTower=null; speed=1; speedBtn.textContent="⏩ Speed: 1×";
+  updateHud(); last=performance.now(); loop(last);
+}
+function updateHud(){battleCoins.textContent=Math.floor(battle.coins); lives.textContent=battle.lives; wave.textContent=battle.wave;document.querySelectorAll(".battle-card").forEach(b=>b.classList.toggle("disabled",animals[b.dataset.key].cost>battle.coins))}
+function enemyForWave(){
+  const w=battle.wave, r=Math.random();
+  if(w>=7 && r<.12)return {emoji:"👹",hp:170+w*18,speed:42,reward:16,size:22};
+  if(w>=4 && r<.28)return {emoji:"🐗",hp:95+w*12,speed:52,reward:10,size:19};
+  if(r<.35)return {emoji:"🐀",hp:38+w*8,speed:82,reward:6,size:15};
+  return {emoji:"🦝",hp:58+w*10,speed:61,reward:8,size:17};
+}
+function spawnEnemy(){
+  const e=enemyForWave(); Object.assign(e,{maxHp:e.hp,seg:0,x:path[0][0],y:path[0][1],poison:0,slowTimer:0,dead:false}); battle.enemies.push(e);
+}
+startWave.onclick=()=>{
+  if(battle.ended){resetBattle();return}
+  if(battle.waveActive){message.textContent="A wave is already running.";return}
+  battle.waveActive=true;battle.spawning=true;battle.spawnLeft=6+battle.wave*2;battle.spawnTimer=0;startWave.textContent="Wave running…";message.textContent=`Wave ${battle.wave} incoming!`;
+};
+speedBtn.onclick=()=>{speed=speed===1?2:1;speedBtn.textContent=`⏩ Speed: ${speed}×`};
+quitBtn.onclick=()=>{showScreen("homeScreen");cancelAnimationFrame(raf)};
+
+function padAt(x,y){return pads.findIndex(p=>Math.hypot(p[0]-x,p[1]-y)<35)}
+canvas.addEventListener("pointerdown",ev=>{
+  if(battle.ended)return;
+  const r=canvas.getBoundingClientRect(), x=(ev.clientX-r.left)*W/r.width,y=(ev.clientY-r.top)*H/r.height;
+  const ti=battle.towers.findIndex(t=>Math.hypot(t.x-x,t.y-y)<30);
+  if(ti>=0){selectedTower=battle.towers[ti];openTowerModal();return}
+  const pi=padAt(x,y); if(pi<0)return;
+  if(battle.towers.some(t=>t.pad===pi)){message.textContent="That tower pad is occupied.";return}
+  if(!selectedCard){message.textContent="Choose an animal card first.";return}
+  const a=animals[selectedCard]; if(battle.coins<a.cost){message.textContent="Not enough coins.";return}
+  battle.coins-=a.cost; battle.towers.push({key:selectedCard,x:pads[pi][0],y:pads[pi][1],pad:pi,cd:0,level:1,spent:a.cost});
+  message.textContent=`${a.emoji} ${a.name} placed!`;updateHud();
+});
+function openTowerModal(){
+  const t=selectedTower,a=animals[t.key], up=Math.floor(a.cost*.7*t.level);
+  towerName.textContent=`${a.emoji} ${a.name} • Level ${t.level}`;
+  towerInfo.textContent=`Damage ${Math.round(a.dmg*(1+(t.level-1)*.35))} • Range ${Math.round(a.range*(1+(t.level-1)*.06))} • Upgrade cost ${up}`;
+  upgradeTower.textContent=`Upgrade • 🪙 ${up}`; towerModal.classList.add("show");
+}
+closeTower.onclick=()=>towerModal.classList.remove("show");
+upgradeTower.onclick=()=>{
+  if(!selectedTower)return; const a=animals[selectedTower.key], cost=Math.floor(a.cost*.7*selectedTower.level);
+  if(battle.coins<cost){alert("Not enough battle coins.");return}
+  battle.coins-=cost;selectedTower.spent+=cost;selectedTower.level++;updateHud();openTowerModal();
+};
+sellTower.onclick=()=>{
+  if(!selectedTower)return; battle.coins+=Math.floor(selectedTower.spent*.65);battle.towers=battle.towers.filter(t=>t!==selectedTower);selectedTower=null;towerModal.classList.remove("show");updateHud();
+};
+
+function moveEnemy(e,dt){
+  if(e.poison>0){e.hp-=5*dt;e.poison-=dt}
+  if(e.slowTimer>0)e.slowTimer-=dt;
+  if(e.hp<=0){killEnemy(e);return}
+  let mult=e.slowTimer>0?.55:1, dist=e.speed*mult*dt;
+  while(dist>0 && e.seg<path.length-1){
+    const [tx,ty]=path[e.seg+1], dx=tx-e.x,dy=ty-e.y,len=Math.hypot(dx,dy);
+    if(dist>=len){e.x=tx;e.y=ty;e.seg++;dist-=len;}
+    else{e.x+=dx/len*dist;e.y+=dy/len*dist;dist=0}
+  }
+  if(e.seg>=path.length-1&&!e.dead){e.dead=true;battle.lives--; if(battle.lives<=0)gameOver();updateHud()}
+}
+function killEnemy(e){if(e.dead)return;e.dead=true;battle.coins+=e.reward;updateHud()}
+function towerTick(t,dt){
+  t.cd-=dt;if(t.cd>0)return;
+  const a=animals[t.key], range=a.range*(1+(t.level-1)*.06);
+  let target=null,best=-1;
+  battle.enemies.forEach(e=>{if(e.dead)return;const d=Math.hypot(e.x-t.x,e.y-t.y);if(d<=range){const prog=e.seg+(1-d/1000);if(prog>best){best=prog;target=e}}});
+  if(!target)return;
+  const nearbyLion=battle.towers.some(o=>o.key==="lion"&&o!==t&&Math.hypot(o.x-t.x,o.y-t.y)<145);
+  const dmg=a.dmg*(1+(t.level-1)*.35)*(nearbyLion?1.15:1);
+  battle.shots.push({x:t.x,y:t.y,tx:target.x,ty:target.y,life:.12});
+  if(a.splash){
+    battle.enemies.forEach(e=>{if(!e.dead&&Math.hypot(e.x-target.x,e.y-target.y)<a.splash){e.hp-=dmg*.8;if(e.hp<=0)killEnemy(e)}})
+  }else{target.hp-=dmg;if(target.hp<=0)killEnemy(target)}
+  if(a.poison)target.poison=Math.max(target.poison,3.2);
+  if(a.slow)target.slowTimer=Math.max(target.slowTimer,1.8);
+  t.cd=a.rate;
+}
+function gameOver(){
+  battle.ended=true;save.bestWave=Math.max(save.bestWave,battle.wave);save.metaCoins+=Math.max(5,battle.wave*3);save.xp+=battle.wave*8;levelCheck();persist();
+  message.textContent=`Defeat! You reached wave ${battle.wave}. Tap Start wave to restart.`;startWave.textContent="Restart";
+}
+function finishWave(){
+  battle.waveActive=false;battle.wave++;save.bestWave=Math.max(save.bestWave,battle.wave-1);save.xp+=12+(battle.wave-1)*3;save.metaCoins+=5; if((battle.wave-1)%3===0)save.packTokens++;levelCheck();persist();
+  battle.coins+=35+Math.floor(battle.wave*3);startWave.textContent="Start wave";message.textContent=`Wave cleared! +coins${(battle.wave-1)%3===0?" • 🎟️ Pack token earned!":""}`;updateHud();
+}
+function update(dt){
+  if(battle.ended)return;
+  if(battle.waveActive&&battle.spawning){
+    battle.spawnTimer-=dt;if(battle.spawnTimer<=0&&battle.spawnLeft>0){spawnEnemy();battle.spawnLeft--;battle.spawnTimer=Math.max(.28,.78-battle.wave*.025)}
+    if(battle.spawnLeft<=0)battle.spawning=false;
+  }
+  battle.enemies.forEach(e=>moveEnemy(e,dt));battle.towers.forEach(t=>towerTick(t,dt));battle.shots.forEach(s=>s.life-=dt);
+  battle.enemies=battle.enemies.filter(e=>!e.dead);battle.shots=battle.shots.filter(s=>s.life>0);
+  if(battle.waveActive&&!battle.spawning&&battle.enemies.length===0)finishWave();
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle="#71a95e";ctx.fillRect(0,0,W,H);
+  // decorative grass
+  ctx.fillStyle="#5b914c";for(let i=0;i<34;i++){let x=(i*137)%W,y=(i*83)%H;ctx.beginPath();ctx.arc(x,y,12+(i%4)*4,0,Math.PI*2);ctx.fill()}
+  // path
+  ctx.strokeStyle="#d7bd83";ctx.lineWidth=74;ctx.lineJoin="round";ctx.lineCap="round";ctx.beginPath();ctx.moveTo(path[0][0],path[0][1]);path.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));ctx.stroke();
+  ctx.strokeStyle="#ad915f";ctx.lineWidth=3;ctx.setLineDash([12,14]);ctx.stroke();ctx.setLineDash([]);
+  // base
+  ctx.font="46px serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("🏰",930,520);
+  // pads
+  pads.forEach((p,i)=>{const occupied=battle.towers?.some(t=>t.pad===i);ctx.beginPath();ctx.arc(p[0],p[1],31,0,Math.PI*2);ctx.fillStyle=occupied?"#395a45":"#d8e8bd99";ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=occupied?"#244734":"#efffd0";ctx.stroke();if(!occupied){ctx.fillStyle="#4d754f";ctx.font="24px sans-serif";ctx.fillText("+",p[0],p[1]+1)}});
+  // towers + ranges only selected
+  battle.towers?.forEach(t=>{if(selectedCard===t.key){ctx.beginPath();ctx.arc(t.x,t.y,animals[t.key].range*(1+(t.level-1)*.06),0,Math.PI*2);ctx.strokeStyle="#ffffff22";ctx.lineWidth=2;ctx.stroke()}ctx.font="42px serif";ctx.fillText(animals[t.key].emoji,t.x,t.y-2);ctx.fillStyle="#183722";ctx.font="bold 12px sans-serif";ctx.fillText("Lv"+t.level,t.x,t.y+28)});
+  // enemies
+  battle.enemies?.forEach(e=>{ctx.font=`${e.size*2}px serif`;ctx.fillText(e.emoji,e.x,e.y);const bw=40,bh=6;ctx.fillStyle="#431f1f";ctx.fillRect(e.x-bw/2,e.y-30,bw,bh);ctx.fillStyle="#65df78";ctx.fillRect(e.x-bw/2,e.y-30,bw*Math.max(0,e.hp/e.maxHp),bh)});
+  battle.shots?.forEach(s=>{ctx.strokeStyle="#fff9";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.tx,s.ty);ctx.stroke()});
+}
+function loop(now){
+  const raw=Math.min(.04,(now-last)/1000);last=now;const dt=raw*speed; if(battle.started){update(dt);draw();raf=requestAnimationFrame(loop)}
+}
+renderMeta();
+</script>
+</body>
+</html>
