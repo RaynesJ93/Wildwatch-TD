@@ -71,7 +71,8 @@
       <h1>Build your animal squad.</h1>
       <p>Collect animal cards, make a 4-card deck, and defend the Wildwood from invading critters.</p>
       <div style="height:14px"></div>
-      <button class="primary" id="playBtn">▶ Play Forest Trail</button>
+      <button class="primary" id="playBtn">▶ New Game</button>
+      <button class="secondary" id="continueBtn" style="display:none;margin-left:8px">↩ Continue Battle</button>
     </div>
 
     <div class="section-title">Current deck</div>
@@ -178,6 +179,20 @@ try { save={...defaults,...JSON.parse(localStorage.getItem("wildwatchSave")||"{}
 save.shards={...defaults.shards,...save.shards};
 save.cardLevels={...defaults.cardLevels,...save.cardLevels};
 function persist(){localStorage.setItem("wildwatchSave",JSON.stringify(save)); renderMeta();}
+function saveBattleState(){
+  if(!battle?.started || battle.ended)return;
+  localStorage.setItem("wildwatchBattleSave",JSON.stringify({...battle,shots:[]}));
+  continueBtn.style.display="inline-block";
+}
+function clearBattleState(){localStorage.removeItem("wildwatchBattleSave");continueBtn.style.display="none"}
+function loadBattleState(){
+  try{
+    const raw=localStorage.getItem("wildwatchBattleSave"); if(!raw)return false;
+    const b=JSON.parse(raw); if(!b?.started||b.ended)return false;
+    cancelAnimationFrame(raf);battle=b;battle.shots=[];selectedCard=null;selectedTower=null;speed=1;
+    speedBtn.textContent="⏩ Speed: 1×";updateHud();last=performance.now();raf=requestAnimationFrame(loop);return true;
+  }catch(e){return false}
+}
 
 function renderMeta(){
   metaCoins.textContent=save.metaCoins;
@@ -224,7 +239,8 @@ function showScreen(id){
   document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen===id));
   if(id==="battleScreen" && !battle.started) resetBattle();
 }
-playBtn.onclick=()=>showScreen("battleScreen");
+playBtn.onclick=()=>{clearBattleState();showScreen("battleScreen");};
+continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));if(!loadBattleState())resetBattle();};
 
 openPackBtn.onclick=()=>{
   if(save.packTokens<1){alert("You need a pack token. Survive more waves to earn one!");return}
@@ -329,12 +345,12 @@ function towerTick(t,dt){
   t.cd=a.rate;
 }
 function gameOver(){
-  battle.ended=true;save.bestWave=Math.max(save.bestWave,battle.wave);save.metaCoins+=Math.max(5,battle.wave*3);save.xp+=battle.wave*8;levelCheck();persist();
+  battle.ended=true;clearBattleState();save.bestWave=Math.max(save.bestWave,battle.wave);save.metaCoins+=Math.max(5,battle.wave*3);save.xp+=battle.wave*8;levelCheck();persist();
   message.textContent=`Defeat! You reached wave ${battle.wave}. Tap Start wave to restart.`;startWave.textContent="Restart";
 }
 function finishWave(){
   battle.waveActive=false;battle.wave++;save.bestWave=Math.max(save.bestWave,battle.wave-1);save.xp+=12+(battle.wave-1)*3;save.metaCoins+=5; if((battle.wave-1)%3===0)save.packTokens++;levelCheck();persist();
-  battle.coins+=35+Math.floor(battle.wave*3);startWave.textContent="Start wave";message.textContent=`Wave cleared! +coins${(battle.wave-1)%3===0?" • 🎟️ Pack token earned!":""}`;updateHud();
+  battle.coins+=35+Math.floor(battle.wave*3);saveBattleState();startWave.textContent="Start wave";message.textContent=`Wave cleared! +coins${(battle.wave-1)%3===0?" • 🎟️ Pack token earned!":""}`;updateHud();
 }
 function update(dt){
   if(battle.ended)return;
@@ -364,10 +380,15 @@ function draw(){
   battle.enemies?.forEach(e=>{ctx.font=`${e.size*2}px serif`;ctx.fillText(e.emoji,e.x,e.y);const bw=40,bh=6;ctx.fillStyle="#431f1f";ctx.fillRect(e.x-bw/2,e.y-30,bw,bh);ctx.fillStyle="#65df78";ctx.fillRect(e.x-bw/2,e.y-30,bw*Math.max(0,e.hp/e.maxHp),bh)});
   battle.shots?.forEach(s=>{ctx.strokeStyle="#fff9";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.tx,s.ty);ctx.stroke()});
 }
+let lastAutoSave=0;
 function loop(now){
-  const raw=Math.min(.04,(now-last)/1000);last=now;const dt=raw*speed; if(battle.started){update(dt);draw();raf=requestAnimationFrame(loop)}
+  const raw=Math.min(.04,(now-last)/1000);last=now;const dt=raw*speed;
+  if(battle.started){update(dt);draw();if(!battle.ended&&now-lastAutoSave>2000){saveBattleState();lastAutoSave=now}raf=requestAnimationFrame(loop)}
 }
 renderMeta();
+continueBtn.style.display=localStorage.getItem("wildwatchBattleSave")?"inline-block":"none";
+window.addEventListener("pagehide",saveBattleState);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)saveBattleState()});
 </script>
 </body>
 </html>
