@@ -307,9 +307,11 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
       packDesc.textContent=`You found ${shardAmount} ${a.name} shard${shardAmount===1?"":"s"}. ${save.shards[key]}/20 collected.`;
     }
   }else{
-    packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent="🪹";
-    packTitle.textContent="No card this time";
-    packDesc.textContent="This chest contained no card or shards. Complete cards are 1/30 and shard drops are 1/5.";
+    const refund=Math.floor(cfg.cost*.35);
+    save.metaCoins+=refund;
+    packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent="🪙";
+    packTitle.textContent="35% Coins Back!";
+    packDesc.textContent=`No card or shards this time, so you received ${refund} Coins back from your ${cfg.name}.`;
   }
   packModal.classList.add("show");persist();renderCards();renderHome();
 });
