@@ -183,6 +183,10 @@ const spritePos={
 };
 function animalVisual(k, cls="mini-portrait"){
   const a=animals[k];
+  if(k==="capybara"){
+    const size=cls==="reward-portrait"?68:cls==="animal-portrait"?48:30;
+    return `<span class="animal-emoji ${cls}" style="display:inline-flex!important;align-items:center;justify-content:center;width:${size}px;height:${size}px;background:#a8794f!important;border-radius:46% 46% 42% 42%;position:relative;box-sizing:border-box;border:2px solid #6e4a30;font-size:${Math.round(size*.28)}px;line-height:1;color:#21150e">●&nbsp;●<span style="position:absolute;left:9%;top:3%;width:22%;height:22%;background:#8b6040;border-radius:50%;border:1px solid #5d3c28"></span><span style="position:absolute;right:9%;top:3%;width:22%;height:22%;background:#8b6040;border-radius:50%;border:1px solid #5d3c28"></span><span style="position:absolute;left:34%;bottom:19%;width:32%;height:23%;background:#6d4932;border-radius:55%;border:1px solid #4b3021"></span></span>`;
+  }
   return a ? `<span class="animal-emoji ${cls}" style="background-image:none!important;display:flex!important;align-items:center;justify-content:center;${a.whiteVariant?"background-color:#f4f4ee!important;border:2px solid #fff;border-radius:50%;filter:grayscale(.85) brightness(1.35);":""}font-family:'Apple Color Emoji','Segoe UI Emoji',sans-serif;font-size:${cls==="reward-portrait"?"68px":cls==="animal-portrait"?"48px":"30px"};line-height:1">${a.emoji}</span>` : "";
 }
 
