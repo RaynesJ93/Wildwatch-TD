@@ -249,7 +249,7 @@ function showScreen(id){
   document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen===id));
   if(id==="battleScreen" && !battle.started) resetBattle();
 }
-playBtn.onclick=()=>{clearBattleState();showScreen("battleScreen");resetBattle();};
+playBtn.onclick=()=>{clearBattleState();battle={};showScreen("battleScreen");};
 continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));if(!loadBattleState())resetBattle();};
 
 openPackBtn.onclick=()=>{
@@ -282,6 +282,8 @@ let battle={}, selectedCard=null, selectedTower=null, raf=0, last=performance.no
 function resetBattle(){
   cancelAnimationFrame(raf);
   battle={started:true,coins:130,lives:20,wave:1,enemies:[],towers:[],shots:[],spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false};
+  startWave.textContent="Start wave";
+  message.textContent="Choose an animal card, then tap a free tower pad.";
   selectedCard=null; selectedTower=null; speed=1; speedBtn.textContent="⏩ Speed: 1×";
   updateHud(); last=performance.now(); loop(last);
 }
@@ -299,12 +301,26 @@ function spawnEnemy(){
 startWave.onclick=()=>{
   if(battle.ended){resetBattle();return}
   if(!battle.started){resetBattle();}
-  if(battle.waveActive){message.textContent="A wave is already running.";return}
+
+  // Recover from a stale saved/paused wave state.
+  const liveEnemies=(battle.enemies||[]).filter(e=>!e.dead);
+  if(battle.waveActive && liveEnemies.length===0){
+    battle.waveActive=false;
+    battle.spawning=false;
+    battle.spawnLeft=0;
+    battle.spawnTimer=0;
+  }
+
+  if(battle.waveActive){
+    message.textContent="Wave is already in progress.";
+    if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}
+    return;
+  }
+
   battle.waveActive=true;
   battle.spawning=true;
   battle.spawnLeft=6+battle.wave*2;
   battle.spawnTimer=0;
-  // Spawn the first enemy immediately so the wave visibly starts on tap.
   spawnEnemy();
   battle.spawnLeft--;
   battle.spawnTimer=Math.max(.28,.78-battle.wave*.025);
