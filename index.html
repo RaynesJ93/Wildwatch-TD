@@ -124,6 +124,7 @@
         <button class="primary chestBtn" data-chest="common">🪵 Common Chest • 🟡 250 Coins</button>
         <button class="primary chestBtn" data-chest="uncommon">🟩 Uncommon Chest • 🟡 450 Coins</button>
         <button class="primary chestBtn" data-chest="epic">💜 Rare Chest • 🟡 1050 Coins</button>
+        <button class="primary chestBtn" data-chest="legendary">🌟 Legendary Chest • 🟡 2000 Coins</button>
       </div>
     </div>
     <div class="section-title">Next player level</div>
@@ -237,7 +238,7 @@ function renderCollection(){
   collectionCards.innerHTML="";
   Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).forEach(([k,a])=>{
     const unlocked=save.unlocked.includes(k), d=document.createElement("div"); d.className="card "+(!unlocked?"locked":"")+(save.deck.includes(k)?" selected":"");
-    d.innerHTML=`<span class="rarity">${a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${unlocked?animalVisual(k,"animal-portrait"):`<div class="animal">❔</div>`}<h3>${unlocked?a.name:"Unknown"}</h3><div class="small">${unlocked?a.desc:`Collect 20 shards to unlock. 🧩 ${save.shards[k]||0}/20`}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div>`:""}`;
+    d.innerHTML=`<span class="rarity">${a.rarity==="Legendary"?"🌟 LEGENDARY":a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${unlocked?animalVisual(k,"animal-portrait"):`<div class="animal">❔</div>`}<h3>${unlocked?a.name:"Unknown"}</h3><div class="small">${unlocked?a.desc:`Collect 20 shards to unlock. 🧩 ${save.shards[k]||0}/20`}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div>`:""}`;
     if(unlocked)d.onclick=()=>toggleDeck(k); collectionCards.appendChild(d);
   });
 }
@@ -259,7 +260,8 @@ continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.class
 const chestConfig={
   common:{name:"Common Chest",cost:250,rarities:{Common:.65,Rare:.27,Epic:.07,Legendary:.01}},
   uncommon:{name:"Uncommon Chest",cost:450,rarities:{Common:.30,Rare:.48,Epic:.19,Legendary:.03}},
-  epic:{name:"Rare Chest",cost:1050,rarities:{Common:.08,Rare:.32,Epic:.50,Legendary:.10},exclusive:["rhino","lion"]}
+  epic:{name:"Rare Chest",cost:1050,rarities:{Common:.08,Rare:.32,Epic:.50,Legendary:.10},exclusive:["rhino","lion"]},
+  legendary:{name:"Legendary Chest",cost:2000,rarities:{Common:.02,Uncommon:.08,Rare:.20,Epic:.30,Legendary:.40},legendary:true}
 };
 function weightedAnimal(pool,weights){
   const weighted=pool.map(k=>({k,w:weights[animals[k].rarity]||0})).filter(x=>x.w>0);
@@ -274,6 +276,7 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   save.metaCoins-=cfg.cost;
   const exclusiveRare=["rhino","lion"];
   const allowedPool=Object.keys(animals).filter(k=>{
+    if(btn.dataset.chest==="legendary") return true;
     if(exclusiveRare.includes(k)) return btn.dataset.chest==="epic";
     if(k==="capybara") return btn.dataset.chest==="uncommon";
     return true;
@@ -307,10 +310,10 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
     const a=animals[key];
     packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent=a.emoji;
     if(fresh){
-      packTitle.textContent=`${a.rarity==="Rare"?"💎 RARE • ":a.rarity==="Uncommon"?"🟩 UNCOMMON • ":a.rarity==="Common"?"⚪ COMMON • ":""}New ${a.name}!`;
+      packTitle.textContent=`${a.rarity==="Legendary"?"🌟 LEGENDARY • ":a.rarity==="Rare"?"💎 RARE • ":a.rarity==="Uncommon"?"🟩 UNCOMMON • ":a.rarity==="Common"?"⚪ COMMON • ":""}New ${a.name}!`;
       packDesc.textContent=shardDrop?`You reached 20 ${a.name} shards and unlocked the card!`:`Complete ${a.rarity} card pulled from a ${cfg.name}! (1/30 drop)`;
     }else{
-      packTitle.textContent=`${a.rarity==="Rare"?"💎 RARE • ":a.rarity==="Uncommon"?"🟩 UNCOMMON • ":a.rarity==="Common"?"⚪ COMMON • ":""}${a.name} shards!`;
+      packTitle.textContent=`${a.rarity==="Legendary"?"🌟 LEGENDARY • ":a.rarity==="Rare"?"💎 RARE • ":a.rarity==="Uncommon"?"🟩 UNCOMMON • ":a.rarity==="Common"?"⚪ COMMON • ":""}${a.name} shards!`;
       packDesc.textContent=`You found ${shardAmount} ${a.name} shard${shardAmount===1?"":"s"}. ${save.shards[key]}/20 collected.`;
     }
   }else{
