@@ -267,7 +267,7 @@ closePack.onclick=()=>packModal.classList.remove("show");
 // ---- Battle engine ----
 const canvas=document.getElementById("game"), ctx=canvas.getContext("2d");
 const W=canvas.width,H=canvas.height;
-// Battlefield artwork is rendered as a CSS background on the canvas element for iPhone reliability.
+// Battlefield is rendered as a crisp inline SVG behind the transparent game canvas.
 const spriteArt=new Image();
 spriteArt.src="assets/wildwatch-realistic-sprites.jpg";
 const spriteSrc={
@@ -390,7 +390,9 @@ function draw(){
   ctx.fillStyle="#00000014";ctx.fillRect(0,0,W,H);
   ctx.textAlign="center";ctx.textBaseline="middle";
 
-  // Tower pads are rendered in the SVG background; the canvas only draws placed towers and battle effects.\n\n  battle.towers?.forEach(t=>{
+  // Tower pads are rendered in the SVG background; the canvas only draws placed towers and battle effects.
+
+  battle.towers?.forEach(t=>{
     const a=animals[t.key];
     if(selectedCard===t.key){
       ctx.beginPath();ctx.arc(t.x,t.y,a.range*(1+(t.level-1)*.06),0,Math.PI*2);
