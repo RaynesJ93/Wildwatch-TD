@@ -88,6 +88,12 @@
   </section>
 
   <section id="battleScreen" class="screen">
+    <div class="hero" style="padding:10px 12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div><b>🌲 Forest Pines</b><div class="small" id="mapLabel">Map 1/10</div></div>
+        <div style="display:flex;gap:6px"><button class="secondary" id="prevMap" style="padding:8px 11px">◀</button><button class="secondary" id="nextMap" style="padding:8px 11px">▶</button></div>
+      </div>
+    </div>
     <div class="battle-ui">
       <div class="pill">❤️ <span id="lives">20</span></div>
       <div class="pill">🪙 <span id="battleCoins">120</span></div>
@@ -197,6 +203,8 @@ const defaults = {
   shards:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0,capybara:0,whiteRhino:0,fox:0,silverback:0},
   cardLevels:{monkey:1,frog:1,owl:1,snake:1,rhino:1,eagle:1,panda:1,lion:1,capybara:1,whiteRhino:1,fox:1,silverback:1},
   noShardChests:0,
+  forestPinesUnlocked:1,
+  forestPinesSelected:1,
   deck:["monkey","frog","owl","snake"]
 };
 let save;
@@ -206,7 +214,7 @@ save.cardLevels={...defaults.cardLevels,...save.cardLevels};
 function persist(){localStorage.setItem("wildwatchSave",JSON.stringify(save)); renderMeta();}
 function saveBattleState(){
   if(!battle?.started || battle.ended)return;
-  localStorage.setItem("wildwatchBattleSave",JSON.stringify({...battle,shots:[]}));
+  localStorage.setItem("wildwatchBattleSave",JSON.stringify({...battle,mapNumber:currentMap,shots:[]}));
   continueBtn.style.display="inline-block";
 }
 function clearBattleState(){localStorage.removeItem("wildwatchBattleSave");continueBtn.style.display="none"}
@@ -214,7 +222,7 @@ function loadBattleState(){
   try{
     const raw=localStorage.getItem("wildwatchBattleSave"); if(!raw)return false;
     const b=JSON.parse(raw); if(!b?.started||b.ended)return false;
-    cancelAnimationFrame(raf);battle=b;battle.shots=[];battle.puddles=battle.puddles||[];selectedCard=null;selectedTower=null;speed=1;
+    cancelAnimationFrame(raf);if(b.mapNumber){currentMap=b.mapNumber;path=forestPinesMaps[currentMap-1].path;pads=forestPinesMaps[currentMap-1].pads;mapLabel.textContent=`Map ${currentMap}/10`;}battle=b;battle.shots=[];battle.puddles=battle.puddles||[];selectedCard=null;selectedTower=null;speed=1;
     speedBtn.textContent="⏩ Speed: 1×";updateHud();last=performance.now();raf=requestAnimationFrame(loop);return true;
   }catch(e){return false}
 }
@@ -359,13 +367,36 @@ const spriteSrc={
   rhino:[0,128,128,128], eagle:[128,128,128,128], panda:[256,128,128,128], lion:[384,128,128,128],
   rat:[0,256,128,128], raccoon:[128,256,128,128], boar:[256,256,128,128], boss:[384,256,128,128]
 };
-// Enemy route aligned to the visible forest road on the V2 battlefield crop.
-const path=[[-45,150],[120,150],[220,220],[220,350],[420,350],[520,430],[520,560],[310,560],[210,640],[210,770],[430,770],[560,840],[720,840],[860,930]];
-const pads=[[115,245],[330,245],[485,275],[120,390],[350,450],[625,430],[115,610],[350,650],[610,610],[115,820],[420,880],[650,940]];
+// Forest Pines series: 10 forest maps. Map 1 preserves the original layout.
+const forestPinesMaps=[
+ {path:[[-45,150],[120,150],[220,220],[220,350],[420,350],[520,430],[520,560],[310,560],[210,640],[210,770],[430,770],[560,840],[720,840],[860,930]],pads:[[115,245],[330,245],[485,275],[120,390],[350,450],[625,430],[115,610],[350,650],[610,610],[115,820],[420,880],[650,940]]},
+ {path:[[-45,125],[180,125],[300,210],[300,335],[590,335],[690,430],[690,555],[430,555],[300,650],[300,790],[540,790],[690,885],[860,885]],pads:[[120,230],[430,235],[610,245],[175,410],[465,435],[745,365],[190,610],[505,650],[745,620],[160,825],[430,900],[700,965]]},
+ {path:[[885,130],[690,130],[575,225],[575,355],[315,355],[205,450],[205,585],[470,585],[585,675],[585,805],[340,805],[205,900],[-45,900]],pads:[[735,235],[465,245],[285,260],[680,420],[390,455],[120,390],[675,610],[365,680],[120,650],[700,835],[450,920],[150,975]]},
+ {path:[[-45,185],[160,185],[250,285],[430,285],[520,385],[520,500],[700,500],[790,600],[790,735],[560,735],[450,835],[230,835],[110,940],[-45,940]],pads:[[105,300],[340,175],[455,385],[645,375],[690,600],[410,600],[225,680],[650,850],[420,925],[170,760],[110,500],[760,300]]},
+ {path:[[-45,110],[210,110],[210,245],[470,245],[600,350],[600,500],[360,500],[220,600],[220,735],[500,735],[650,840],[650,1025]],pads:[[95,225],[345,150],[510,350],[710,420],[455,610],[125,480],[115,690],[360,830],[555,900],[745,760],[320,390],[720,590]]},
+ {path:[[885,170],[650,170],[540,270],[540,400],[280,400],[170,500],[170,640],[430,640],[555,745],[555,870],[310,870],[180,1025]],pads:[[730,280],[450,190],[315,300],[650,480],[390,520],[95,390],[95,610],[315,745],[660,700],[680,900],[420,965],[170,805]]},
+ {path:[[-45,145],[150,145],[260,235],[260,365],[610,365],[720,455],[720,590],[430,590],[300,690],[300,825],[590,825],[720,930],[885,930]],pads:[[110,255],[390,255],[590,245],[160,450],[430,470],[760,330],[150,630],[510,700],[760,680],[165,850],[440,930],[670,780]]},
+ {path:[[885,115],[670,115],[670,245],[400,245],[280,340],[280,480],[565,480],[690,580],[690,710],[405,710],[270,810],[270,945],[-45,945]],pads:[[750,270],[535,155],[330,185],[170,355],[425,370],[760,465],[570,610],[160,610],[520,815],[750,810],[420,925],[120,840]]},
+ {path:[[-45,200],[190,200],[300,300],[300,420],[560,420],[680,520],[680,650],[400,650],[275,750],[275,880],[500,880],[640,1025]],pads:[[100,315],[405,210],[590,300],[185,470],[430,530],[755,405],[170,665],[525,755],[750,720],[150,890],[390,970],[650,850]]},
+ {path:[[-45,125],[160,125],[275,220],[275,330],[520,330],[650,430],[650,545],[390,545],[245,650],[245,770],[530,770],[680,870],[680,1025]],pads:[[105,235],[390,180],[560,225],[150,390],[430,435],[735,340],[125,575],[480,650],[740,620],[140,800],[410,880],[580,960]]}
+];
+let currentMap=Math.max(1,Math.min(10,save.forestPinesSelected||1));
+let path=forestPinesMaps[currentMap-1].path, pads=forestPinesMaps[currentMap-1].pads;
 let battle={}, selectedCard=null, selectedTower=null, raf=0, last=performance.now(), speed=1;
+function applyForestMap(n){
+  currentMap=Math.max(1,Math.min(10,n));
+  path=forestPinesMaps[currentMap-1].path;pads=forestPinesMaps[currentMap-1].pads;
+  save.forestPinesSelected=currentMap;
+  mapLabel.textContent=`Map ${currentMap}/10`;
+  prevMap.disabled=currentMap<=1;nextMap.disabled=currentMap>=Math.min(10,save.forestPinesUnlocked||1);
+  persist();
+}
+prevMap.onclick=()=>{if(currentMap>1){clearBattleState();applyForestMap(currentMap-1);resetBattle();}};
+nextMap.onclick=()=>{if(currentMap<Math.min(10,save.forestPinesUnlocked||1)){clearBattleState();applyForestMap(currentMap+1);resetBattle();}};
 
 function resetBattle(){
   cancelAnimationFrame(raf);
+  applyForestMap(currentMap);
   battle={started:true,coins:130,lives:20,wave:1,enemies:[],towers:[],shots:[],puddles:[],spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false};
   startWave.textContent="Start wave";
   message.textContent="Choose an animal card, then tap a free tower pad.";
@@ -531,10 +562,11 @@ function finishWave(){
   if(clearedWave%3===0)save.metaCoins+=25;
   if(clearedWave>=15){
     save.metaCoins+=100;
+    if(currentMap<10)save.forestPinesUnlocked=Math.max(save.forestPinesUnlocked||1,currentMap+1);
     levelCheck();persist();clearBattleState();
     battle.ended=true;
     startWave.textContent="Map complete!";
-    message.textContent="🏆 Map complete! You cleared all 15 waves • 🟡 100 bonus Coins!";
+    message.textContent=`🏆 Forest Pines ${currentMap}/10 complete! ${currentMap<10?"Map "+(currentMap+1)+" unlocked!":"Forest Pines series complete!"} • 🟡 100 bonus Coins!`;
     updateHud();
     return;
   }
@@ -576,7 +608,7 @@ function draw(){
   ctx.imageSmoothingQuality="high";
 
   // Basic battlefield: drawn directly in canvas so it is always sharp and always aligned.
-  ctx.fillStyle="#3f7b36";ctx.fillRect(0,0,W,H);
+  const forestGreens=["#3f7b36","#397435","#447d38","#36703a","#477b32","#386f40","#427633","#3b793d","#467438","#35713a"];ctx.fillStyle=forestGreens[currentMap-1];ctx.fillRect(0,0,W,H);
 
   // Subtle forest edge.
   ctx.fillStyle="#24552b";
@@ -782,6 +814,7 @@ function loop(now){
   }
 }
 renderMeta();
+setTimeout(()=>applyForestMap(currentMap),0);
 continueBtn.style.display=localStorage.getItem("wildwatchBattleSave")?"inline-block":"none";
 window.addEventListener("pagehide",saveBattleState);
 document.addEventListener("visibilitychange",()=>{if(document.hidden)saveBattleState()});
