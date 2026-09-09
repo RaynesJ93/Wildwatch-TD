@@ -589,6 +589,20 @@ function draw(){
       ctx.drawImage(spriteArt,es[0]+4,es[1]+4,120,120,e.x-sz/2,e.y-sz/2-2,sz,sz);ctx.restore();
       ctx.beginPath();ctx.arc(e.x,e.y-2,sz*.46,0,Math.PI*2);ctx.strokeStyle="#3b2a1fcc";ctx.lineWidth=2;ctx.stroke();
     }else{ctx.font=(e.size*2.2)+"px serif";ctx.fillText(e.emoji,e.x,e.y-2);}
+
+    // Purple poison tint remains visible for the full Snake poison duration.
+    if(e.poison>0){
+      const poisonSize=Math.max(42,e.size*2.7);
+      ctx.save();
+      ctx.globalCompositeOperation="source-over";
+      ctx.globalAlpha=.48;
+      ctx.fillStyle="#9b35e8";
+      ctx.beginPath();ctx.arc(e.x,e.y-2,poisonSize*.47,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=.9;
+      ctx.strokeStyle="#d477ff";ctx.lineWidth=3;
+      ctx.beginPath();ctx.arc(e.x,e.y-2,poisonSize*.50,0,Math.PI*2);ctx.stroke();
+      ctx.restore();
+    }
     const bw=44,bh=7;
     ctx.fillStyle="#2c0d0ddd";ctx.fillRect(e.x-bw/2,e.y-38,bw,bh);
     ctx.fillStyle="#57dc69";ctx.fillRect(e.x-bw/2,e.y-38,bw*Math.max(0,e.hp/e.maxHp),bh);
