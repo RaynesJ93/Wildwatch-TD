@@ -173,7 +173,8 @@ const animals = {
   lion:{name:"Lion", emoji:"🦁", rarity:"Rare", rareCard:true, cost:160, range:217.5, rate:.65, dmg:31, aura:1.15, color:"#d99c35", desc:"Powerful attacker that inspires nearby towers."},
   capybara:{name:"Capybara", emoji:"🦫", rarity:"Uncommon", uncommonOnly:true, cost:70, range:140, rate:.8, dmg:12, color:"#a8794f", desc:"Calm, dependable attacker. Exclusive to the Uncommon Chest."},
   whiteRhino:{name:"White Rhino", emoji:"🦏", rarity:"Legendary", legendaryOnly:true, whiteVariant:true, cost:135, range:140, rate:.8, dmg:35, color:"#f2f2ec", desc:"Legendary white rhino with powerful medium-speed attacks. Exclusive to the Legendary Chest."},
-  fox:{name:"Fox", emoji:"🦊", rarity:"Common", cost:60, range:120, rate:.8, dmg:12, color:"#d97832", desc:"Quick and dependable common attacker with medium attack speed."}
+  fox:{name:"Fox", emoji:"🦊", rarity:"Common", cost:60, range:120, rate:.8, dmg:12, color:"#d97832", desc:"Quick and dependable common attacker with medium attack speed."},
+  silverback:{name:"Silverback Gorilla", emoji:"🦍", rarity:"Legendary", legendaryOnly:true, cost:185, range:140, rate:1.45, dmg:55, quakeDamage:27, color:"#777b80", desc:"Slow legendary powerhouse. Slams the ground to create an earthquake that can hit up to 5 enemies."}
 };
 const rarityOrder={Common:1,Rare:2,Epic:3,Legendary:4};
 const spritePos={
@@ -188,8 +189,8 @@ function animalVisual(k, cls="mini-portrait"){
 const defaults = {
   metaCoins:250, level:1, xp:0, packTokens:0, bestWave:0,
   unlocked:["monkey","frog","owl","snake"],
-  shards:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0,capybara:0,whiteRhino:0,fox:0},
-  cardLevels:{monkey:1,frog:1,owl:1,snake:1,rhino:1,eagle:1,panda:1,lion:1,capybara:1,whiteRhino:1,fox:1},
+  shards:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0,capybara:0,whiteRhino:0,fox:0,silverback:0},
+  cardLevels:{monkey:1,frog:1,owl:1,snake:1,rhino:1,eagle:1,panda:1,lion:1,capybara:1,whiteRhino:1,fox:1,silverback:1},
   deck:["monkey","frog","owl","snake"]
 };
 let save;
@@ -278,7 +279,7 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   save.metaCoins-=cfg.cost;
   const exclusiveRare=["rhino","lion"];
   const allowedPool=Object.keys(animals).filter(k=>{
-    if(k==="whiteRhino") return btn.dataset.chest==="legendary";
+    if(k==="whiteRhino" || k==="silverback") return btn.dataset.chest==="legendary";
     if(btn.dataset.chest==="legendary") return true;
     if(exclusiveRare.includes(k)) return btn.dataset.chest==="epic";
     if(k==="capybara") return btn.dataset.chest==="uncommon";
@@ -463,8 +464,16 @@ function towerTick(t,dt){
   if(!target)return;
   const nearbyLion=battle.towers.some(o=>o.key==="lion"&&o!==t&&Math.hypot(o.x-t.x,o.y-t.y)<145);
   const dmg=a.dmg*(1+(t.level-1)*.35)*(nearbyLion?1.15:1);
-  battle.shots.push({x:t.x,y:t.y,tx:target.x,ty:target.y,life:t.key==="owl"?.34:t.key==="snake"?.28:t.key==="monkey"?.32:t.key==="frog"?.20:.12,type:t.key==="owl"?"soundwave":t.key==="snake"?"poisonblob":t.key==="monkey"?"banana":t.key==="frog"?"tongue":"beam"});
-  if(t.key==="monkey"){
+  battle.shots.push({x:t.x,y:t.y,tx:target.x,ty:target.y,life:t.key==="owl"?.34:t.key==="snake"?.28:t.key==="monkey"?.32:t.key==="frog"?.20:t.key==="silverback"?.42:.12,type:t.key==="owl"?"soundwave":t.key==="snake"?"poisonblob":t.key==="monkey"?"banana":t.key==="frog"?"tongue":t.key==="silverback"?"quake":"beam"});
+  if(t.key==="silverback"){
+    target.hp-=dmg;
+    if(target.hp<=0)killEnemy(target);
+    const quakeVictims=battle.enemies
+      .filter(e=>!e.dead&&e!==target&&Math.hypot(e.x-target.x,e.y-target.y)<=95)
+      .sort((x,y)=>Math.hypot(x.x-target.x,x.y-target.y)-Math.hypot(y.x-target.x,y.y-target.y))
+      .slice(0,4);
+    quakeVictims.forEach(e=>{e.hp-=27;if(e.hp<=0)killEnemy(e)});
+  }else if(t.key==="monkey"){
     const victims=battle.enemies
       .filter(e=>!e.dead&&Math.hypot(e.x-target.x,e.y-target.y)<=72)
       .sort((x,y)=>Math.hypot(x.x-target.x,x.y-target.y)-Math.hypot(y.x-target.x,y.y-target.y))
@@ -672,6 +681,29 @@ function draw(){
         const spread=16+i*9+p*22;
         ctx.beginPath();
         ctx.arc(travel,0,spread,-.55,.55);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }else if(s.type==="quake"){
+      const p=1-Math.max(0,s.life)/.42;
+      ctx.save();
+      ctx.globalAlpha=Math.max(0,1-p);
+      ctx.strokeStyle="#d7c18b";
+      ctx.lineWidth=5;
+      ctx.shadowColor="rgba(255,220,140,.7)";ctx.shadowBlur=8;
+      for(let i=0;i<3;i++){
+        ctx.beginPath();
+        ctx.arc(s.tx,s.ty,18+p*80+i*13,0,Math.PI*2);
+        ctx.stroke();
+      }
+      ctx.strokeStyle="#6c573c";ctx.lineWidth=4;
+      for(let i=0;i<6;i++){
+        const a=i*Math.PI/3+.25;
+        const r1=12+p*20,r2=38+p*65;
+        ctx.beginPath();
+        ctx.moveTo(s.tx+Math.cos(a)*r1,s.ty+Math.sin(a)*r1);
+        ctx.lineTo(s.tx+Math.cos(a+.13)*((r1+r2)/2),s.ty+Math.sin(a+.13)*((r1+r2)/2));
+        ctx.lineTo(s.tx+Math.cos(a)*r2,s.ty+Math.sin(a)*r2);
         ctx.stroke();
       }
       ctx.restore();
