@@ -173,8 +173,8 @@ const spritePos={
   rhino:"0% 50%", eagle:"33.333% 50%", panda:"66.667% 50%", lion:"100% 50%"
 };
 function animalVisual(k, cls="mini-portrait"){
-  const p=spritePos[k];
-  return p ? `<span class="${cls}" style="background-position:${p}"></span>` : `<span class="animal">${animals[k].emoji}</span>`;
+  const a=animals[k];
+  return a ? `<span class="animal animal-emoji ${cls}" style="background-image:none;display:flex;align-items:center;justify-content:center;font-size:${cls==="reward-portrait"?"68px":cls==="animal-portrait"?"48px":"30px"}">${a.emoji}</span>` : "";
 }
 
 const defaults = {
@@ -259,7 +259,7 @@ openPackBtn.onclick=()=>{
   let key, fresh=false;
   if(locked.length && Math.random()<.62){ key=locked[Math.floor(Math.random()*locked.length)]; save.unlocked.push(key); fresh=true; }
   else { key=save.unlocked[Math.floor(Math.random()*save.unlocked.length)]; save.shards[key]=(save.shards[key]||0)+5; }
-  const a=animals[key]; if(spritePos[key]){packEmoji.textContent="";packEmoji.className="reward-portrait";packEmoji.style.backgroundPosition=spritePos[key]}else{packEmoji.className="reward";packEmoji.style.backgroundPosition="";packEmoji.textContent=a.emoji} packTitle.textContent=fresh?`New ${a.name}!`:`${a.name} shards!`; packDesc.textContent=fresh?`${a.rarity} card unlocked. Add it to your deck from the Cards screen.`:`You received 5 ${a.name} shards. Upgrades will use shards in a later version.`;
+  const a=animals[key]; packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent=a.emoji; packTitle.textContent=fresh?`New ${a.name}!`:`${a.name} shards!`; packDesc.textContent=fresh?`${a.rarity} card unlocked. Add it to your deck from the Cards screen.`:`You received 5 ${a.name} shards. Upgrades will use shards in a later version.`;
   packModal.classList.add("show"); persist();
 };
 closePack.onclick=()=>packModal.classList.remove("show");
@@ -425,7 +425,7 @@ function draw(){
     ctx.beginPath();ctx.ellipse(t.x,t.y+13,29,16,0,0,Math.PI*2);ctx.fillStyle="#6a6455";ctx.fill();
     ctx.strokeStyle="#b5aa8d";ctx.lineWidth=2;ctx.stroke();
 
-    const src=spriteSrc[t.key];
+    const src=null;
     if(src && spriteArt.complete && spriteArt.naturalWidth){
       ctx.save();
       ctx.beginPath();ctx.arc(t.x,t.y-12,30,0,Math.PI*2);ctx.clip();
