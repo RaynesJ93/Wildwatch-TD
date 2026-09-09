@@ -271,7 +271,8 @@ const mapArt=new Image();
 let mapReady=false;
 mapArt.onload=()=>{mapReady=true;};
 mapArt.onerror=()=>{mapReady=false;};
-mapArt.src="assets/forest_map_hd.jpg?v=5";
+// Use the smaller, proven iPhone-safe battlefield artwork.
+mapArt.src="assets/wildwatch-v2-sheet.jpg?v=6";
 const spriteArt=new Image();
 spriteArt.src="assets/wildwatch-realistic-sprites.jpg";
 const spriteSrc={
@@ -390,11 +391,8 @@ function draw(){
   ctx.imageSmoothingQuality="high";
   ctx.fillStyle="#16241b";ctx.fillRect(0,0,W,H);
   if(mapReady && mapArt.naturalWidth && mapArt.naturalHeight){
-    // Cover the whole battlefield. This avoids partially decoded images leaving a grey canvas.
-    const scale=Math.max(W/mapArt.naturalWidth,H/mapArt.naturalHeight);
-    const sw=W/scale, sh=H/scale;
-    const sx=(mapArt.naturalWidth-sw)/2, sy=(mapArt.naturalHeight-sh)/2;
-    ctx.drawImage(mapArt,sx,sy,sw,sh,0,0,W,H);
+    // Reliable battlefield crop from the lightweight V2 art sheet.
+    ctx.drawImage(mapArt,0,120,420,510,0,0,W,H);
   }
   ctx.fillStyle="#00000014";ctx.fillRect(0,0,W,H);
   ctx.textAlign="center";ctx.textBaseline="middle";
