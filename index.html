@@ -317,8 +317,8 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   let key=null,fresh=false,shardDrop=false,shardAmount=0;
   const roll=Math.random();
   const chestType=btn.dataset.chest;
-  const shardChance={common:1,uncommon:1,epic:.60,legendary:.70}[chestType]||.50;
-  const shardRanges={common:[1,3],uncommon:[1,1],epic:[3,4],legendary:[4,6]};
+  const shardChance={common:1,uncommon:1,epic:.75,legendary:.60}[chestType]||.50;
+  const shardRanges={common:[1,3],uncommon:[1,1],epic:[1,3],legendary:[1,4]};
   const pityShard=(save.noShardChests||0)>=3;
 
   // 1/30 jackpot chance for a complete locked card.
