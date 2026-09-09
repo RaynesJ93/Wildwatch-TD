@@ -195,6 +195,7 @@ const defaults = {
   unlocked:["monkey","frog","owl","snake"],
   shards:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0,capybara:0,whiteRhino:0,fox:0,silverback:0},
   cardLevels:{monkey:1,frog:1,owl:1,snake:1,rhino:1,eagle:1,panda:1,lion:1,capybara:1,whiteRhino:1,fox:1,silverback:1},
+  noShardChests:0,
   deck:["monkey","frog","owl","snake"]
 };
 let save;
@@ -292,19 +293,27 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   const locked=allowedPool.filter(k=>!save.unlocked.includes(k));
   let key=null,fresh=false,shardDrop=false,shardAmount=0;
   const roll=Math.random();
+  const chestType=btn.dataset.chest;
+  const shardChance={common:1,uncommon:.50,epic:.60,legendary:.70}[chestType]||.50;
+  const shardRanges={common:[1,3],uncommon:[2,3],epic:[3,4],legendary:[4,6]};
+  const pityShard=(save.noShardChests||0)>=3;
 
-  // Exactly 1/30 chance for a complete locked card from any chest.
+  // 1/30 jackpot chance for a complete locked card.
   if(locked.length && roll<(1/30)){
     key=weightedAnimal(locked,cfg.rarities);
     save.unlocked.push(key);fresh=true;
-  }
-  // Otherwise, exactly 1/5 chance for shards.
-  else if(roll<(1/30)+(1/5)){
-    const shardPool=locked.length?locked:allowedPool;
+    save.noShardChests=(save.noShardChests||0)+1;
+  }else if(chestType==="common" || pityShard || Math.random()<shardChance){
+    // Shard rewards favour locked cards 80% of the time when locked cards are available.
+    let shardPool;
+    if(locked.length && Math.random()<.80) shardPool=locked;
+    else shardPool=allowedPool;
     key=weightedAnimal(shardPool,cfg.rarities);
-    shardAmount=1+Math.floor(Math.random()*3);
+    const range=shardRanges[chestType]||[1,3];
+    shardAmount=range[0]+Math.floor(Math.random()*(range[1]-range[0]+1));
     save.shards[key]=(save.shards[key]||0)+shardAmount;
     shardDrop=true;
+    save.noShardChests=0;
 
     // 20 shards automatically unlock that specific card.
     if(!save.unlocked.includes(key) && save.shards[key]>=20){
@@ -312,6 +321,8 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
       save.unlocked.push(key);
       fresh=true;
     }
+  }else{
+    save.noShardChests=(save.noShardChests||0)+1;
   }
 
   if(key){
