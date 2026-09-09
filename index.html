@@ -171,7 +171,8 @@ const animals = {
   eagle:{name:"Eagle", emoji:"🦅", rarity:"Epic", cost:120, range:322.5, rate:.88, dmg:27, color:"#b68142", desc:"Extreme range and strong damage."},
   panda:{name:"Panda", emoji:"🐼", rarity:"Legendary", cost:145, range:187.5, rate:.72, dmg:23, slow:.55, color:"#eee", desc:"Bamboo blasts slow enemies."},
   lion:{name:"Lion", emoji:"🦁", rarity:"Rare", rareCard:true, cost:160, range:217.5, rate:.65, dmg:31, aura:1.15, color:"#d99c35", desc:"Powerful attacker that inspires nearby towers."},
-  capybara:{name:"Capybara", emoji:"🦫", rarity:"Uncommon", uncommonOnly:true, cost:70, range:140, rate:.8, dmg:12, color:"#a8794f", desc:"Calm, dependable attacker. Exclusive to the Uncommon Chest."}
+  capybara:{name:"Capybara", emoji:"🦫", rarity:"Uncommon", uncommonOnly:true, cost:70, range:140, rate:.8, dmg:12, color:"#a8794f", desc:"Calm, dependable attacker. Exclusive to the Uncommon Chest."},
+  whiteRhino:{name:"White Rhino", emoji:"🦏", rarity:"Legendary", legendaryOnly:true, whiteVariant:true, cost:135, range:140, rate:.8, dmg:35, color:"#f2f2ec", desc:"Legendary white rhino with powerful medium-speed attacks. Exclusive to the Legendary Chest."}
 };
 const rarityOrder={Common:1,Rare:2,Epic:3,Legendary:4};
 const spritePos={
@@ -180,14 +181,14 @@ const spritePos={
 };
 function animalVisual(k, cls="mini-portrait"){
   const a=animals[k];
-  return a ? `<span class="animal-emoji ${cls}" style="background-image:none!important;display:flex!important;align-items:center;justify-content:center;font-family:'Apple Color Emoji','Segoe UI Emoji',sans-serif;font-size:${cls==="reward-portrait"?"68px":cls==="animal-portrait"?"48px":"30px"};line-height:1">${a.emoji}</span>` : "";
+  return a ? `<span class="animal-emoji ${cls}" style="background-image:none!important;display:flex!important;align-items:center;justify-content:center;${a.whiteVariant?"background-color:#f4f4ee!important;border:2px solid #fff;border-radius:50%;filter:grayscale(.85) brightness(1.35);":""}font-family:'Apple Color Emoji','Segoe UI Emoji',sans-serif;font-size:${cls==="reward-portrait"?"68px":cls==="animal-portrait"?"48px":"30px"};line-height:1">${a.emoji}</span>` : "";
 }
 
 const defaults = {
   metaCoins:250, level:1, xp:0, packTokens:0, bestWave:0,
   unlocked:["monkey","frog","owl","snake"],
-  shards:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0,capybara:0},
-  cardLevels:{monkey:1,frog:1,owl:1,snake:1,rhino:1,eagle:1,panda:1,lion:1,capybara:1},
+  shards:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0,capybara:0,whiteRhino:0},
+  cardLevels:{monkey:1,frog:1,owl:1,snake:1,rhino:1,eagle:1,panda:1,lion:1,capybara:1,whiteRhino:1},
   deck:["monkey","frog","owl","snake"]
 };
 let save;
@@ -276,6 +277,7 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   save.metaCoins-=cfg.cost;
   const exclusiveRare=["rhino","lion"];
   const allowedPool=Object.keys(animals).filter(k=>{
+    if(k==="whiteRhino") return btn.dataset.chest==="legendary";
     if(btn.dataset.chest==="legendary") return true;
     if(exclusiveRare.includes(k)) return btn.dataset.chest==="epic";
     if(k==="capybara") return btn.dataset.chest==="uncommon";
