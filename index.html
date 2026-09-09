@@ -457,7 +457,7 @@ function towerTick(t,dt){
   if(!target)return;
   const nearbyLion=battle.towers.some(o=>o.key==="lion"&&o!==t&&Math.hypot(o.x-t.x,o.y-t.y)<145);
   const dmg=a.dmg*(1+(t.level-1)*.35)*(nearbyLion?1.15:1);
-  battle.shots.push({x:t.x,y:t.y,tx:target.x,ty:target.y,life:t.key==="owl"?.34:t.key==="snake"?.28:t.key==="monkey"?.32:.12,type:t.key==="owl"?"soundwave":t.key==="snake"?"poisonblob":t.key==="monkey"?"banana":"beam"});
+  battle.shots.push({x:t.x,y:t.y,tx:target.x,ty:target.y,life:t.key==="owl"?.34:t.key==="snake"?.28:t.key==="monkey"?.32:t.key==="frog"?.20:.12,type:t.key==="owl"?"soundwave":t.key==="snake"?"poisonblob":t.key==="monkey"?"banana":t.key==="frog"?"tongue":"beam"});
   if(t.key==="monkey"){
     const victims=battle.enemies
       .filter(e=>!e.dead&&Math.hypot(e.x-target.x,e.y-target.y)<=72)
@@ -627,6 +627,24 @@ function draw(){
         ctx.arc(travel,0,spread,-.55,.55);
         ctx.stroke();
       }
+      ctx.restore();
+    }else if(s.type==="tongue"){
+      const p=1-Math.max(0,s.life)/.20;
+      ctx.save();
+      ctx.strokeStyle="#ef6f9b";
+      ctx.lineWidth=7;
+      ctx.lineCap="round";
+      ctx.shadowColor="rgba(255,120,170,.7)";
+      ctx.shadowBlur=5;
+      ctx.beginPath();
+      ctx.moveTo(s.x,s.y-8);
+      const reach=Math.min(1,p*2);
+      const ex=s.x+(s.tx-s.x)*reach;
+      const ey=(s.y-8)+(s.ty-(s.y-8))*reach;
+      ctx.quadraticCurveTo((s.x+ex)/2,((s.y-8)+ey)/2+10,ex,ey);
+      ctx.stroke();
+      ctx.fillStyle="#ff9abb";
+      ctx.beginPath();ctx.arc(ex,ey,5,0,Math.PI*2);ctx.fill();
       ctx.restore();
     }else if(s.type==="poisonblob"){
       const p=1-Math.max(0,s.life)/.28;
