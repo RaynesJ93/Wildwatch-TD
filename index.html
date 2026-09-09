@@ -185,7 +185,7 @@ const animals = {
   jaguar:{name:"Jaguar", emoji:"🐆", rarity:"Rare", cost:85, range:135, rate:.48, dmg:19, color:"#d99a35", desc:"Rare fast attacker that tears into enemies with rapid claw swipes."}
 };
 const rarityOrder={Common:1,Rare:2,Epic:3,Legendary:4};
-function shardRequirement(a){return a.rarity==="Common"?5:a.rarity==="Uncommon"?10:20;}
+function shardRequirement(a){return a.rarity==="Common"?5:a.rarity==="Uncommon"?10:a.rarity==="Legendary"?30:20;}
 const spritePos={
   monkey:"0% 0%", frog:"33.333% 0%", owl:"66.667% 0%", snake:"100% 0%",
   rhino:"0% 50%", eagle:"33.333% 50%", panda:"66.667% 50%", lion:"100% 50%"
