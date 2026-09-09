@@ -237,7 +237,7 @@ function renderCollection(){
   collectionCards.innerHTML="";
   Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).forEach(([k,a])=>{
     const unlocked=save.unlocked.includes(k), d=document.createElement("div"); d.className="card "+(!unlocked?"locked":"")+(save.deck.includes(k)?" selected":"");
-    d.innerHTML=`<span class="rarity">${a.rarity==="Rare"?"💎 RARE":a.rarity}</span>${unlocked?animalVisual(k,"animal-portrait"):`<div class="animal">❔</div>`}<h3>${unlocked?a.name:"Unknown"}</h3><div class="small">${unlocked?a.desc:`Collect 20 shards to unlock. 🧩 ${save.shards[k]||0}/20`}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div>`:""}`;
+    d.innerHTML=`<span class="rarity">${a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${unlocked?animalVisual(k,"animal-portrait"):`<div class="animal">❔</div>`}<h3>${unlocked?a.name:"Unknown"}</h3><div class="small">${unlocked?a.desc:`Collect 20 shards to unlock. 🧩 ${save.shards[k]||0}/20`}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div>`:""}`;
     if(unlocked)d.onclick=()=>toggleDeck(k); collectionCards.appendChild(d);
   });
 }
@@ -307,10 +307,10 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
     const a=animals[key];
     packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent=a.emoji;
     if(fresh){
-      packTitle.textContent=`${a.rarity==="Rare"?"💎 RARE • ":""}New ${a.name}!`;
+      packTitle.textContent=`${a.rarity==="Rare"?"💎 RARE • ":a.rarity==="Uncommon"?"🟩 UNCOMMON • ":a.rarity==="Common"?"⚪ COMMON • ":""}New ${a.name}!`;
       packDesc.textContent=shardDrop?`You reached 20 ${a.name} shards and unlocked the card!`:`Complete ${a.rarity} card pulled from a ${cfg.name}! (1/30 drop)`;
     }else{
-      packTitle.textContent=`${a.rarity==="Rare"?"💎 RARE • ":""}${a.name} shards!`;
+      packTitle.textContent=`${a.rarity==="Rare"?"💎 RARE • ":a.rarity==="Uncommon"?"🟩 UNCOMMON • ":a.rarity==="Common"?"⚪ COMMON • ":""}${a.name} shards!`;
       packDesc.textContent=`You found ${shardAmount} ${a.name} shard${shardAmount===1?"":"s"}. ${save.shards[key]}/20 collected.`;
     }
   }else{
