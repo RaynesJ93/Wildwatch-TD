@@ -42,7 +42,7 @@
     .deckslot{background:#0c1a14;border:1px dashed #4d7965;border-radius:14px;min-height:68px;display:grid;place-items:center;text-align:center;font-size:11px;padding:4px}
     .deckslot b{font-size:28px;display:block}
     .map-wrap{position:relative;background:#172018;border:3px solid #5f665c;border-radius:18px;overflow:hidden;box-shadow:0 22px 45px #0008,inset 0 0 0 1px #ffffff18}
-    #game{display:block;width:100%;height:auto;aspect-ratio:14/17;touch-action:none}
+    #game{display:block;width:100%;height:auto;aspect-ratio:14/17;touch-action:none;background-image:url("assets/wildwatch-v2-sheet.jpg?v=7");background-repeat:no-repeat;background-size:100% auto;background-position:center 15%;background-color:#16241b}
     .battle-ui{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0}
     .battle-deck{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
     .battle-card{position:relative;background:linear-gradient(180deg,#27302b,#101714);border:2px solid #6f756e;border-radius:12px;padding:7px 4px;text-align:center;min-height:78px;box-shadow:0 8px 16px #0007,inset 0 0 0 1px #ffffff12}
@@ -267,12 +267,7 @@ closePack.onclick=()=>packModal.classList.remove("show");
 // ---- Battle engine ----
 const canvas=document.getElementById("game"), ctx=canvas.getContext("2d");
 const W=canvas.width,H=canvas.height;
-const mapArt=new Image();
-let mapReady=false;
-mapArt.onload=()=>{mapReady=true;};
-mapArt.onerror=()=>{mapReady=false;};
-// Use the smaller, proven iPhone-safe battlefield artwork.
-mapArt.src="assets/wildwatch-v2-sheet.jpg?v=6";
+// Battlefield artwork is rendered as a CSS background on the canvas element for iPhone reliability.
 const spriteArt=new Image();
 spriteArt.src="assets/wildwatch-realistic-sprites.jpg";
 const spriteSrc={
@@ -389,11 +384,7 @@ function draw(){
   ctx.clearRect(0,0,W,H);
   ctx.imageSmoothingEnabled=true;
   ctx.imageSmoothingQuality="high";
-  ctx.fillStyle="#16241b";ctx.fillRect(0,0,W,H);
-  if(mapReady && mapArt.naturalWidth && mapArt.naturalHeight){
-    // Reliable battlefield crop from the lightweight V2 art sheet.
-    ctx.drawImage(mapArt,0,120,420,510,0,0,W,H);
-  }
+  // Keep the canvas transparent so the CSS battlefield background remains visible.
   ctx.fillStyle="#00000014";ctx.fillRect(0,0,W,H);
   ctx.textAlign="center";ctx.textBaseline="middle";
 
