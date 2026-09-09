@@ -169,7 +169,8 @@ const animals = {
   rhino:{name:"Rhino", emoji:"🦏", rarity:"Rare", rareCard:true, cost:110, range:178.125, rate:1.16, dmg:53.75, color:"#829099", desc:"Heavy hitter with huge single-target damage."},
   eagle:{name:"Eagle", emoji:"🦅", rarity:"Epic", cost:120, range:322.5, rate:.88, dmg:27, color:"#b68142", desc:"Extreme range and strong damage."},
   panda:{name:"Panda", emoji:"🐼", rarity:"Legendary", cost:145, range:187.5, rate:.72, dmg:23, slow:.55, color:"#eee", desc:"Bamboo blasts slow enemies."},
-  lion:{name:"Lion", emoji:"🦁", rarity:"Rare", rareCard:true, cost:160, range:217.5, rate:.65, dmg:31, aura:1.15, color:"#d99c35", desc:"Powerful attacker that inspires nearby towers."}
+  lion:{name:"Lion", emoji:"🦁", rarity:"Rare", rareCard:true, cost:160, range:217.5, rate:.65, dmg:31, aura:1.15, color:"#d99c35", desc:"Powerful attacker that inspires nearby towers."},
+  capybara:{name:"Capybara", emoji:"🦫", rarity:"Uncommon", uncommonOnly:true, cost:70, range:140, rate:.8, dmg:12, color:"#a8794f", desc:"Calm, dependable attacker. Exclusive to the Uncommon Chest."}
 };
 const rarityOrder={Common:1,Rare:2,Epic:3,Legendary:4};
 const spritePos={
@@ -184,8 +185,8 @@ function animalVisual(k, cls="mini-portrait"){
 const defaults = {
   metaCoins:250, level:1, xp:0, packTokens:0, bestWave:0,
   unlocked:["monkey","frog","owl","snake"],
-  shards:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0},
-  cardLevels:{monkey:1,frog:1,owl:1,snake:1,rhino:1,eagle:1,panda:1,lion:1},
+  shards:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0,capybara:0},
+  cardLevels:{monkey:1,frog:1,owl:1,snake:1,rhino:1,eagle:1,panda:1,lion:1,capybara:1},
   deck:["monkey","frog","owl","snake"]
 };
 let save;
@@ -236,7 +237,7 @@ function renderCollection(){
   collectionCards.innerHTML="";
   Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).forEach(([k,a])=>{
     const unlocked=save.unlocked.includes(k), d=document.createElement("div"); d.className="card "+(!unlocked?"locked":"")+(save.deck.includes(k)?" selected":"");
-    d.innerHTML=`<span class="rarity">${a.rareCard?"💎 RARE":a.rarity}</span>${unlocked?animalVisual(k,"animal-portrait"):`<div class="animal">❔</div>`}<h3>${unlocked?a.name:"Unknown"}</h3><div class="small">${unlocked?a.desc:`Collect 20 shards to unlock. 🧩 ${save.shards[k]||0}/20`}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div>`:""}`;
+    d.innerHTML=`<span class="rarity">${a.rarity==="Rare"?"💎 RARE":a.rarity}</span>${unlocked?animalVisual(k,"animal-portrait"):`<div class="animal">❔</div>`}<h3>${unlocked?a.name:"Unknown"}</h3><div class="small">${unlocked?a.desc:`Collect 20 shards to unlock. 🧩 ${save.shards[k]||0}/20`}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div>`:""}`;
     if(unlocked)d.onclick=()=>toggleDeck(k); collectionCards.appendChild(d);
   });
 }
@@ -272,7 +273,11 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   if(save.metaCoins<cfg.cost){alert(`You need ${cfg.cost} Coins for this chest. Earn more by completing waves.`);return}
   save.metaCoins-=cfg.cost;
   const exclusiveRare=["rhino","lion"];
-  const allowedPool=Object.keys(animals).filter(k=>cfg.exclusive?true:!exclusiveRare.includes(k));
+  const allowedPool=Object.keys(animals).filter(k=>{
+    if(exclusiveRare.includes(k)) return btn.dataset.chest==="epic";
+    if(k==="capybara") return btn.dataset.chest==="uncommon";
+    return true;
+  });
   const locked=allowedPool.filter(k=>!save.unlocked.includes(k));
   let key=null,fresh=false,shardDrop=false,shardAmount=0;
   const roll=Math.random();
@@ -302,10 +307,10 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
     const a=animals[key];
     packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent=a.emoji;
     if(fresh){
-      packTitle.textContent=`${a.rareCard?"💎 RARE • ":""}New ${a.name}!`;
+      packTitle.textContent=`${a.rarity==="Rare"?"💎 RARE • ":""}New ${a.name}!`;
       packDesc.textContent=shardDrop?`You reached 20 ${a.name} shards and unlocked the card!`:`Complete ${a.rarity} card pulled from a ${cfg.name}! (1/30 drop)`;
     }else{
-      packTitle.textContent=`${a.rareCard?"💎 RARE • ":""}${a.name} shards!`;
+      packTitle.textContent=`${a.rarity==="Rare"?"💎 RARE • ":""}${a.name} shards!`;
       packDesc.textContent=`You found ${shardAmount} ${a.name} shard${shardAmount===1?"":"s"}. ${save.shards[key]}/20 collected.`;
     }
   }else{
