@@ -465,7 +465,7 @@ function towerTick(t,dt){
       .slice(0,3);
     if(!victims.includes(target))victims.unshift(target);
     victims.slice(0,3).forEach((e,i)=>{
-      e.hp-=i===0?dmg:dmg*.75;
+      e.hp-=i===0?dmg:a.dmg*.40;
       if(e.hp<=0)killEnemy(e);
     });
   }else if(a.splash){
