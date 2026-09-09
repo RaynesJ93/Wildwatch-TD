@@ -848,7 +848,7 @@ function draw(){
   battle.enemies?.forEach(e=>{
     ctx.save();
     const walk=Math.sin(e.walkPhase||0), bob=Math.abs(walk)*3, lean=Math.sin((e.walkPhase||0)*.5)*.035;
-    const faceLeft=(e.dirX||1)<0;
+    const faceLeft=(e.dirX||1)>0;
     ctx.beginPath();ctx.ellipse(e.x,e.y+19,22-Math.abs(walk)*2,8+Math.abs(walk),0,0,Math.PI*2);ctx.fillStyle="#0009";ctx.fill();
     const enemyType=e.type||({ "🐀":"rat","🦝":"raccoon","🐗":"boar","👹":"boss" }[e.emoji]);
     const es=enemyType&&spriteSrc[enemyType];
