@@ -236,7 +236,7 @@ function renderCollection(){
   collectionCards.innerHTML="";
   Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).forEach(([k,a])=>{
     const unlocked=save.unlocked.includes(k), d=document.createElement("div"); d.className="card "+(!unlocked?"locked":"")+(save.deck.includes(k)?" selected":"");
-    d.innerHTML=`<span class="rarity">${a.rarity}</span>${unlocked?animalVisual(k,"animal-portrait"):`<div class="animal">❔</div>`}<h3>${unlocked?a.name:"Unknown"}</h3><div class="small">${unlocked?a.desc:"Find this animal in Animal Chests."}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div>`:""}`;
+    d.innerHTML=`<span class="rarity">${a.rarity}</span>${unlocked?animalVisual(k,"animal-portrait"):`<div class="animal">❔</div>`}<h3>${unlocked?a.name:"Unknown"}</h3><div class="small">${unlocked?a.desc:`Collect 20 shards to unlock. 🧩 ${save.shards[k]||0}/20`}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div>`:""}`;
     if(unlocked)d.onclick=()=>toggleDeck(k); collectionCards.appendChild(d);
   });
 }
@@ -256,9 +256,9 @@ playBtn.onclick=()=>{clearBattleState();battle={};showScreen("battleScreen");};
 continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));if(!loadBattleState())resetBattle();};
 
 const chestConfig={
-  common:{name:"Common Chest",cost:250,newChance:.06,rarities:{Common:.65,Rare:.27,Epic:.07,Legendary:.01},shards:2},
-  uncommon:{name:"Uncommon Chest",cost:450,newChance:.10,rarities:{Common:.30,Rare:.48,Epic:.19,Legendary:.03},shards:3},
-  epic:{name:"Epic Chest",cost:1050,newChance:.16,rarities:{Common:.08,Rare:.32,Epic:.50,Legendary:.10},shards:5}
+  common:{name:"Common Chest",cost:250,rarities:{Common:.65,Rare:.27,Epic:.07,Legendary:.01}},
+  uncommon:{name:"Uncommon Chest",cost:450,rarities:{Common:.30,Rare:.48,Epic:.19,Legendary:.03}},
+  epic:{name:"Epic Chest",cost:1050,rarities:{Common:.08,Rare:.32,Epic:.50,Legendary:.10}}
 };
 function weightedAnimal(pool,weights){
   const weighted=pool.map(k=>({k,w:weights[animals[k].rarity]||0})).filter(x=>x.w>0);
@@ -272,19 +272,46 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   if(save.metaCoins<cfg.cost){alert(`You need ${cfg.cost} Coins for this chest. Earn more by completing waves.`);return}
   save.metaCoins-=cfg.cost;
   const locked=Object.keys(animals).filter(k=>!save.unlocked.includes(k));
-  let key,fresh=false;
-  if(locked.length && Math.random()<cfg.newChance){
+  let key=null,fresh=false,shardDrop=false,shardAmount=0;
+  const roll=Math.random();
+
+  // Exactly 1/30 chance for a complete locked card from any chest.
+  if(locked.length && roll<(1/30)){
     key=weightedAnimal(locked,cfg.rarities);
     save.unlocked.push(key);fresh=true;
-  }else{
-    key=weightedAnimal(save.unlocked,cfg.rarities);
-    save.shards[key]=(save.shards[key]||0)+cfg.shards;
   }
-  const a=animals[key];
-  packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent=a.emoji;
-  packTitle.textContent=fresh?`New ${a.name}!`:`${a.name} shards!`;
-  packDesc.textContent=fresh?`${a.rarity} card unlocked from a ${cfg.name}! Add it to your deck from Cards.`:`No new card this time. You received ${cfg.shards} ${a.name} shards.`;
-  packModal.classList.add("show");persist();
+  // Otherwise, exactly 1/5 chance for shards.
+  else if(roll<(1/30)+(1/5)){
+    const shardPool=locked.length?locked:Object.keys(animals);
+    key=weightedAnimal(shardPool,cfg.rarities);
+    shardAmount=1+Math.floor(Math.random()*3);
+    save.shards[key]=(save.shards[key]||0)+shardAmount;
+    shardDrop=true;
+
+    // 20 shards automatically unlock that specific card.
+    if(!save.unlocked.includes(key) && save.shards[key]>=20){
+      save.shards[key]-=20;
+      save.unlocked.push(key);
+      fresh=true;
+    }
+  }
+
+  if(key){
+    const a=animals[key];
+    packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent=a.emoji;
+    if(fresh){
+      packTitle.textContent=`New ${a.name}!`;
+      packDesc.textContent=shardDrop?`You reached 20 ${a.name} shards and unlocked the card!`:`Complete ${a.rarity} card pulled from a ${cfg.name}! (1/30 drop)`;
+    }else{
+      packTitle.textContent=`${a.name} shards!`;
+      packDesc.textContent=`You found ${shardAmount} ${a.name} shard${shardAmount===1?"":"s"}. ${save.shards[key]}/20 collected.`;
+    }
+  }else{
+    packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent="🪹";
+    packTitle.textContent="No card this time";
+    packDesc.textContent="This chest contained no card or shards. Complete cards are 1/30 and shard drops are 1/5.";
+  }
+  packModal.classList.add("show");persist();renderCards();renderHome();
 });
 closePack.onclick=()=>packModal.classList.remove("show");
 
