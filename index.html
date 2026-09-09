@@ -605,7 +605,21 @@ function towerTick(t,dt){
       battle.shots.push({x:t.x,y:t.y,tx:owlSecondary.x,ty:owlSecondary.y,life:.34,type:"soundwave"});
     }
   }
-  if(t.key==="owl"){
+  let frogSecond=null,frogThird=null;
+  if(t.key==="frog" && t.level>=10){
+    const extras=battle.enemies
+      .filter(e=>!e.dead&&e!==target&&Math.hypot(e.x-t.x,e.y-t.y)<=range)
+      .sort((x,y)=>(y.seg+(1-Math.hypot(y.x-t.x,y.y-t.y)/1000))-(x.seg+(1-Math.hypot(x.x-t.x,x.y-t.y)/1000)))
+      .slice(0,2);
+    frogSecond=extras[0]||null;frogThird=extras[1]||null;
+    if(frogSecond)battle.shots.push({x:t.x,y:t.y,tx:frogSecond.x,ty:frogSecond.y,life:.20,type:"tongue"});
+    if(frogThird)battle.shots.push({x:t.x,y:t.y,tx:frogThird.x,ty:frogThird.y,life:.20,type:"tongue"});
+  }
+  if(t.key==="frog"){
+    target.hp-=dmg;if(target.hp<=0)killEnemy(target);
+    if(frogSecond&&!frogSecond.dead){frogSecond.hp-=dmg*.60;if(frogSecond.hp<=0)killEnemy(frogSecond);}
+    if(frogThird&&!frogThird.dead){frogThird.hp-=dmg*.40;if(frogThird.hp<=0)killEnemy(frogThird);}
+  }else if(t.key==="owl"){
     target.hp-=dmg;
     if(target.hp<=0)killEnemy(target);
     if(owlSecondary && !owlSecondary.dead){
@@ -640,11 +654,16 @@ function towerTick(t,dt){
   }
   if(a.slow)target.slowTimer=Math.max(target.slowTimer,1.8);
   if(t.key==="penguin" && Math.random()<(1/3))target.freezeTimer=Math.max(target.freezeTimer||0,3);
-  if(t.key==="frog" && Math.random()<.40){
-    battle.puddles=battle.puddles||[];
-    battle.puddles.push({
-      id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,7),
-      x:target.x,y:target.y,life:6,maxLife:6,radius:46,damage:15
+  if(t.key==="frog"){
+    const frogHits=[target,frogSecond,frogThird].filter(Boolean);
+    frogHits.forEach(hit=>{
+      if(Math.random()<.40){
+        battle.puddles=battle.puddles||[];
+        battle.puddles.push({
+          id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+          x:hit.x,y:hit.y,life:6,maxLife:6,radius:46,damage:15
+        });
+      }
     });
   }
   t.cd=a.rate;
