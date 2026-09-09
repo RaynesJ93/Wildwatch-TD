@@ -116,11 +116,15 @@
 
   <section id="packsScreen" class="screen">
     <div class="hero center">
-      <div style="font-size:70px">🎁</div>
-      <h1>Wild Packs</h1>
-      <p>Earn pack tokens by surviving waves. Packs can unlock new animals or give duplicate shards.</p>
+      <div style="font-size:70px">🧰</div>
+      <h1>Animal Chests</h1>
+      <p>Spend coins to open chests and hunt for rare animal cards. New cards are deliberately hard to find.</p>
       <div style="height:14px"></div>
-      <button class="primary" id="openPackBtn">Open Pack • 🎟️ <span id="packTokens">0</span></button>
+      <div style="display:grid;gap:12px">
+        <button class="primary chestBtn" data-chest="common">🪵 Common Chest • 🪙 250</button>
+        <button class="primary chestBtn" data-chest="uncommon">🟩 Uncommon Chest • 🪙 450</button>
+        <button class="primary chestBtn" data-chest="epic">💜 Epic Chest • 🪙 1050</button>
+      </div>
     </div>
     <div class="section-title">Next player level</div>
     <div class="progress"><i id="xpBar" style="width:0%"></i></div>
@@ -132,7 +136,7 @@
   <button data-screen="homeScreen" class="active"><span class="ico">🏕️</span>Home</button>
   <button data-screen="battleScreen"><span class="ico">⚔️</span>Battle</button>
   <button data-screen="collectionScreen"><span class="ico">🃏</span>Cards</button>
-  <button data-screen="packsScreen"><span class="ico">🎁</span>Packs</button>
+  <button data-screen="packsScreen"><span class="ico">🧰</span>Chests</button>
 </nav>
 
 <div class="modal" id="packModal">
@@ -178,7 +182,7 @@ function animalVisual(k, cls="mini-portrait"){
 }
 
 const defaults = {
-  metaCoins:0, level:1, xp:0, packTokens:1, bestWave:0,
+  metaCoins:250, level:1, xp:0, packTokens:0, bestWave:0,
   unlocked:["monkey","frog","owl","snake"],
   shards:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0},
   cardLevels:{monkey:1,frog:1,owl:1,snake:1,rhino:1,eagle:1,panda:1,lion:1},
@@ -209,14 +213,13 @@ function renderMeta(){
   playerLevel.textContent=save.level;
   bestWave.textContent=save.bestWave;
   ownedCount.textContent=`${save.unlocked.length}/8`;
-  packTokens.textContent=save.packTokens;
   const need=100+save.level*35, pct=Math.min(100,save.xp/need*100);
   xpBar.style.width=pct+"%"; xpText.textContent=`${save.xp} / ${need} XP`;
   renderDecks(); renderCollection();
 }
 function levelCheck(){
   let need=100+save.level*35;
-  while(save.xp>=need){save.xp-=need;save.level++;save.packTokens++;need=100+save.level*35;}
+  while(save.xp>=need){save.xp-=need;save.level++;save.metaCoins+=75;need=100+save.level*35;}
 }
 function renderDecks(){
   const draw=(el)=>{el.innerHTML=""; for(let i=0;i<4;i++){const k=save.deck[i], d=document.createElement("div");d.className="deckslot";d.innerHTML=k?`<div>${animalVisual(k)}${animals[k].name}</div>`:"Empty";el.appendChild(d)}}
@@ -233,7 +236,7 @@ function renderCollection(){
   collectionCards.innerHTML="";
   Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).forEach(([k,a])=>{
     const unlocked=save.unlocked.includes(k), d=document.createElement("div"); d.className="card "+(!unlocked?"locked":"")+(save.deck.includes(k)?" selected":"");
-    d.innerHTML=`<span class="rarity">${a.rarity}</span>${unlocked?animalVisual(k,"animal-portrait"):`<div class="animal">❔</div>`}<h3>${unlocked?a.name:"Unknown"}</h3><div class="small">${unlocked?a.desc:"Find this animal in Wild Packs."}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div>`:""}`;
+    d.innerHTML=`<span class="rarity">${a.rarity}</span>${unlocked?animalVisual(k,"animal-portrait"):`<div class="animal">❔</div>`}<h3>${unlocked?a.name:"Unknown"}</h3><div class="small">${unlocked?a.desc:"Find this animal in Animal Chests."}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div>`:""}`;
     if(unlocked)d.onclick=()=>toggleDeck(k); collectionCards.appendChild(d);
   });
 }
@@ -252,16 +255,37 @@ function showScreen(id){
 playBtn.onclick=()=>{clearBattleState();battle={};showScreen("battleScreen");};
 continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));if(!loadBattleState())resetBattle();};
 
-openPackBtn.onclick=()=>{
-  if(save.packTokens<1){alert("You need a pack token. Survive more waves to earn one!");return}
-  save.packTokens--;
-  const locked=Object.keys(animals).filter(k=>!save.unlocked.includes(k));
-  let key, fresh=false;
-  if(locked.length && Math.random()<.62){ key=locked[Math.floor(Math.random()*locked.length)]; save.unlocked.push(key); fresh=true; }
-  else { key=save.unlocked[Math.floor(Math.random()*save.unlocked.length)]; save.shards[key]=(save.shards[key]||0)+5; }
-  const a=animals[key]; packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent=a.emoji; packTitle.textContent=fresh?`New ${a.name}!`:`${a.name} shards!`; packDesc.textContent=fresh?`${a.rarity} card unlocked. Add it to your deck from the Cards screen.`:`You received 5 ${a.name} shards. Upgrades will use shards in a later version.`;
-  packModal.classList.add("show"); persist();
+const chestConfig={
+  common:{name:"Common Chest",cost:250,newChance:.06,rarities:{Common:.65,Rare:.27,Epic:.07,Legendary:.01},shards:2},
+  uncommon:{name:"Uncommon Chest",cost:450,newChance:.10,rarities:{Common:.30,Rare:.48,Epic:.19,Legendary:.03},shards:3},
+  epic:{name:"Epic Chest",cost:1050,newChance:.16,rarities:{Common:.08,Rare:.32,Epic:.50,Legendary:.10},shards:5}
 };
+function weightedAnimal(pool,weights){
+  const weighted=pool.map(k=>({k,w:weights[animals[k].rarity]||0})).filter(x=>x.w>0);
+  if(!weighted.length)return pool[Math.floor(Math.random()*pool.length)];
+  let roll=Math.random()*weighted.reduce((s,x)=>s+x.w,0);
+  for(const x of weighted){roll-=x.w;if(roll<=0)return x.k}
+  return weighted[weighted.length-1].k;
+}
+document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
+  const cfg=chestConfig[btn.dataset.chest];
+  if(save.metaCoins<cfg.cost){alert(`You need ${cfg.cost} coins for this chest.`);return}
+  save.metaCoins-=cfg.cost;
+  const locked=Object.keys(animals).filter(k=>!save.unlocked.includes(k));
+  let key,fresh=false;
+  if(locked.length && Math.random()<cfg.newChance){
+    key=weightedAnimal(locked,cfg.rarities);
+    save.unlocked.push(key);fresh=true;
+  }else{
+    key=weightedAnimal(save.unlocked,cfg.rarities);
+    save.shards[key]=(save.shards[key]||0)+cfg.shards;
+  }
+  const a=animals[key];
+  packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent=a.emoji;
+  packTitle.textContent=fresh?`New ${a.name}!`:`${a.name} shards!`;
+  packDesc.textContent=fresh?`${a.rarity} card unlocked from a ${cfg.name}! Add it to your deck from Cards.`:`No new card this time. You received ${cfg.shards} ${a.name} shards.`;
+  packModal.classList.add("show");persist();
+});
 closePack.onclick=()=>packModal.classList.remove("show");
 
 // ---- Battle engine ----
@@ -402,8 +426,8 @@ function gameOver(){
   message.textContent=`Defeat! You reached wave ${battle.wave}. Tap Start wave to restart.`;startWave.textContent="Restart";
 }
 function finishWave(){
-  battle.waveActive=false;battle.wave++;save.bestWave=Math.max(save.bestWave,battle.wave-1);save.xp+=12+(battle.wave-1)*3;save.metaCoins+=5; if((battle.wave-1)%3===0)save.packTokens++;levelCheck();persist();
-  battle.coins+=35+Math.floor(battle.wave*3);saveBattleState();startWave.textContent="Start wave";message.textContent=`Wave cleared! +coins${(battle.wave-1)%3===0?" • 🎟️ Pack token earned!":""}`;updateHud();
+  battle.waveActive=false;battle.wave++;save.bestWave=Math.max(save.bestWave,battle.wave-1);save.xp+=12+(battle.wave-1)*3;save.metaCoins+=10; if((battle.wave-1)%3===0)save.metaCoins+=25;levelCheck();persist();
+  battle.coins+=35+Math.floor(battle.wave*3);saveBattleState();startWave.textContent="Start wave";message.textContent=`Wave cleared! +coins${(battle.wave-1)%3===0?" • 🪙 Bonus coins earned!":""}`;updateHud();
 }
 function update(dt){
   if(battle.ended)return;
