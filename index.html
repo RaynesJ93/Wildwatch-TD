@@ -204,7 +204,7 @@ function loadBattleState(){
   try{
     const raw=localStorage.getItem("wildwatchBattleSave"); if(!raw)return false;
     const b=JSON.parse(raw); if(!b?.started||b.ended)return false;
-    cancelAnimationFrame(raf);battle=b;battle.shots=[];selectedCard=null;selectedTower=null;speed=1;
+    cancelAnimationFrame(raf);battle=b;battle.shots=[];battle.puddles=battle.puddles||[];selectedCard=null;selectedTower=null;speed=1;
     speedBtn.textContent="⏩ Speed: 1×";updateHud();last=performance.now();raf=requestAnimationFrame(loop);return true;
   }catch(e){return false}
 }
@@ -342,7 +342,7 @@ let battle={}, selectedCard=null, selectedTower=null, raf=0, last=performance.no
 
 function resetBattle(){
   cancelAnimationFrame(raf);
-  battle={started:true,coins:130,lives:20,wave:1,enemies:[],towers:[],shots:[],spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false};
+  battle={started:true,coins:130,lives:20,wave:1,enemies:[],towers:[],shots:[],puddles:[],spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false};
   startWave.textContent="Start wave";
   message.textContent="Choose an animal card, then tap a free tower pad.";
   selectedCard=null; selectedTower=null; speed=1; speedBtn.textContent="⏩ Speed: 1×";
@@ -357,7 +357,7 @@ function enemyForWave(){
   return {type:"raccoon",emoji:"🦝",hp:(58+w*10)*.8,speed:61,reward:8,size:17};
 }
 function spawnEnemy(){
-  const e=enemyForWave(); Object.assign(e,{maxHp:e.hp,seg:0,x:path[0][0],y:path[0][1],poison:0,poisonTick:0,poisonDmg:0,slowTimer:0,dead:false}); battle.enemies.push(e);
+  const e=enemyForWave(); Object.assign(e,{maxHp:e.hp,seg:0,x:path[0][0],y:path[0][1],poison:0,poisonTick:0,poisonDmg:0,slowTimer:0,puddleHits:{},dead:false}); battle.enemies.push(e);
 }
 startWave.onclick=()=>{
   if(battle.ended){resetBattle();return}
@@ -477,6 +477,13 @@ function towerTick(t,dt){
     target.poisonDmg=a.poison;
   }
   if(a.slow)target.slowTimer=Math.max(target.slowTimer,1.8);
+  if(t.key==="frog" && Math.random()<.40){
+    battle.puddles=battle.puddles||[];
+    battle.puddles.push({
+      id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+      x:target.x,y:target.y,life:6,maxLife:6,radius:46,damage:15
+    });
+  }
   t.cd=a.rate;
 }
 function gameOver(){
@@ -513,6 +520,20 @@ function update(dt){
     battle.spawnTimer-=dt;if(battle.spawnTimer<=0&&battle.spawnLeft>0){spawnEnemy();battle.spawnLeft--;battle.spawnTimer=Math.max(.28,.78-battle.wave*.025)}
     if(battle.spawnLeft<=0)battle.spawning=false;
   }
+  battle.puddles=battle.puddles||[];
+  battle.puddles.forEach(p=>{
+    p.life-=dt;
+    battle.enemies.forEach(e=>{
+      if(e.dead)return;
+      e.puddleHits=e.puddleHits||{};
+      if(!e.puddleHits[p.id] && Math.hypot(e.x-p.x,e.y-p.y)<=p.radius){
+        e.puddleHits[p.id]=true;
+        e.hp-=p.damage;
+        if(e.hp<=0)killEnemy(e);
+      }
+    });
+  });
+  battle.puddles=battle.puddles.filter(p=>p.life>0);
   battle.enemies.forEach(e=>moveEnemy(e,dt));battle.towers.forEach(t=>towerTick(t,dt));battle.shots.forEach(s=>s.life-=dt);
   battle.enemies=battle.enemies.filter(e=>!e.dead);battle.shots=battle.shots.filter(s=>s.life>0);
   if(battle.waveActive&&!battle.spawning&&battle.enemies.length===0)finishWave();
@@ -538,6 +559,26 @@ function draw(){
   ctx.beginPath();ctx.moveTo(path[0][0],path[0][1]);for(let i=1;i<path.length;i++)ctx.lineTo(path[i][0],path[i][1]);
   ctx.strokeStyle="#d8b35b";ctx.lineWidth=72;ctx.stroke();
   ctx.restore();
+
+  // Frog acid puddles.
+  battle.puddles?.forEach(p=>{
+    const alpha=Math.max(.18,Math.min(.72,p.life/p.maxLife*.72));
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.fillStyle="#62e334";
+    ctx.strokeStyle="#b5ff76";
+    ctx.lineWidth=3;
+    ctx.shadowColor="rgba(90,255,50,.65)";
+    ctx.shadowBlur=12;
+    ctx.beginPath();
+    ctx.ellipse(p.x,p.y,p.radius,p.radius*.62,0,0,Math.PI*2);
+    ctx.fill();ctx.stroke();
+    ctx.globalAlpha=alpha*.8;
+    ctx.fillStyle="#b8ff66";
+    ctx.beginPath();ctx.arc(p.x-14,p.y-7,7,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(p.x+12,p.y+5,5,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  });
 
   // Tower pads are drawn from the exact clickable pad coordinates.
   ctx.textAlign="center";ctx.textBaseline="middle";
