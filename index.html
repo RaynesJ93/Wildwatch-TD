@@ -42,7 +42,7 @@
     .deckslot{background:#0c1a14;border:1px dashed #4d7965;border-radius:14px;min-height:68px;display:grid;place-items:center;text-align:center;font-size:11px;padding:4px}
     .deckslot b{font-size:28px;display:block}
     .map-wrap{position:relative;background:#172018;border:3px solid #5f665c;border-radius:18px;overflow:hidden;box-shadow:0 22px 45px #0008,inset 0 0 0 1px #ffffff18}
-    #game{display:block;width:100%;height:auto;aspect-ratio:14/17;touch-action:none;background-image:url("assets/wildwatch-v2-sheet.jpg?v=7");background-repeat:no-repeat;background-size:100% auto;background-position:center 15%;background-color:#16241b}
+    #game{display:block;width:100%;height:auto;aspect-ratio:14/17;touch-action:none;background-image:url("assets/wildwatch-cartoon-map.jpg?v=8");background-repeat:no-repeat;background-size:100% 100%;background-position:center;background-color:#16241b}
     .battle-ui{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0}
     .battle-deck{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
     .battle-card{position:relative;background:linear-gradient(180deg,#27302b,#101714);border:2px solid #6f756e;border-radius:12px;padding:7px 4px;text-align:center;min-height:78px;box-shadow:0 8px 16px #0007,inset 0 0 0 1px #ffffff12}
@@ -388,16 +388,14 @@ function draw(){
   ctx.fillStyle="#00000014";ctx.fillRect(0,0,W,H);
   ctx.textAlign="center";ctx.textBaseline="middle";
 
+  // Empty tower pads are already painted into the background image.
+  // Only occupied pads need an extra pedestal/shadow beneath the placed animal.
   pads.forEach((p,i)=>{
     const occupied=battle.towers?.some(t=>t.pad===i);
+    if(!occupied)return;
     ctx.save();
-    ctx.shadowColor="#000c";ctx.shadowBlur=14;ctx.shadowOffsetY=8;
-    ctx.beginPath();ctx.ellipse(p[0],p[1]+7,38,23,0,0,Math.PI*2);ctx.fillStyle="#0007";ctx.fill();
-    ctx.shadowColor="transparent";
-    ctx.beginPath();ctx.ellipse(p[0],p[1],36,27,0,0,Math.PI*2);
-    ctx.fillStyle=occupied?"#3f4741e8":"#8b8879d9";ctx.fill();
-    ctx.lineWidth=3;ctx.strokeStyle=occupied?"#222923":"#e4d8b7";ctx.stroke();
-    if(!occupied){ctx.fillStyle="#f7e9bc";ctx.font="bold 25px system-ui";ctx.fillText("+",p[0],p[1]-1)}
+    ctx.beginPath();ctx.ellipse(p[0],p[1]+12,31,14,0,0,Math.PI*2);
+    ctx.fillStyle="#0007";ctx.fill();
     ctx.restore();
   });
 
