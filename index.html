@@ -355,7 +355,7 @@ function resetBattle(){
   selectedCard=null; selectedTower=null; speed=1; speedBtn.textContent="⏩ Speed: 1×";
   updateHud(); last=performance.now(); loop(last);
 }
-function updateHud(){battleCoins.textContent=Math.floor(battle.coins); lives.textContent=battle.lives; wave.textContent=battle.wave;document.querySelectorAll(".battle-card").forEach(b=>b.classList.toggle("disabled",animals[b.dataset.key].cost>battle.coins))}
+function updateHud(){battleCoins.textContent=Math.floor(battle.coins); lives.textContent=battle.lives; wave.textContent=`${Math.min(battle.wave,15)}/15`;document.querySelectorAll(".battle-card").forEach(b=>b.classList.toggle("disabled",animals[b.dataset.key].cost>battle.coins))}
 function enemyForWave(){
   const w=battle.wave, r=Math.random();
   if(w>=7 && r<.12)return {type:"boss",emoji:"👹",hp:(170+w*18)*.8,speed:42,reward:16,size:22};
