@@ -457,8 +457,18 @@ function towerTick(t,dt){
   if(!target)return;
   const nearbyLion=battle.towers.some(o=>o.key==="lion"&&o!==t&&Math.hypot(o.x-t.x,o.y-t.y)<145);
   const dmg=a.dmg*(1+(t.level-1)*.35)*(nearbyLion?1.15:1);
-  battle.shots.push({x:t.x,y:t.y,tx:target.x,ty:target.y,life:t.key==="owl"?.34:t.key==="snake"?.28:.12,type:t.key==="owl"?"soundwave":t.key==="snake"?"poisonblob":"beam"});
-  if(a.splash){
+  battle.shots.push({x:t.x,y:t.y,tx:target.x,ty:target.y,life:t.key==="owl"?.34:t.key==="snake"?.28:t.key==="monkey"?.32:.12,type:t.key==="owl"?"soundwave":t.key==="snake"?"poisonblob":t.key==="monkey"?"banana":"beam"});
+  if(t.key==="monkey"){
+    const victims=battle.enemies
+      .filter(e=>!e.dead&&Math.hypot(e.x-target.x,e.y-target.y)<=72)
+      .sort((x,y)=>Math.hypot(x.x-target.x,x.y-target.y)-Math.hypot(y.x-target.x,y.y-target.y))
+      .slice(0,3);
+    if(!victims.includes(target))victims.unshift(target);
+    victims.slice(0,3).forEach((e,i)=>{
+      e.hp-=i===0?dmg:dmg*.75;
+      if(e.hp<=0)killEnemy(e);
+    });
+  }else if(a.splash){
     battle.enemies.forEach(e=>{if(!e.dead&&Math.hypot(e.x-target.x,e.y-target.y)<a.splash){e.hp-=dmg*.8;if(e.hp<=0)killEnemy(e)}})
   }else{target.hp-=dmg;if(target.hp<=0)killEnemy(target)}
   if(a.poison){
@@ -614,6 +624,17 @@ function draw(){
       ctx.beginPath();ctx.arc(x,y,9,0,Math.PI*2);ctx.fill();
       ctx.fillStyle="rgba(225,170,255,.9)";
       ctx.beginPath();ctx.arc(x-3,y-3,3,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    }else if(s.type==="banana"){
+      const p=1-Math.max(0,s.life)/.32;
+      const x=s.x+(s.tx-s.x)*p;
+      const y=(s.y-12)+(s.ty-(s.y-12))*p-24*Math.sin(Math.PI*p);
+      ctx.save();
+      ctx.translate(x,y);
+      ctx.rotate(p*Math.PI*4);
+      ctx.font="24px 'Apple Color Emoji','Segoe UI Emoji',sans-serif";
+      ctx.textAlign="center";ctx.textBaseline="middle";
+      ctx.fillText("🍌",0,0);
       ctx.restore();
     }else{
       ctx.save();ctx.shadowColor="#fff";ctx.shadowBlur=12;ctx.strokeStyle="#fff";ctx.lineWidth=3;
