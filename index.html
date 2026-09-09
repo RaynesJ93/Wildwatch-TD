@@ -276,7 +276,7 @@ const spriteSrc={
   rat:[0,256,128,128], raccoon:[128,256,128,128], boar:[256,256,128,128], boss:[384,256,128,128]
 };
 // Enemy route aligned to the visible forest road on the V2 battlefield crop.\nconst path=[[-45,190],[75,205],[170,245],[265,300],[350,365],[425,445],[500,525],[575,600],[650,670],[720,745],[760,825],[795,910],[850,1010]];
-const pads=[[300,365],[570,520],[170,560],[245,710],[445,690],[610,720],[255,845],[520,865],[675,650],[710,930],[385,535],[135,790]];
+const pads=[[369,216],[158,307],[569,287],[381,407],[114,474],[587,527],[384,600],[767,636],[94,681],[252,793],[599,724],[489,878]];
 let battle={}, selectedCard=null, selectedTower=null, raf=0, last=performance.now(), speed=1;
 
 function resetBattle(){
@@ -304,7 +304,14 @@ startWave.onclick=()=>{
 speedBtn.onclick=()=>{speed=speed===1?2:1;speedBtn.textContent=`⏩ Speed: ${speed}×`};
 quitBtn.onclick=()=>{showScreen("homeScreen");cancelAnimationFrame(raf)};
 
-function padAt(x,y){return pads.findIndex(p=>Math.hypot(p[0]-x,p[1]-y)<35)}
+function padAt(x,y){
+  let best=-1,bestDist=Infinity;
+  pads.forEach((p,i)=>{
+    const d=Math.hypot(p[0]-x,p[1]-y);
+    if(d<bestDist){bestDist=d;best=i}
+  });
+  return bestDist<72?best:-1;
+}
 canvas.addEventListener("pointerdown",ev=>{
   if(battle.ended)return;
   const r=canvas.getBoundingClientRect(), x=(ev.clientX-r.left)*W/r.width,y=(ev.clientY-r.top)*H/r.height;
