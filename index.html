@@ -249,7 +249,7 @@ function showScreen(id){
   document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen===id));
   if(id==="battleScreen" && !battle.started) resetBattle();
 }
-playBtn.onclick=()=>{clearBattleState();showScreen("battleScreen");};
+playBtn.onclick=()=>{clearBattleState();showScreen("battleScreen");resetBattle();};
 continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));if(!loadBattleState())resetBattle();};
 
 openPackBtn.onclick=()=>{
@@ -298,11 +298,22 @@ function spawnEnemy(){
 }
 startWave.onclick=()=>{
   if(battle.ended){resetBattle();return}
+  if(!battle.started){resetBattle();}
   if(battle.waveActive){message.textContent="A wave is already running.";return}
-  battle.waveActive=true;battle.spawning=true;battle.spawnLeft=6+battle.wave*2;battle.spawnTimer=0;startWave.textContent="Wave running…";message.textContent=`Wave ${battle.wave} incoming!`;
+  battle.waveActive=true;
+  battle.spawning=true;
+  battle.spawnLeft=6+battle.wave*2;
+  battle.spawnTimer=0;
+  // Spawn the first enemy immediately so the wave visibly starts on tap.
+  spawnEnemy();
+  battle.spawnLeft--;
+  battle.spawnTimer=Math.max(.28,.78-battle.wave*.025);
+  startWave.textContent="Wave running…";
+  message.textContent=`Wave ${battle.wave} incoming!`;
+  if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}
 };
 speedBtn.onclick=()=>{speed=speed===1?2:1;speedBtn.textContent=`⏩ Speed: ${speed}×`};
-quitBtn.onclick=()=>{showScreen("homeScreen");cancelAnimationFrame(raf)};
+quitBtn.onclick=()=>{showScreen("homeScreen");cancelAnimationFrame(raf);raf=0;};
 
 function padAt(x,y){
   let best=-1,bestDist=Infinity;
@@ -458,7 +469,13 @@ function draw(){
 let lastAutoSave=0;
 function loop(now){
   const raw=Math.min(.04,(now-last)/1000);last=now;const dt=raw*speed;
-  if(battle.started){update(dt);draw();if(!battle.ended&&now-lastAutoSave>2000){saveBattleState();lastAutoSave=now}raf=requestAnimationFrame(loop)}
+  if(battle.started){
+    update(dt);draw();
+    if(!battle.ended&&now-lastAutoSave>2000){saveBattleState();lastAutoSave=now}
+    raf=requestAnimationFrame(loop);
+  }else{
+    raf=0;
+  }
 }
 renderMeta();
 continueBtn.style.display=localStorage.getItem("wildwatchBattleSave")?"inline-block":"none";
