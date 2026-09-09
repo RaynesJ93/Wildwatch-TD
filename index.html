@@ -545,14 +545,14 @@ canvas.addEventListener("pointerdown",ev=>{
   message.textContent=`${a.name} placed!`;updateHud();
 });
 function openTowerModal(){
-  const t=selectedTower,a=animals[t.key], up=Math.floor(a.cost*.7*t.level);
+  const t=selectedTower,a=animals[t.key], up=Math.floor(a.cost*.595*t.level);
   towerName.textContent=`${a.name} • Level ${t.level}`;
   towerInfo.textContent=`Damage ${Math.round(towerDamage(t))} • Range ${Math.round(a.range*(1+(t.level-1)*.06))} • Upgrade cost ${up}`;
   upgradeTower.textContent=`Upgrade • 🪙 ${up}`; towerModal.classList.add("show");
 }
 closeTower.onclick=()=>{towerModal.classList.remove("show");selectedTower=null;};
 upgradeTower.onclick=()=>{
-  if(!selectedTower)return; const a=animals[selectedTower.key], cost=Math.floor(a.cost*.7*selectedTower.level);
+  if(!selectedTower)return; const a=animals[selectedTower.key], cost=Math.floor(a.cost*.595*selectedTower.level);
   if(battle.coins<cost){alert("Not enough battle coins.");return}
   battle.coins-=cost;selectedTower.spent+=cost;selectedTower.level++;updateHud();openTowerModal();
 };
