@@ -658,7 +658,7 @@ function towerTick(t,dt){
     battle.puddles=battle.puddles||[];
     battle.puddles.push({
       id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,7),
-      x:target.x,y:target.y,life:6,maxLife:6,radius:46,damage:15
+      x:target.x,y:target.y,life:4,maxLife:4,radius:46,damage:15
     });
   }
   t.cd=a.rate;
