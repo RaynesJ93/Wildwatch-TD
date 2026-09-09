@@ -243,7 +243,7 @@ function renderMeta(){
 }
 function levelCheck(){
   let need=100+save.level*35;
-  while(save.xp>=need){save.xp-=need;save.level++;save.metaCoins+=75;need=100+save.level*35;}
+  while(save.xp>=need){save.xp-=need;save.level++;save.metaCoins+=150;need=100+save.level*35;}
 }
 function renderDecks(){
   const draw=(el)=>{el.innerHTML=""; for(let i=0;i<4;i++){const k=save.deck[i], d=document.createElement("div");d.className="deckslot";d.innerHTML=k?`<div>${animalVisual(k)}${animals[k].name}</div>`:"Empty";el.appendChild(d)}}
@@ -572,7 +572,7 @@ function towerTick(t,dt){
   t.cd=a.rate;
 }
 function gameOver(){
-  battle.ended=true;clearBattleState();save.bestWave=Math.max(save.bestWave,battle.wave);save.metaCoins+=Math.max(5,battle.wave*3);save.xp+=battle.wave*8;levelCheck();persist();
+  battle.ended=true;clearBattleState();save.bestWave=Math.max(save.bestWave,battle.wave);save.metaCoins+=Math.max(10,battle.wave*6);save.xp+=battle.wave*8;levelCheck();persist();
   message.textContent=`Defeat! You reached wave ${battle.wave}. Tap Start wave to restart.`;startWave.textContent="Restart";
 }
 function finishWave(){
@@ -580,15 +580,15 @@ function finishWave(){
   battle.waveActive=false;
   save.bestWave=Math.max(save.bestWave,clearedWave);
   save.xp+=12+clearedWave*3;
-  save.metaCoins+=10;
-  if(clearedWave%3===0)save.metaCoins+=25;
+  save.metaCoins+=20;
+  if(clearedWave%3===0)save.metaCoins+=50;
   if(clearedWave>=15){
-    save.metaCoins+=100;
+    save.metaCoins+=200;
     if(currentMap<10)save.forestPinesUnlocked=Math.max(save.forestPinesUnlocked||1,currentMap+1);
     levelCheck();persist();clearBattleState();
     battle.ended=true;
     startWave.textContent="Map complete!";
-    message.textContent=`🏆 Forest Pines ${currentMap}/10 complete! ${currentMap<10?"Map "+(currentMap+1)+" unlocked!":"Forest Pines series complete!"} • 🟡 100 bonus Coins!`;
+    message.textContent=`🏆 Forest Pines ${currentMap}/10 complete! ${currentMap<10?"Map "+(currentMap+1)+" unlocked!":"Forest Pines series complete!"} • 🟡 200 bonus Coins!`;
     updateHud();
     return;
   }
