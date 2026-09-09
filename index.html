@@ -174,7 +174,7 @@ const spritePos={
 };
 function animalVisual(k, cls="mini-portrait"){
   const a=animals[k];
-  return a ? `<span class="animal animal-emoji ${cls}" style="background-image:none;display:flex;align-items:center;justify-content:center;font-size:${cls==="reward-portrait"?"68px":cls==="animal-portrait"?"48px":"30px"}">${a.emoji}</span>` : "";
+  return a ? `<span class="animal-emoji ${cls}" style="background-image:none!important;display:flex!important;align-items:center;justify-content:center;font-family:'Apple Color Emoji','Segoe UI Emoji',sans-serif;font-size:${cls==="reward-portrait"?"68px":cls==="animal-portrait"?"48px":"30px"};line-height:1">${a.emoji}</span>` : "";
 }
 
 const defaults = {
