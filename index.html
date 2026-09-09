@@ -216,6 +216,14 @@ save.shards={...defaults.shards,...save.shards};
 save.cardLevels={...defaults.cardLevels,...save.cardLevels};
 save.damageUpgrades={...defaults.damageUpgrades,...save.damageUpgrades};
 function cardBaseDamage(k){const a=animals[k];return a.dmg*(1+(save.damageUpgrades[k]||0)*.075);}
+function towerDamage(t){
+  const base=cardBaseDamage(t.key);
+  if(t.level>=10){
+    const level9Damage=base*(1+8*.35);
+    return level9Damage*1.30;
+  }
+  return base*(1+(t.level-1)*.35);
+}
 function persist(){localStorage.setItem("wildwatchSave",JSON.stringify(save)); renderMeta();}
 function saveBattleState(){
   if(!battle?.started || battle.ended)return;
@@ -491,7 +499,7 @@ canvas.addEventListener("pointerdown",ev=>{
 function openTowerModal(){
   const t=selectedTower,a=animals[t.key], up=Math.floor(a.cost*.7*t.level);
   towerName.textContent=`${a.name} • Level ${t.level}`;
-  towerInfo.textContent=`Damage ${Math.round(cardBaseDamage(t.key)*(1+(t.level-1)*.35))} • Range ${Math.round(a.range*(1+(t.level-1)*.06))} • Upgrade cost ${up}`;
+  towerInfo.textContent=`Damage ${Math.round(towerDamage(t))} • Range ${Math.round(a.range*(1+(t.level-1)*.06))} • Upgrade cost ${up}`;
   upgradeTower.textContent=`Upgrade • 🪙 ${up}`; towerModal.classList.add("show");
 }
 closeTower.onclick=()=>{towerModal.classList.remove("show");selectedTower=null;};
@@ -532,7 +540,7 @@ function towerTick(t,dt){
   battle.enemies.forEach(e=>{if(e.dead)return;const d=Math.hypot(e.x-t.x,e.y-t.y);if(d<=range){const prog=e.seg+(1-d/1000);if(prog>best){best=prog;target=e}}});
   if(!target)return;
   const nearbyLion=battle.towers.some(o=>o.key==="lion"&&o!==t&&Math.hypot(o.x-t.x,o.y-t.y)<145);
-  const dmg=cardBaseDamage(t.key)*(1+(t.level-1)*.35)*(nearbyLion?1.15:1);
+  const dmg=towerDamage(t)*(nearbyLion?1.15:1);
   battle.shots.push({x:t.x,y:t.y,tx:target.x,ty:target.y,life:t.key==="owl"?.34:t.key==="snake"?.28:t.key==="monkey"?.32:t.key==="frog"?.20:t.key==="silverback"?.42:t.key==="penguin"?.24:t.key==="jaguar"?.22:.12,type:t.key==="owl"?"soundwave":t.key==="snake"?"poisonblob":t.key==="monkey"?"banana":t.key==="frog"?"tongue":t.key==="silverback"?"quake":t.key==="penguin"?"ice":t.key==="jaguar"?"claw":"beam"});
   if(t.key==="silverback"){
     target.hp-=dmg;
