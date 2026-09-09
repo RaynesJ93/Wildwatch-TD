@@ -572,6 +572,10 @@ function moveEnemy(e,dt){
   }
   if(e.slowTimer>0)e.slowTimer-=dt;
   if(e.hp<=0){killEnemy(e);return}
+  if((e.freezeTimer||0)>0){
+    e.freezeTimer=Math.max(0,e.freezeTimer-dt);
+    return;
+  }
   let mult=e.slowTimer>0?.55:1, dist=e.speed*mult*dt;
   while(dist>0 && e.seg<path.length-1){
     const [tx,ty]=path[e.seg+1], dx=tx-e.x,dy=ty-e.y,len=Math.hypot(dx,dy); if(len>0){e.dirX=dx/len;e.dirY=dy/len;e.walkPhase=(e.walkPhase||0)+dt*e.speed*.16;}
