@@ -735,6 +735,25 @@ function draw(){
       ctx.font="48px serif";ctx.fillText(a.emoji,t.x,t.y-10);
     }
     ctx.fillStyle="#f6e6ad";ctx.font="bold 12px system-ui";ctx.fillText("Lv "+t.level,t.x,t.y+38);
+    if(t.level>=10){
+      const now=performance.now()/1000;
+      ctx.save();
+      for(let i=0;i<8;i++){
+        const a=i*Math.PI/4+now*.9;
+        const pulse=36+4*Math.sin(now*3+i);
+        const sx=t.x+Math.cos(a)*pulse, sy=t.y-8+Math.sin(a)*pulse*.72;
+        const s=3+1.5*Math.sin(now*5+i*1.7);
+        ctx.translate(sx,sy);
+        ctx.rotate(a+now);
+        ctx.fillStyle=i%2?"#fff6b0":"#ffffff";
+        ctx.shadowColor="#ffe477";ctx.shadowBlur=10;
+        ctx.beginPath();
+        ctx.moveTo(0,-s*1.8);ctx.lineTo(s*.65,-s*.65);ctx.lineTo(s*1.8,0);ctx.lineTo(s*.65,s*.65);
+        ctx.lineTo(0,s*1.8);ctx.lineTo(-s*.65,s*.65);ctx.lineTo(-s*1.8,0);ctx.lineTo(-s*.65,-s*.65);ctx.closePath();ctx.fill();
+        ctx.setTransform(1,0,0,1,0,0);
+      }
+      ctx.restore();
+    }
     ctx.restore();
   });
 
