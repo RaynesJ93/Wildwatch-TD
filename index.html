@@ -494,7 +494,7 @@ function openTowerModal(){
   towerInfo.textContent=`Damage ${Math.round(cardBaseDamage(t.key)*(1+(t.level-1)*.35))} • Range ${Math.round(a.range*(1+(t.level-1)*.06))} • Upgrade cost ${up}`;
   upgradeTower.textContent=`Upgrade • 🪙 ${up}`; towerModal.classList.add("show");
 }
-closeTower.onclick=()=>towerModal.classList.remove("show");
+closeTower.onclick=()=>{towerModal.classList.remove("show");selectedTower=null;};
 upgradeTower.onclick=()=>{
   if(!selectedTower)return; const a=animals[selectedTower.key], cost=Math.floor(a.cost*.7*selectedTower.level);
   if(battle.coins<cost){alert("Not enough battle coins.");return}
@@ -705,7 +705,7 @@ function draw(){
 
   battle.towers?.forEach(t=>{
     const a=animals[t.key];
-    if(selectedCard===t.key){
+    if(selectedTower===t){
       ctx.beginPath();ctx.arc(t.x,t.y,a.range*(1+(t.level-1)*.06),0,Math.PI*2);
       ctx.strokeStyle="#ffd65a66";ctx.lineWidth=3;ctx.stroke();
     }
