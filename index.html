@@ -56,6 +56,9 @@
     .sheet h2{margin-top:0}.reward{font-size:70px;text-align:center}.center{text-align:center}
     .progress{height:10px;background:#09160f;border-radius:999px;overflow:hidden}.progress i{display:block;height:100%;background:var(--gold)}
     .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.info-box{background:#11291f;border:1px solid #315b47;border-radius:15px;padding:12px}
+    details.questDrop summary::-webkit-details-marker{display:none}
+    details.questDrop .dropArrow{transition:transform .18s ease;font-size:12px}
+    details.questDrop[open] .dropArrow{transform:rotate(180deg)}
   
     #startWave{flex:0 0 150px;min-width:150px;height:58px;padding:8px 10px;white-space:nowrap;font-family:"Trebuchet MS","Arial Rounded MT Bold",system-ui,sans-serif;font-size:16px;line-height:1;font-weight:900;text-align:center;letter-spacing:.2px}
     @media(max-width:430px){#startWave{flex-basis:142px;min-width:142px;font-size:15px}}
@@ -1519,11 +1522,12 @@ const CHALLENGE_QUESTS=[
  {icon:'⏩',name:'Full Speed Ahead',text:'Clear 5 waves at 3× speed',reward:75}
 ];
 function questPlaceholderCards(items){return items.map(q=>`<div class="info-box"><div style="display:flex;justify-content:space-between;gap:8px"><b>${q.icon} ${q.name}</b><b>🟡 ${q.reward}</b></div><div class="small" style="margin-top:6px">${q.text}</div><div class="small" style="margin-top:9px;opacity:.8">Ready for tracking rules</div></div>`).join('')}
+function questDropdownCards(items){return items.map((q,i)=>`<details class="info-box questDrop" ${i===0?'open':''}><summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900"><span>${q.icon} ${q.name}</span><span style="display:flex;align-items:center;gap:8px"><span>🟡 ${q.reward}</span><span class="dropArrow">▼</span></span></summary><div style="border-top:1px solid #315b47;margin-top:10px;padding-top:10px"><div class="small">${q.text}</div><div class="small" style="margin-top:9px;opacity:.8">Ready for tracking rules</div></div></details>`).join('')}
 function renderExtraQuestBoards(){
  const w=document.getElementById('weeklyQuestList'),m=document.getElementById('milestoneQuestList'),c=document.getElementById('challengeQuestList');
  if(w)w.innerHTML=questPlaceholderCards(WEEKLY_QUESTS);
- if(m)m.innerHTML=questPlaceholderCards(MILESTONE_QUESTS);
- if(c)c.innerHTML=questPlaceholderCards(CHALLENGE_QUESTS);
+ if(m)m.innerHTML=questDropdownCards(MILESTONE_QUESTS);
+ if(c)c.innerHTML=questDropdownCards(CHALLENGE_QUESTS);
 }
 function setQuestTab(tab){
  const ids={daily:'dailyQuestList',weekly:'weeklyQuestList',milestones:'milestoneQuestList',challenges:'challengeQuestList'};
