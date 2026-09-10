@@ -969,15 +969,14 @@ function finishWave(){
   battle.waveActive=false;
   save.bestWave=Math.max(save.bestWave,clearedWave);
   save.xp+=Math.round((12+clearedWave*3)*(hardMode?1.5:1));
-  save.metaCoins+=hardMode?30:20;
-  if(clearedWave%3===0)save.metaCoins+=hardMode?75:50;
+  // Permanent coin economy: exactly 7 Coins for every cleared wave.
+  save.metaCoins+=7;
   if(autoWave && clearedWave<15 && !battle.ended){
     clearTimeout(autoWaveTimer);
     autoWaveTimer=setTimeout(()=>{if(autoWave && !battle.waveActive && !battle.ended)startWave.click();},900);
   }
   if(clearedWave>=15){
     const cardXp=awardUsedCardXp(true);
-    save.metaCoins+=hardMode?175:100;
     if(hardMode)save.hardCompleted[`${currentSeries}-${currentMap}`]=true;
     else save.normalCompleted[`${currentSeries}-${currentMap}`]=true;
     if(currentSeries===1){
