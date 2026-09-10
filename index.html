@@ -667,7 +667,7 @@ startWave.onclick=()=>{
   message.textContent=`Wave ${battle.wave} incoming!`;
   if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}
 };
-speedBtn.onclick=()=>{speed=speed===1?2:1;speedBtn.textContent=`⏩ Speed: ${speed}×`};
+speedBtn.onclick=()=>{speed=speed===1?2:speed===2?3:1;speedBtn.textContent=`⏩ Speed: ${speed}×`};
 quitBtn.onclick=()=>{showScreen("homeScreen");cancelAnimationFrame(raf);raf=0;};
 
 function pointToSegmentDistance(px,py,a,b){
