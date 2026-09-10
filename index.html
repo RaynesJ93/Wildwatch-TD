@@ -1511,8 +1511,8 @@ setTimeout(()=>{
 const WEEKLY_QUESTS=[
  {id:'weeklyWaves150',icon:'🌊',name:'Wave Marathon',text:'Complete 150 waves',goal:150,reward:300,type:'weeklyWaves'},
  {id:'weeklyCoins2500',icon:'🪙',name:'Coin Collector',text:'Collect 2,500 coins',goal:2500,reward:350,type:'weeklyCoins'},
- {id:'weeklyCommon50',icon:'⚪',name:'Common Commander',text:'Place 50 Common towers',goal:50,reward:200,type:'weeklyCommonPlaced'},
- {id:'weeklyLegendary15',icon:'🌟',name:'Legendary Force',text:'Place 15 Legendary towers',goal:15,reward:400,type:'weeklyLegendaryPlaced'},
+ {id:'weeklyCommon50',icon:'⚪',name:'Common Commander',text:'Place 50 Common towers',goal:50,reward:200,rewardType:'tierExp',rewardTier:'Common',type:'weeklyCommonPlaced'},
+ {id:'weeklyLegendary15',icon:'🌟',name:'Legendary Force',text:'Place 15 Legendary towers',goal:15,reward:400,rewardType:'tierExp',rewardTier:'Legendary',type:'weeklyLegendaryPlaced'},
  {id:'weeklyLevels5',icon:'⬆️',name:'Level Climber',text:'Gain 5 player levels',goal:5,reward:500,type:'weeklyLevels'}
 ];
 const MILESTONE_QUESTS=[
@@ -1559,7 +1559,7 @@ function sortQuestItems(items,mode){
 function questDropdownCards(items,mode='not-completed'){
  const sorted=sortQuestItems(items,mode);
  if(!sorted.length)return `<div class="info-box center small">No quests in this category yet.</div>`;
- return sorted.map((q,i)=>{const st=questState(q),claimed=!!save.milestoneClaims?.[q.id];const status=claimed?'✓ Reward claimed':st.completed?'✓ Completed':st.progress>0?`${st.progress}/${st.goal}`:'Not started';const claim=q.id==='commonAll'&&st.completed?`<button class="primary milestoneClaimBtn" data-id="${q.id}" style="width:100%;margin-top:10px" ${claimed?'disabled':''}>${claimed?'✓ 500 EXP given to every Common card':'Claim ⭐ 500 EXP for every Common card'}</button>`:'';return `<details class="info-box questDrop" ${i===0?'open':''}><summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900"><span>${q.icon} ${q.name}</span><span style="display:flex;align-items:center;gap:8px"><span>${q.rewardType==='exp'?'⭐':'🟡'} ${q.reward}${q.rewardType==='exp'?' EXP each':''}</span><span class="dropArrow">▼</span></span></summary><div style="border-top:1px solid #315b47;margin-top:10px;padding-top:10px"><div class="small">${q.text}</div><div class="progress" style="margin-top:9px"><i style="width:${Math.round(st.ratio*100)}%"></i></div><div class="small" style="margin-top:7px">${status}</div>${claim}</div></details>`}).join('')
+ return sorted.map((q,i)=>{const st=questState(q),claimed=!!save.milestoneClaims?.[q.id];const status=claimed?'✓ Reward claimed':st.completed?'✓ Completed':st.progress>0?`${st.progress}/${st.goal}`:'Not started';const claim=q.id==='commonAll'&&st.completed?`<button class="primary milestoneClaimBtn" data-id="${q.id}" style="width:100%;margin-top:10px" ${claimed?'disabled':''}>${claimed?'✓ 500 EXP given to every Common card':'Claim ⭐ 500 EXP for every Common card'}</button>`:'';return `<details class="info-box questDrop" ${i===0?'open':''}><summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900"><span>${q.icon} ${q.name}</span><span style="display:flex;align-items:center;gap:8px"><span>${q.rewardType==='exp'||q.rewardType==='tierExp'?'⭐':'🟡'} ${q.reward}${q.rewardType==='exp'?' EXP each':q.rewardType==='tierExp'?` EXP to every ${q.rewardTier} card`:''}</span><span class="dropArrow">▼</span></span></summary><div style="border-top:1px solid #315b47;margin-top:10px;padding-top:10px"><div class="small">${q.text}</div><div class="progress" style="margin-top:9px"><i style="width:${Math.round(st.ratio*100)}%"></i></div><div class="small" style="margin-top:7px">${status}</div>${claim}</div></details>`}).join('')
 }
 function bindMilestoneClaimButtons(){
  document.querySelectorAll('.milestoneClaimBtn').forEach(btn=>btn.onclick=()=>{
