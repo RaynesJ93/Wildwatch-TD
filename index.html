@@ -1517,7 +1517,7 @@ const MILESTONE_QUESTS=[
  {id:'common3',icon:'⚪',name:'Common Collector I',text:'Collect 3 Common cards',reward:25,type:'commonOwned',goal:3},
  {id:'common7',icon:'⚪',name:'Common Collector II',text:'Collect 7 Common cards',reward:50,type:'commonOwned',goal:7},
  {id:'common14',icon:'⚪',name:'Common Collector III',text:'Collect 14 Common cards',reward:100,type:'commonOwned',goal:14},
- {id:'commonAll',icon:'🏆',name:'Common Collector IV',text:'Collect all Common cards',reward:200,type:'commonOwned',goal:'allCommon'},
+ {id:'commonAll',icon:'🏆',name:'Common Collector IV',text:'Collect all Common cards',reward:500,rewardType:'exp',type:'commonOwned',goal:'allCommon'},
  {id:'uncommon3',icon:'🟢',name:'Uncommon Collector I',text:'Collect 3 Uncommon cards',reward:30,type:'uncommonOwned',goal:3},
  {id:'uncommon7',icon:'🟢',name:'Uncommon Collector II',text:'Collect 7 Uncommon cards',reward:60,type:'uncommonOwned',goal:7},
  {id:'uncommon14',icon:'🟢',name:'Uncommon Collector III',text:'Collect 14 Uncommon cards',reward:125,type:'uncommonOwned',goal:14},
@@ -1557,7 +1557,7 @@ function sortQuestItems(items,mode){
 function questDropdownCards(items,mode='not-completed'){
  const sorted=sortQuestItems(items,mode);
  if(!sorted.length)return `<div class="info-box center small">No quests in this category yet.</div>`;
- return sorted.map((q,i)=>{const st=questState(q);const status=st.completed?'✓ Completed':st.progress>0?`${st.progress}/${st.goal}`:'Not started';return `<details class="info-box questDrop" ${i===0?'open':''}><summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900"><span>${q.icon} ${q.name}</span><span style="display:flex;align-items:center;gap:8px"><span>🟡 ${q.reward}</span><span class="dropArrow">▼</span></span></summary><div style="border-top:1px solid #315b47;margin-top:10px;padding-top:10px"><div class="small">${q.text}</div><div class="progress" style="margin-top:9px"><i style="width:${Math.round(st.ratio*100)}%"></i></div><div class="small" style="margin-top:7px">${status}</div></div></details>`}).join('')
+ return sorted.map((q,i)=>{const st=questState(q);const status=st.completed?'✓ Completed':st.progress>0?`${st.progress}/${st.goal}`:'Not started';return `<details class="info-box questDrop" ${i===0?'open':''}><summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900"><span>${q.icon} ${q.name}</span><span style="display:flex;align-items:center;gap:8px"><span>${q.rewardType==='exp'?'⭐':'🟡'} ${q.reward}${q.rewardType==='exp'?' EXP':''}</span><span class="dropArrow">▼</span></span></summary><div style="border-top:1px solid #315b47;margin-top:10px;padding-top:10px"><div class="small">${q.text}</div><div class="progress" style="margin-top:9px"><i style="width:${Math.round(st.ratio*100)}%"></i></div><div class="small" style="margin-top:7px">${status}</div></div></details>`}).join('')
 }
 function renderExtraQuestBoards(){
  const w=document.getElementById('weeklyQuestList'),m=document.getElementById('milestoneQuestList'),c=document.getElementById('challengeQuestList');
