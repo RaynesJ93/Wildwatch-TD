@@ -710,8 +710,12 @@ canvas.addEventListener("pointerdown",ev=>{
 function openTowerModal(){
   const t=selectedTower,a=animals[t.key], up=Math.floor(a.cost*.595*t.level);
   towerName.textContent=`${a.name} • Level ${t.level}`;
-  towerInfo.textContent=`Damage ${Math.round(towerDamage(t))} • Range ${Math.round(cardBaseRange(t.key)*(1+(t.level-1)*.06))} • Upgrade cost ${up}`;
-  upgradeTower.textContent=`Upgrade • 🥩 ${up}`; towerModal.classList.add("show");
+  const cash=Math.floor(battle.coins);
+  towerInfo.textContent=`Damage ${Math.round(towerDamage(t))} • Range ${Math.round(cardBaseRange(t.key)*(1+(t.level-1)*.06))} • Upgrade cost 🥩 ${up} • You have 🥩 ${cash}`;
+  upgradeTower.textContent=`Upgrade • 🥩 ${up}`;
+  upgradeTower.disabled=cash<up;
+  upgradeTower.style.opacity=cash<up?".55":"1";
+  towerModal.classList.add("show");
 }
 closeTower.onclick=()=>{towerModal.classList.remove("show");selectedTower=null;};
 upgradeTower.onclick=()=>{
