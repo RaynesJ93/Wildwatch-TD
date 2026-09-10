@@ -128,6 +128,10 @@
 #packsScreen .legendaryPack .simplePackArt b,#packsScreen .legendaryPack .simplePackArt small{color:#402800;text-shadow:none}
 #packsScreen .simplePackPrice{font-weight:1000;color:#e53935}
 
+
+#packsScreen .commonPack .simplePackArt{background:linear-gradient(145deg,#ffffff,#d7d7d7 58%,#f4f4f4);border-color:#ffffff}
+#packsScreen .commonPack .simplePackArt b,#packsScreen .commonPack .simplePackArt small{color:#242424;text-shadow:none}
+
 </style>
 </head>
 <body>
@@ -220,7 +224,7 @@
       <p>Earn Coins by completing waves. Spend those permanent Coins on card packs to collect animal cards. Every pack contains 1 card from its matching rarity. Battle currency is separate and is only used for towers.</p>
       <div style="height:14px"></div>
       <div style="display:grid;gap:12px">
-        <button class="primary chestBtn packArtBtn" data-chest="common"><img src="assets/common-pack.jpg" alt="Common Pack artwork" class="packArtwork"><span>⚪ Common Pack • 🟡 250 Coins</span></button>
+        <button class="primary chestBtn simplePackBtn commonPack" data-chest="common"><span class="simplePackArt"><span class="simplePaw">🐾</span><b>COMMON</b><small>PACK</small></span><span class="simplePackPrice">🟡 250 Coins</span></button>
         <button class="primary chestBtn simplePackBtn uncommonPack" data-chest="uncommon"><span class="simplePackArt"><span class="simplePaw">🐾</span><b>UNCOMMON</b><small>PACK</small></span><span class="simplePackPrice">🟡 500 Coins</span></button>
         <button class="primary chestBtn simplePackBtn rarePack" data-chest="epic"><span class="simplePackArt"><span class="simplePaw">🐾</span><b>RARE</b><small>PACK</small></span><span class="simplePackPrice">🟡 750 Coins</span></button>
         <button class="primary chestBtn simplePackBtn legendaryPack" data-chest="legendary"><span class="simplePackArt"><span class="simplePaw">🐾</span><b>LEGENDARY</b><small>PACK</small></span><span class="simplePackPrice">🟡 1500 Coins</span></button>
