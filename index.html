@@ -573,74 +573,32 @@ function weightedAnimal(pool,weights){
 }
 document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   const cfg=chestConfig[btn.dataset.chest];
-  if(save.metaCoins<cfg.cost){alert(`You need ${cfg.cost} Coins for this chest. Earn more by completing waves.`);return}
+  if(save.metaCoins<cfg.cost){alert(`You need ${cfg.cost} Coins for this chest. Earn more by completing levels.`);return}
   save.metaCoins-=cfg.cost;
   const chestTier={common:"Common",uncommon:"Uncommon",epic:"Rare",legendary:"Legendary"}[btn.dataset.chest];
   const allowedPool=Object.keys(animals).filter(k=>animals[k].rarity===chestTier);
   const locked=allowedPool.filter(k=>!save.unlocked.includes(k));
-  let key=null,fresh=false,shardDrop=false,shardAmount=0;
-  const roll=Math.random();
-  const chestType=btn.dataset.chest;
-  const shardChance={common:1,uncommon:1,epic:1,legendary:1}[chestType]||.50;
-  const shardRanges={common:[1,3],uncommon:[1,1],epic:[1,3],legendary:[1,4]};
-  const pityShard=(save.noShardChests||0)>=3;
-
-  // 1/30 jackpot chance for a complete locked card.
-  if(locked.length && roll<(1/30)){
-    key=weightedAnimal(locked,cfg.rarities);
-    save.unlocked.push(key);fresh=true;
-    save.noShardChests=(save.noShardChests||0)+1;
-  }else if(chestType==="common" || chestType==="uncommon" || pityShard || Math.random()<shardChance){
-    // Shard rewards favour locked cards 80% of the time when locked cards are available.
-    let shardPool;
-    if(locked.length && Math.random()<.80) shardPool=locked;
-    else shardPool=allowedPool;
-    key=weightedAnimal(shardPool,cfg.rarities);
-    const range=shardRanges[chestType]||[1,3];
-    if(chestType==="uncommon"){
-      // Uncommon Chest: guaranteed 1 shard, with a 1/3 chance to award 2-4 instead.
-      shardAmount=Math.random()<(1/3) ? 2+Math.floor(Math.random()*3) : 1;
-    }else if(chestType==="epic"){
-      // Rare Chest: always award a random 1-4 shards.
-      shardAmount=1+Math.floor(Math.random()*4);
-    }else if(chestType==="legendary"){
-      // Legendary Chest: always award a random 1-3 shards.
-      shardAmount=1+Math.floor(Math.random()*3);
-    }else{
-      shardAmount=range[0]+Math.floor(Math.random()*(range[1]-range[0]+1));
-    }
-    save.shards[key]=(save.shards[key]||0)+shardAmount;
-    shardDrop=true;
-    save.noShardChests=0;
-
-    // Shard requirement depends on rarity: Common 5, Uncommon 10, Rare/Legendary 20.
-    const shardNeed=shardRequirement(animals[key]);
-    if(!save.unlocked.includes(key) && save.shards[key]>=shardNeed){
-      save.shards[key]-=shardNeed;
-      save.unlocked.push(key);
-      fresh=true;
-    }
+  if(!allowedPool.length){save.metaCoins+=cfg.cost;alert(`No ${chestTier} cards are available in this chest yet.`);return}
+  // Every chest guarantees a complete card. Prefer a card the player has not unlocked yet.
+  const pool=locked.length?locked:allowedPool;
+  const key=pool[Math.floor(Math.random()*pool.length)];
+  const a=animals[key];
+  const fresh=!save.unlocked.includes(key);
+  if(fresh){
+    save.unlocked.push(key);
+    save.levels[key]=save.levels[key]||1;
+    save.cardXP[key]=save.cardXP[key]||0;
   }else{
-    save.noShardChests=(save.noShardChests||0)+1;
+    // Once every card in the tier is owned, duplicate pulls still count as a card and add one shard.
+    save.shards[key]=(save.shards[key]||0)+1;
   }
-
-  if(key){
-    const a=animals[key];
-    packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent=a.emoji;
-    if(fresh){
-      packTitle.textContent=`${a.rarity==="Legendary"?"🌟 LEGENDARY • ":a.rarity==="Rare"?"💎 RARE • ":a.rarity==="Uncommon"?"🟩 UNCOMMON • ":a.rarity==="Common"?"⚪ COMMON • ":""}New ${a.name}!`;
-      packDesc.textContent=shardDrop?`You reached ${shardRequirement(a)} ${a.name} shards and unlocked the card!`:`Complete ${a.rarity} card pulled from a ${cfg.name}! (1/30 drop)`;
-    }else{
-      packTitle.textContent=`${a.rarity==="Legendary"?"🌟 LEGENDARY • ":a.rarity==="Rare"?"💎 RARE • ":a.rarity==="Uncommon"?"🟩 UNCOMMON • ":a.rarity==="Common"?"⚪ COMMON • ":""}${a.name} shards!`;
-      packDesc.textContent=`You found ${shardAmount} ${a.name} shard${shardAmount===1?"":"s"}. ${save.shards[key]}/${shardRequirement(a)} collected.`;
-    }
-  }else{
-    const refund=Math.floor(cfg.cost*.35);
-    save.metaCoins+=refund;
-    packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent="🪙";
-    packTitle.textContent="35% Coins Back!";
-    packDesc.textContent=`No card or shards this time, so you received ${refund} Coins back from your ${cfg.name}.`;
-  }
+  packEmoji.className="reward";
+  packEmoji.style.backgroundImage="none";
+  packEmoji.style.backgroundPosition="";
+  packEmoji.textContent=a.emoji;
+  const rarityLabel=a.rarity==="Legendary"?"🌟 LEGENDARY • ":a.rarity==="Rare"?"💎 RARE • ":a.rarity==="Uncommon"?"🟩 UNCOMMON • ":"⚪ COMMON • ";
+  packTitle.textContent=`${rarityLabel}${fresh?"New ":""}${a.name}!`;
+  packDesc.textContent=fresh?`Guaranteed ${a.rarity} card from your ${cfg.name}!`:`Guaranteed ${a.rarity} card from your ${cfg.name}! Duplicate converted to 1 ${a.name} shard.`;
   packModal.classList.add("show");persist();renderCards();renderHome();
 });
 closePack.onclick=()=>packModal.classList.remove("show");
@@ -1016,7 +974,7 @@ function finishWave(){
   }
   if(clearedWave>=15){
     const cardXp=awardUsedCardXp(true);
-    save.metaCoins+=hardMode?300:200;
+    save.metaCoins+=hardMode?175:100;
     if(hardMode)save.hardCompleted[`${currentSeries}-${currentMap}`]=true;
     else save.normalCompleted[`${currentSeries}-${currentMap}`]=true;
     if(currentSeries===1){
