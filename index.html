@@ -304,9 +304,9 @@ continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.class
 
 const chestConfig={
   common:{name:"Common Chest",cost:250,rarities:{Common:.65,Rare:.27,Epic:.07,Legendary:.01}},
-  uncommon:{name:"Uncommon Chest",cost:450,rarities:{Common:.30,Rare:.48,Epic:.19,Legendary:.03}},
-  epic:{name:"Rare Chest",cost:1050,rarities:{Common:.08,Rare:.32,Epic:.50,Legendary:.10},exclusive:["rhino","lion"]},
-  legendary:{name:"Legendary Chest",cost:2000,rarities:{Common:.02,Uncommon:.08,Rare:.20,Epic:.30,Legendary:.40},legendary:true}
+  uncommon:{name:"Uncommon Chest",cost:500,rarities:{Common:.30,Rare:.48,Epic:.19,Legendary:.03}},
+  epic:{name:"Rare Chest",cost:750,rarities:{Common:.08,Rare:.32,Epic:.50,Legendary:.10},exclusive:["rhino","lion"]},
+  legendary:{name:"Legendary Chest",cost:1500,rarities:{Common:.02,Uncommon:.08,Rare:.20,Epic:.30,Legendary:.40},legendary:true}
 };
 function weightedAnimal(pool,weights){
   const weighted=pool.map(k=>({k,w:weights[animals[k].rarity]||0})).filter(x=>x.w>0);
