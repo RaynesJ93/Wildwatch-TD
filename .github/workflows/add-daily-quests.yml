@@ -17,3 +17,4 @@ jobs:
           git add index.html
           git commit -m "Add 3-quest daily board"
           git push
+# retry after installer fix
