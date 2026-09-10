@@ -220,10 +220,23 @@ let save;
 try { save={...defaults,...JSON.parse(localStorage.getItem("wildwatchSave")||"{}")}; } catch { save={...defaults}; }
 save.shards={...defaults.shards,...save.shards};
 save.cardLevels={...defaults.cardLevels,...save.cardLevels};
-save.damageUpgrades={...defaults.damageUpgrades,...save.damageUpgrades};
+Object.keys(animals).forEach(k=>{if(save.cardLevels[k]==null)save.cardLevels[k]=1;if(save.shards[k]==null)save.shards[k]=0;});
+// Preserve previous +7.5% damage-upgrade progress by converting each old upgrade into one card level.
+if(save.damageUpgrades){
+  Object.keys(save.cardLevels).forEach(k=>{
+    const oldUps=save.damageUpgrades[k]||0;
+    if(oldUps>0)save.cardLevels[k]=Math.max(save.cardLevels[k]||1,1+oldUps);
+  });
+}
+delete save.damageUpgrades;
 save.hardCompleted={...defaults.hardCompleted,...(save.hardCompleted||{})};
 let hardMode=save.battleDifficulty==="hard";
-function cardBaseDamage(k){const a=animals[k];return a.dmg*(1+(save.damageUpgrades[k]||0)*.075);}
+const MAX_CARD_LEVEL=20;
+function cardLevel(k){return Math.max(1,Math.min(MAX_CARD_LEVEL,save.cardLevels[k]||1));}
+function cardLevelCost(k){const lvl=cardLevel(k);return lvl>=MAX_CARD_LEVEL?0:3+lvl*2;}
+function cardBaseDamage(k){const a=animals[k];return a.dmg*(1+(cardLevel(k)-1)*.05);}
+function cardBaseRange(k){const a=animals[k];return a.range*(1+Math.floor((cardLevel(k)-1)/5)*.025);}
+function cardRate(k){const a=animals[k];return a.rate*Math.pow(.98,Math.floor((cardLevel(k)-1)/5));}
 function towerDamage(t){
   const base=cardBaseDamage(t.key);
   if(t.level>=10){
@@ -276,19 +289,22 @@ function renderCollection(){
   collectionCards.innerHTML="";
   Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).forEach(([k,a])=>{
     const unlocked=save.unlocked.includes(k), d=document.createElement("div"); d.className="card "+(!unlocked?"locked":"")+(save.deck.includes(k)?" selected":"");
-    const shardNeed=shardRequirement(a), dmgNow=cardBaseDamage(k), dmgUps=save.damageUpgrades[k]||0;
-    d.innerHTML=`<span class="rarity">${a.rarity==="Legendary"?"🌟 LEGENDARY":a.rarity==="Epic"?"🟣 EPIC":a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${animalVisual(k,"animal-portrait")}<h3>${a.name}</h3><div class="small">${unlocked?a.desc:`🔒 Locked • Collect ${shardNeed} shards to unlock. 🧩 ${save.shards[k]||0}/${shardNeed}`}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${Math.round(dmgNow*10)/10}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div><button class="secondary damageUpgradeBtn" style="width:100%;margin-top:8px;padding:8px;font-size:11px" data-key="${k}">⚔️ Damage +7.5% • 🧩 5</button><div class="small" style="margin-top:4px">Damage upgrades: ${dmgUps}</div>`:`<div class="statrow"><span>🔒 Not unlocked</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span></div>`}`;
+    const shardNeed=shardRequirement(a), lvl=cardLevel(k), lvlCost=cardLevelCost(k), dmgNow=cardBaseDamage(k), rangeNow=cardBaseRange(k), maxed=lvl>=MAX_CARD_LEVEL;
+    d.innerHTML=`<span class="rarity">${a.rarity==="Legendary"?"🌟 LEGENDARY":a.rarity==="Epic"?"🟣 EPIC":a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${animalVisual(k,"animal-portrait")}<h3>${a.name}</h3><div class="small">${unlocked?a.desc:`🔒 Locked • Collect ${shardNeed} shards to unlock. 🧩 ${save.shards[k]||0}/${shardNeed}`}</div>${unlocked?`<div class="statrow"><span>⭐ Card Lv ${lvl}/${MAX_CARD_LEVEL}</span><span>⚔️ ${Math.round(dmgNow*10)/10}</span><span>🎯 ${Math.round(rangeNow*10)/10}</span><span>🧩 ${save.shards[k]||0}</span></div><button class="secondary cardLevelBtn" style="width:100%;margin-top:8px;padding:8px;font-size:11px" data-key="${k}" ${maxed?'disabled':''}>${maxed?'⭐ MAX LEVEL':`⬆️ Level Up • 🧩 ${lvlCost}`}</button><div class="small" style="margin-top:4px">Each card level gives +5% base damage. Levels 5, 10, 15 and 20 also improve range and attack speed.</div>`:`<div class="statrow"><span>🔒 Not unlocked</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span></div>`}`;
     if(unlocked)d.onclick=()=>toggleDeck(k);
     collectionCards.appendChild(d);
-    const upgradeBtn=d.querySelector(".damageUpgradeBtn");
-    if(upgradeBtn)upgradeBtn.onclick=ev=>{ev.stopPropagation();upgradeCardDamage(k)};
+    const levelBtn=d.querySelector(".cardLevelBtn");
+    if(levelBtn)levelBtn.onclick=ev=>{ev.stopPropagation();levelUpCard(k)};
   });
 }
-function upgradeCardDamage(k){
+function levelUpCard(k){
   if(!save.unlocked.includes(k))return;
-  if((save.shards[k]||0)<5){alert("You need 5 duplicate shards to upgrade attack damage.");return}
-  save.shards[k]-=5;
-  save.damageUpgrades[k]=(save.damageUpgrades[k]||0)+1;
+  const lvl=cardLevel(k);
+  if(lvl>=MAX_CARD_LEVEL){alert("This card is already max level.");return}
+  const cost=cardLevelCost(k);
+  if((save.shards[k]||0)<cost){alert(`You need ${cost} duplicate shards to level up ${animals[k].name}.`);return}
+  save.shards[k]-=cost;
+  save.cardLevels[k]=lvl+1;
   persist();
 }
 function toggleDeck(k){
@@ -593,7 +609,7 @@ canvas.addEventListener("pointerdown",ev=>{
 function openTowerModal(){
   const t=selectedTower,a=animals[t.key], up=Math.floor(a.cost*.595*t.level);
   towerName.textContent=`${a.name} • Level ${t.level}`;
-  towerInfo.textContent=`Damage ${Math.round(towerDamage(t))} • Range ${Math.round(a.range*(1+(t.level-1)*.06))} • Upgrade cost ${up}`;
+  towerInfo.textContent=`Damage ${Math.round(towerDamage(t))} • Range ${Math.round(cardBaseRange(t.key)*(1+(t.level-1)*.06))} • Upgrade cost ${up}`;
   upgradeTower.textContent=`Upgrade • 🪙 ${up}`; towerModal.classList.add("show");
 }
 closeTower.onclick=()=>{towerModal.classList.remove("show");selectedTower=null;};
@@ -633,7 +649,7 @@ function moveEnemy(e,dt){
 function killEnemy(e){if(e.dead)return;e.dead=true;battle.coins+=e.reward;updateHud()}
 function towerTick(t,dt){
   t.cd-=dt;if(t.cd>0)return;
-  const a=animals[t.key], range=a.range*(1+(t.level-1)*.06);
+  const a=animals[t.key], range=cardBaseRange(t.key)*(1+(t.level-1)*.06);
   let target=null,best=-1;
   battle.enemies.forEach(e=>{if(e.dead)return;const d=Math.hypot(e.x-t.x,e.y-t.y);if(d<=range){const prog=e.seg+(1-d/1000);if(prog>best){best=prog;target=e}}});
   if(!target)return;
@@ -736,7 +752,7 @@ function towerTick(t,dt){
       x:target.x,y:target.y,life:4,maxLife:4,radius:46,damage:15
     });
   }
-  t.cd=a.rate;
+  t.cd=cardRate(t.key);
 }
 function gameOver(){
   battle.ended=true;clearBattleState();save.bestWave=Math.max(save.bestWave,battle.wave);save.metaCoins+=Math.max(10,battle.wave*6);save.xp+=battle.wave*8;levelCheck();persist();
