@@ -1,0 +1,82 @@
+from pathlib import Path
+p=Path('index.html')
+s=p.read_text()
+marker='''  elephant:{name:"Elephant", emoji:"🐘", rarity:"Rare", cost:120, range:140, rate:.70, dmg:25, color:'''
+pos=s.find(marker)
+if pos<0: raise SystemExit('elephant marker not found')
+end=s.find('\n};',pos)
+if end<0: raise SystemExit('animals end not found')
+entries='''
+  mouse:{name:"Mouse",emoji:"🐭",rarity:"Common",cost:45,range:125,rate:1/1.45,dmg:7,color:"#aaa",desc:"Quick basic attacker."},
+  hamster:{name:"Hamster",emoji:"🐹",rarity:"Common",cost:48,range:120,rate:1/1.35,dmg:8,color:"#c99b62",desc:"Quick basic attacker."},
+  rabbit:{name:"Rabbit",emoji:"🐰",rarity:"Common",cost:52,range:145,rate:1/1.30,dmg:9,color:"#ddd",desc:"Fast basic attacker."},
+  squirrel:{name:"Squirrel",emoji:"🐿️",rarity:"Common",cost:58,range:175,rate:1/1.25,dmg:10,color:"#a66b3d",desc:"Fast ranged attacker."},
+  hedgehog:{name:"Hedgehog",emoji:"🦔",rarity:"Common",cost:60,range:135,rate:1,dmg:13,color:"#76543b",desc:"Solid basic attacker."},
+  chicken:{name:"Chicken",emoji:"🐔",rarity:"Common",cost:52,range:150,rate:1/1.20,dmg:9,color:"#eee",desc:"Fast basic attacker."},
+  bird:{name:"Bird",emoji:"🐦",rarity:"Common",cost:55,range:190,rate:1/1.30,dmg:8,color:"#58a",desc:"Longer-range basic attacker."},
+  duck:{name:"Duck",emoji:"🦆",rarity:"Common",cost:58,range:160,rate:1/1.10,dmg:11,color:"#6b8e45",desc:"Balanced basic attacker."},
+  goose:{name:"Goose",emoji:"🪿",rarity:"Common",cost:62,range:155,rate:1/.95,dmg:14,color:"#ddd",desc:"Strong basic attacker."},
+  crow:{name:"Crow",emoji:"🐦‍⬛",rarity:"Common",cost:62,range:195,rate:1/1.15,dmg:12,color:"#222",desc:"Long-range basic attacker."},
+  parrot:{name:"Parrot",emoji:"🦜",rarity:"Common",cost:64,range:205,rate:1/1.20,dmg:11,color:"#e44",desc:"Long-range basic attacker."},
+  penguin:{name:"Penguin",emoji:"🐧",rarity:"Common",cost:65,range:150,rate:1/.90,dmg:15,color:"#eee",desc:"Heavy basic attacker."},
+  snail:{name:"Snail",emoji:"🐌",rarity:"Common",cost:55,range:110,rate:1/.55,dmg:18,color:"#a87",desc:"Slow but heavy basic attacker."},
+  caterpillar:{name:"Caterpillar",emoji:"🐛",rarity:"Common",cost:40,range:120,rate:1/1.20,dmg:6,color:"#7c5",desc:"Cheap basic attacker."},
+  ant:{name:"Ant",emoji:"🐜",rarity:"Common",cost:38,range:105,rate:1/1.60,dmg:5,color:"#633",desc:"Very fast basic attacker."},
+  beetle:{name:"Beetle",emoji:"🪲",rarity:"Common",cost:52,range:115,rate:1/1.05,dmg:12,color:"#385",desc:"Close-range basic attacker."},
+  cricket:{name:"Cricket",emoji:"🦗",rarity:"Common",cost:48,range:145,rate:1/1.45,dmg:8,color:"#697",desc:"Very fast basic attacker."},
+  worm:{name:"Worm",emoji:"🪱",rarity:"Common",cost:42,range:110,rate:1/1.30,dmg:7,color:"#b87",desc:"Cheap fast attacker."},
+  butterfly:{name:"Butterfly",emoji:"🦋",rarity:"Common",cost:48,range:180,rate:1/1.40,dmg:6,color:"#a6e",desc:"Fast long-range attacker."},
+  bee:{name:"Bee",emoji:"🐝",rarity:"Common",cost:55,range:165,rate:1/1.55,dmg:9,color:"#fc3",desc:"Very fast basic attacker."},
+  cat:{name:"Cat",emoji:"🐱",rarity:"Uncommon",cost:75,range:170,rate:1/1.30,dmg:17,color:"#d99",desc:"Fast balanced attacker."},
+  dog:{name:"Dog",emoji:"🐶",rarity:"Uncommon",cost:80,range:165,rate:1/1.20,dmg:19,color:"#b87",desc:"Balanced attacker."},
+  raccoon:{name:"Raccoon",emoji:"🦝",rarity:"Uncommon",cost:82,range:180,rate:1/1.15,dmg:20,color:"#888",desc:"Balanced ranged attacker."},
+  skunk:{name:"Skunk",emoji:"🦨",rarity:"Uncommon",cost:82,range:155,rate:1,dmg:21,color:"#eee",desc:"Solid mid-range attacker."},
+  badger:{name:"Badger",emoji:"🦡",rarity:"Uncommon",cost:88,range:140,rate:1/.85,dmg:26,color:"#777",desc:"Hard-hitting close attacker."},
+  otter:{name:"Otter",emoji:"🦦",rarity:"Uncommon",cost:82,range:190,rate:1/1.25,dmg:18,color:"#986",desc:"Fast ranged attacker."},
+  sloth:{name:"Sloth",emoji:"🦥",rarity:"Uncommon",cost:92,range:150,rate:1/.60,dmg:34,color:"#876",desc:"Slow heavy attacker."},
+  koala:{name:"Koala",emoji:"🐨",rarity:"Uncommon",cost:85,range:175,rate:1/.95,dmg:22,color:"#aaa",desc:"Balanced attacker."},
+  goat:{name:"Goat",emoji:"🐐",rarity:"Uncommon",cost:88,range:160,rate:1/.90,dmg:25,color:"#ddd",desc:"Strong attacker."},
+  sheep:{name:"Sheep",emoji:"🐑",rarity:"Uncommon",cost:82,range:155,rate:1,dmg:21,color:"#eee",desc:"Balanced attacker."},
+  ram:{name:"Ram",emoji:"🐏",rarity:"Uncommon",cost:92,range:145,rate:1/.80,dmg:29,color:"#aaa",desc:"Heavy close attacker."},
+  pig:{name:"Pig",emoji:"🐖",rarity:"Uncommon",cost:90,range:150,rate:1/.85,dmg:27,color:"#eaa",desc:"Heavy attacker."},
+  turkey:{name:"Turkey",emoji:"🦃",rarity:"Uncommon",cost:80,range:185,rate:1/1.15,dmg:18,color:"#963",desc:"Fast ranged attacker."},
+  flamingo:{name:"Flamingo",emoji:"🦩",rarity:"Uncommon",cost:82,range:220,rate:1/1.05,dmg:17,color:"#f8a",desc:"Long-range attacker."},
+  peacock:{name:"Peacock",emoji:"🦚",rarity:"Uncommon",cost:86,range:210,rate:1,dmg:20,color:"#38a",desc:"Long-range attacker."},
+  swan:{name:"Swan",emoji:"🦢",rarity:"Uncommon",cost:88,range:195,rate:1,dmg:23,color:"#eee",desc:"Strong ranged attacker."},
+  turtle:{name:"Turtle",emoji:"🐢",rarity:"Uncommon",cost:92,range:130,rate:1/.65,dmg:32,color:"#587",desc:"Slow heavy attacker."},
+  lizard:{name:"Lizard",emoji:"🦎",rarity:"Uncommon",cost:80,range:175,rate:1/1.35,dmg:18,color:"#5a6",desc:"Fast attacker."},
+  scorpion:{name:"Scorpion",emoji:"🦂",rarity:"Uncommon",cost:90,range:160,rate:1/1.10,dmg:25,color:"#a65",desc:"Strong quick attacker."},
+  spider:{name:"Spider",emoji:"🕷️",rarity:"Uncommon",cost:80,range:170,rate:1/1.50,dmg:16,color:"#654",desc:"Very fast attacker."},
+  crab:{name:"Crab",emoji:"🦀",rarity:"Uncommon",cost:92,range:140,rate:1/.85,dmg:28,color:"#d54",desc:"Heavy close attacker."},
+  lobster:{name:"Lobster",emoji:"🦞",rarity:"Uncommon",cost:96,range:145,rate:1/.75,dmg:31,color:"#d43",desc:"Heavy close attacker."},
+  wolf:{name:"Wolf",emoji:"🐺",rarity:"Rare",cost:115,range:185,rate:1/1.25,dmg:34,color:"#888",desc:"Fast powerful attacker."},
+  boar:{name:"Boar",emoji:"🐗",rarity:"Rare",cost:125,range:155,rate:1/.90,dmg:42,color:"#754",desc:"Hard-hitting attacker."},
+  deer:{name:"Deer",emoji:"🦌",rarity:"Rare",cost:110,range:215,rate:1/1.20,dmg:28,color:"#a76",desc:"Fast long-range attacker."},
+  bison:{name:"Bison",emoji:"🦬",rarity:"Rare",cost:135,range:150,rate:1/.70,dmg:50,color:"#654",desc:"Heavy attacker."},
+  buffalo:{name:"Buffalo",emoji:"🐃",rarity:"Rare",cost:132,range:155,rate:1/.75,dmg:47,color:"#654",desc:"Heavy attacker."},
+  ox:{name:"Ox",emoji:"🐂",rarity:"Rare",cost:138,range:145,rate:1/.65,dmg:52,color:"#875",desc:"Very heavy attacker."},
+  cow:{name:"Cow",emoji:"🐄",rarity:"Rare",cost:120,range:160,rate:1/.80,dmg:39,color:"#eee",desc:"Strong attacker."},
+  horse:{name:"Horse",emoji:"🐎",rarity:"Rare",cost:115,range:205,rate:1/1.15,dmg:32,color:"#986",desc:"Fast ranged attacker."},
+  kangaroo:{name:"Kangaroo",emoji:"🦘",rarity:"Rare",cost:125,range:190,rate:1/1.05,dmg:38,color:"#b86",desc:"Strong ranged attacker."},
+  gorilla:{name:"Gorilla",emoji:"🦍",rarity:"Rare",cost:145,range:160,rate:1/.70,dmg:55,color:"#555",desc:"Very heavy attacker."},
+  orangutan:{name:"Orangutan",emoji:"🦧",rarity:"Rare",cost:132,range:180,rate:1/.85,dmg:43,color:"#b63",desc:"Powerful attacker."},
+  crocodile:{name:"Crocodile",emoji:"🐊",rarity:"Rare",cost:150,range:135,rate:1/.60,dmg:60,color:"#586",desc:"Massive close-range damage."},
+  seal:{name:"Seal",emoji:"🦭",rarity:"Rare",cost:120,range:205,rate:1,dmg:35,color:"#999",desc:"Strong ranged attacker."},
+  octopus:{name:"Octopus",emoji:"🐙",rarity:"Rare",cost:130,range:195,rate:1/1.10,dmg:40,color:"#b58",desc:"Strong quick attacker."},
+  squid:{name:"Squid",emoji:"🦑",rarity:"Rare",cost:130,range:215,rate:1/1.05,dmg:38,color:"#b79",desc:"Long-range attacker."},
+  shark:{name:"Shark",emoji:"🦈",rarity:"Rare",cost:155,range:150,rate:1/.65,dmg:64,color:"#789",desc:"Devastating attacker."},
+  tiger:{name:"Tiger",emoji:"🐯",rarity:"Legendary",cost:175,range:185,rate:1/1.10,dmg:70,color:"#e83",desc:"Elite fast attacker."},
+  leopard:{name:"Leopard",emoji:"🐆",rarity:"Legendary",cost:170,range:200,rate:1/1.30,dmg:61,color:"#d95",desc:"Extremely fast elite attacker."},
+  bear:{name:"Bear",emoji:"🐻",rarity:"Legendary",cost:190,range:165,rate:1/.75,dmg:82,color:"#754",desc:"Massive damage attacker."},
+  polarBear:{name:"Polar Bear",emoji:"🐻‍❄️",rarity:"Legendary",cost:195,range:160,rate:1/.70,dmg:88,color:"#eef",desc:"Massive damage attacker."},
+  hippo:{name:"Hippo",emoji:"🦛",rarity:"Legendary",cost:210,range:145,rate:1/.55,dmg:100,color:"#879",desc:"Extremely heavy attacker."},
+  giraffe:{name:"Giraffe",emoji:"🦒",rarity:"Legendary",cost:175,range:275,rate:1/.85,dmg:55,color:"#db7",desc:"Exceptional range attacker."},
+  zebra:{name:"Zebra",emoji:"🦓",rarity:"Legendary",cost:175,range:215,rate:1/1.05,dmg:58,color:"#eee",desc:"Fast long-range attacker."},
+  whale:{name:"Whale",emoji:"🐋",rarity:"Legendary",cost:220,range:175,rate:1/.50,dmg:110,color:"#58a",desc:"Enormous slow damage."},
+  trex:{name:"T-Rex",emoji:"🦖",rarity:"Legendary",cost:240,range:160,rate:1/.45,dmg:125,color:"#596",desc:"Highest raw damage, very slow."},
+  sauropod:{name:"Sauropod",emoji:"🦕",rarity:"Legendary",cost:220,range:225,rate:1/.55,dmg:95,color:"#5a9",desc:"Huge long-range damage."},'''
+# ensure previous final animal gets comma, then insert
+s=s[:end].rstrip()
+if not s.endswith(','): s+=','
+s+='\n'+entries.rstrip(',')+'\n'+Path('index.html').read_text()[end:]
+p.write_text(s)
