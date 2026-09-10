@@ -555,7 +555,9 @@ function renderMeta(){
 }
 function levelCheck(){
   let need=100+save.level*35;
-  while(save.xp>=need){save.xp-=need;save.level++;save.metaCoins+=150;need=100+save.level*35;}
+  let gainedLevels=0;
+  while(save.xp>=need){save.xp-=need;save.level++;save.metaCoins+=150;gainedLevels++;need=100+save.level*35;}
+  if(gainedLevels>0)addWeeklyProgress("weeklyLevels",gainedLevels);
 }
 function renderDecks(){
   const draw=(el)=>{el.innerHTML=""; for(let i=0;i<4;i++){const k=save.deck[i], d=document.createElement("div");d.className="deckslot";d.innerHTML=k?`<div>${animalVisual(k)}${animals[k].name}</div>`:"Empty";el.appendChild(d)}}
