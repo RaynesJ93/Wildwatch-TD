@@ -113,6 +113,21 @@
 #packsScreen .packArtBtn[data-chest="common"]{height:auto;min-height:0;padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px;background:linear-gradient(135deg,#fff,#d7d7d7 55%,#fff);color:#c62828}
 #packsScreen .packArtwork{display:block;width:min(180px,48vw);height:auto;aspect-ratio:2/3;object-fit:cover;border-radius:9px;box-shadow:0 5px 14px rgba(0,0,0,.3)}
 #packsScreen .packArtBtn span{font-weight:900;color:#c62828}
+
+/* Simple rarity pack assets */
+#packsScreen .simplePackBtn{height:auto;min-height:0;padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px}
+#packsScreen .simplePackArt{width:min(180px,48vw);aspect-ratio:2/3;border-radius:10px;border:2px solid rgba(255,255,255,.55);box-shadow:inset 0 0 18px rgba(255,255,255,.2),0 5px 14px rgba(0,0,0,.3);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+#packsScreen .simplePackArt:before,#packsScreen .simplePackArt:after{content:"";position:absolute;left:0;right:0;height:11px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.55) 0 6px,rgba(0,0,0,.14) 6px 11px)}
+#packsScreen .simplePackArt:before{top:0}#packsScreen .simplePackArt:after{bottom:0}
+#packsScreen .simplePaw{font-size:42px;filter:grayscale(1);margin-bottom:12px}
+#packsScreen .simplePackArt b{font-size:20px;letter-spacing:1px;color:#fff;text-shadow:0 2px 3px #0008}
+#packsScreen .simplePackArt small{font-size:12px;letter-spacing:3px;color:#fff;font-weight:900;margin-top:5px;text-shadow:0 2px 3px #0008}
+#packsScreen .uncommonPack .simplePackArt{background:linear-gradient(145deg,#45df6b,#08752b 58%,#20b84b)}
+#packsScreen .rarePack .simplePackArt{background:linear-gradient(145deg,#55adff,#0754b8 58%,#2389ed)}
+#packsScreen .legendaryPack .simplePackArt{background:linear-gradient(145deg,#ffe879,#b87800 58%,#f4c32d);border-color:#fff0a0}
+#packsScreen .legendaryPack .simplePackArt b,#packsScreen .legendaryPack .simplePackArt small{color:#402800;text-shadow:none}
+#packsScreen .simplePackPrice{font-weight:1000;color:#e53935}
+
 </style>
 </head>
 <body>
@@ -206,9 +221,9 @@
       <div style="height:14px"></div>
       <div style="display:grid;gap:12px">
         <button class="primary chestBtn packArtBtn" data-chest="common"><img src="assets/common-pack.jpg" alt="Common Pack artwork" class="packArtwork"><span>⚪ Common Pack • 🟡 250 Coins</span></button>
-        <button class="primary chestBtn" data-chest="uncommon">🟢 Uncommon Pack • 🟡 500 Coins</button>
-        <button class="primary chestBtn" data-chest="epic">🔵 Rare Pack • 🟡 750 Coins</button>
-        <button class="primary chestBtn" data-chest="legendary">🟡 Legendary Pack • 🟡 1500 Coins</button>
+        <button class="primary chestBtn simplePackBtn uncommonPack" data-chest="uncommon"><span class="simplePackArt"><span class="simplePaw">🐾</span><b>UNCOMMON</b><small>PACK</small></span><span class="simplePackPrice">🟡 500 Coins</span></button>
+        <button class="primary chestBtn simplePackBtn rarePack" data-chest="epic"><span class="simplePackArt"><span class="simplePaw">🐾</span><b>RARE</b><small>PACK</small></span><span class="simplePackPrice">🟡 750 Coins</span></button>
+        <button class="primary chestBtn simplePackBtn legendaryPack" data-chest="legendary"><span class="simplePackArt"><span class="simplePaw">🐾</span><b>LEGENDARY</b><small>PACK</small></span><span class="simplePackPrice">🟡 1500 Coins</span></button>
       </div>
     </div>
     <div class="section-title">Next player level</div>
