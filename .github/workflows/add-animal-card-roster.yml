@@ -1,6 +1,9 @@
 name: Expand animal cards
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/run-rewards-update.txt'
 permissions:
   contents: write
 jobs:
