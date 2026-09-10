@@ -1850,8 +1850,23 @@ function bindMilestoneClaimButtons(){
  });
 }
 function weekKey(){const d=new Date(),x=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));x.setUTCDate(x.getUTCDate()+4-(x.getUTCDay()||7));const y=new Date(Date.UTC(x.getUTCFullYear(),0,1));return x.getUTCFullYear()+"-W"+String(Math.ceil((((x-y)/86400000)+1)/7)).padStart(2,"0")}
-function ensureWeeklyQuests(){const k=weekKey();if(!save.weeklyQuests||save.weeklyQuests.week!==k)save.weeklyQuests={week:k,progress:{},claimed:{}}}
-function addWeeklyProgress(type,n=1){ensureWeeklyQuests();save.weeklyQuests.progress[type]=(save.weeklyQuests.progress[type]||0)+n;persist();renderExtraQuestBoards()}
+function ensureWeeklyQuests(){
+ const k=weekKey();
+ if(!save.weeklyQuests||save.weeklyQuests.week!==k)save.weeklyQuests={week:k,progress:{},claimed:{}};
+ // Repair/migrate older weekly save formats so progress cannot fail silently.
+ save.weeklyQuests.progress=save.weeklyQuests.progress&&typeof save.weeklyQuests.progress==="object"?save.weeklyQuests.progress:{};
+ save.weeklyQuests.claimed=save.weeklyQuests.claimed&&typeof save.weeklyQuests.claimed==="object"?save.weeklyQuests.claimed:{};
+ ["weeklyWaves","weeklyCoins","weeklyCommonPlaced","weeklyLegendaryPlaced","weeklyLevels"].forEach(t=>{
+   if(save.weeklyQuests.progress[t]==null && Number.isFinite(Number(save[t])))save.weeklyQuests.progress[t]=Number(save[t]);
+ });
+}
+function addWeeklyProgress(type,n=1){
+ ensureWeeklyQuests();
+ const amount=Number(n)||0;
+ save.weeklyQuests.progress[type]=Math.max(0,Number(save.weeklyQuests.progress[type]||0)+amount);
+ persist();
+ renderExtraQuestBoards();
+}
 function renderExtraQuestBoards(){
  const w=document.getElementById('weeklyQuestList'),m=document.getElementById('milestoneQuestList'),c=document.getElementById('challengeQuestList');
  if(w)w.innerHTML=questDropdownCards(WEEKLY_QUESTS,'progress');
