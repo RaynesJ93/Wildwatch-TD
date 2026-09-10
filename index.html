@@ -182,7 +182,8 @@ const animals = {
   fox:{name:"Fox", emoji:"🦊", rarity:"Common", cost:60, range:120, rate:.55, dmg:12, color:"#d97832", desc:"Quick and dependable common attacker with fast attack speed."},
   silverback:{name:"Silverback Gorilla", emoji:"🦍", rarity:"Legendary", legendaryOnly:true, cost:185, range:140, rate:1.45, dmg:55, quakeDamage:27, color:"#777b80", desc:"Slow legendary powerhouse. Slams the ground to create an earthquake that can hit up to 5 enemies."},
   penguin:{name:"Penguin", emoji:"🐧", rarity:"Common", cost:65, range:115, rate:.8, dmg:16, freezeChance:(1/3), color:"#bfeaff", desc:"Common ice attacker. Each attack has a 1 in 3 chance to freeze an enemy completely for 3 seconds."},
-  jaguar:{name:"Jaguar", emoji:"🐆", rarity:"Rare", cost:85, range:135, rate:.48, dmg:19, color:"#d99a35", desc:"Rare fast attacker that tears into enemies with rapid claw swipes."}
+  jaguar:{name:"Jaguar", emoji:"🐆", rarity:"Rare", cost:85, range:135, rate:.48, dmg:19, color:"#d99a35", desc:"Rare fast attacker that tears into enemies with rapid claw swipes."},
+  elephant:{name:"Elephant", emoji:"🐘", rarity:"Epic", cost:120, range:140, rate:.70, dmg:25, color:"#708da3", desc:"Epic water attacker that sprays a continuous stream from its trunk."}
 };
 const rarityOrder={Common:1,Rare:2,Epic:3,Legendary:4};
 function shardRequirement(a){return a.rarity==="Common"?5:a.rarity==="Uncommon"?10:a.rarity==="Rare"?15:a.rarity==="Legendary"?20:20;}
@@ -272,7 +273,7 @@ function renderCollection(){
   Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).forEach(([k,a])=>{
     const unlocked=save.unlocked.includes(k), d=document.createElement("div"); d.className="card "+(!unlocked?"locked":"")+(save.deck.includes(k)?" selected":"");
     const shardNeed=shardRequirement(a), dmgNow=cardBaseDamage(k), dmgUps=save.damageUpgrades[k]||0;
-    d.innerHTML=`<span class="rarity">${a.rarity==="Legendary"?"🌟 LEGENDARY":a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${animalVisual(k,"animal-portrait")}<h3>${a.name}</h3><div class="small">${unlocked?a.desc:`🔒 Locked • Collect ${shardNeed} shards to unlock. 🧩 ${save.shards[k]||0}/${shardNeed}`}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${Math.round(dmgNow*10)/10}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div><button class="secondary damageUpgradeBtn" style="width:100%;margin-top:8px;padding:8px;font-size:11px" data-key="${k}">⚔️ Damage +7.5% • 🧩 5</button><div class="small" style="margin-top:4px">Damage upgrades: ${dmgUps}</div>`:`<div class="statrow"><span>🔒 Not unlocked</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span></div>`}`;
+    d.innerHTML=`<span class="rarity">${a.rarity==="Legendary"?"🌟 LEGENDARY":a.rarity==="Epic"?"🟣 EPIC":a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${animalVisual(k,"animal-portrait")}<h3>${a.name}</h3><div class="small">${unlocked?a.desc:`🔒 Locked • Collect ${shardNeed} shards to unlock. 🧩 ${save.shards[k]||0}/${shardNeed}`}</div>${unlocked?`<div class="statrow"><span>Lvl ${save.cardLevels[k]}</span><span>⚔️ ${Math.round(dmgNow*10)/10}</span><span>🎯 ${a.range}</span><span>🧩 ${save.shards[k]||0}</span></div><button class="secondary damageUpgradeBtn" style="width:100%;margin-top:8px;padding:8px;font-size:11px" data-key="${k}">⚔️ Damage +7.5% • 🧩 5</button><div class="small" style="margin-top:4px">Damage upgrades: ${dmgUps}</div>`:`<div class="statrow"><span>🔒 Not unlocked</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span></div>`}`;
     if(unlocked)d.onclick=()=>toggleDeck(k);
     collectionCards.appendChild(d);
     const upgradeBtn=d.querySelector(".damageUpgradeBtn");
@@ -320,6 +321,7 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   save.metaCoins-=cfg.cost;
   const exclusiveRare=["rhino","lion"];
   const allowedPool=Object.keys(animals).filter(k=>{
+    if(k==="elephant") return btn.dataset.chest==="epic";
     if(k==="whiteRhino" || k==="silverback") return btn.dataset.chest==="legendary";
     if(btn.dataset.chest==="legendary") return true;
     if(exclusiveRare.includes(k)) return btn.dataset.chest==="epic";
@@ -613,7 +615,7 @@ function towerTick(t,dt){
   if(!target)return;
   const nearbyLion=battle.towers.some(o=>o.key==="lion"&&o!==t&&Math.hypot(o.x-t.x,o.y-t.y)<145);
   const dmg=towerDamage(t)*(nearbyLion?1.15:1);
-  battle.shots.push({x:t.x,y:t.y,tx:target.x,ty:target.y,life:t.key==="owl"?.34:t.key==="snake"?.28:t.key==="monkey"?.32:t.key==="frog"?.20:t.key==="silverback"?.42:t.key==="penguin"?.24:(t.key==="jaguar"||t.key==="lion")?.22:t.key==="fox"?.30:t.key==="eagle"?.28:.12,type:t.key==="owl"?"soundwave":t.key==="snake"?"poisonblob":t.key==="monkey"?"banana":t.key==="frog"?"tongue":t.key==="silverback"?"quake":t.key==="penguin"?"ice":(t.key==="jaguar"||t.key==="lion")?"claw":t.key==="fox"?"tailswipe":t.key==="eagle"?"feather":"beam"});
+  battle.shots.push({x:t.x,y:t.y,tx:target.x,ty:target.y,life:t.key==="elephant"?.78:t.key==="owl"?.34:t.key==="snake"?.28:t.key==="monkey"?.32:t.key==="frog"?.20:t.key==="silverback"?.42:t.key==="penguin"?.24:(t.key==="jaguar"||t.key==="lion")?.22:t.key==="fox"?.30:t.key==="eagle"?.28:.12,type:t.key==="elephant"?"water":t.key==="owl"?"soundwave":t.key==="snake"?"poisonblob":t.key==="monkey"?"banana":t.key==="frog"?"tongue":t.key==="silverback"?"quake":t.key==="penguin"?"ice":(t.key==="jaguar"||t.key==="lion")?"claw":t.key==="fox"?"tailswipe":t.key==="eagle"?"feather":"beam"});
   let eagleSecondary=null;
   if(t.key==="eagle" && t.level>=10){
     let secondBest=-1;
@@ -957,7 +959,22 @@ function draw(){
   });
 
   battle.shots?.forEach(s=>{
-    if(s.type==="soundwave"){
+    if(s.type==="water"){
+      const fade=Math.min(1,Math.max(0,s.life/.16));
+      const baseDx=s.tx-s.x,baseDy=s.ty-(s.y-4),len=Math.hypot(baseDx,baseDy)||1;
+      const ux=baseDx/len,uy=baseDy/len,nx=-uy,ny=ux;
+      const sx=s.x+ux*17,sy=(s.y-4)+uy*17;
+      const dx=s.tx-sx,dy=s.ty-sy;
+      const wob=Math.sin((performance.now()/1000)*20+s.x*.01)*5;
+      ctx.save();ctx.lineCap="round";ctx.lineJoin="round";
+      ctx.globalAlpha=.78*fade;ctx.strokeStyle="#4bc9ff";ctx.lineWidth=11;ctx.shadowColor="#29bfff";ctx.shadowBlur=13;
+      ctx.beginPath();ctx.moveTo(sx,sy);ctx.bezierCurveTo(sx+dx*.30+nx*wob,sy+dy*.30+ny*wob,sx+dx*.68-nx*wob*.7,sy+dy*.68-ny*wob*.7,s.tx,s.ty);ctx.stroke();
+      ctx.globalAlpha=.95*fade;ctx.strokeStyle="#d8f8ff";ctx.lineWidth=3;ctx.shadowBlur=4;
+      ctx.beginPath();ctx.moveTo(sx,sy);ctx.bezierCurveTo(sx+dx*.30+nx*wob,sy+dy*.30+ny*wob,sx+dx*.68-nx*wob*.7,sy+dy*.68-ny*wob*.7,s.tx,s.ty);ctx.stroke();
+      ctx.fillStyle="#8de7ff";ctx.shadowBlur=5;
+      for(let i=0;i<4;i++){const q=(i+1)/5,drift=Math.sin((performance.now()/1000)*15+i*1.7)*5;const px=sx+dx*q+nx*drift,py=sy+dy*q+ny*drift;ctx.beginPath();ctx.arc(px,py,2.4+(i%2),0,Math.PI*2);ctx.fill();}
+      ctx.restore();
+    }else if(s.type==="soundwave"){
       const p=1-Math.max(0,s.life)/.34;
       const dx=s.tx-s.x,dy=s.ty-(s.y-10);
       const ang=Math.atan2(dy,dx);
