@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Capybara">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#174d3a"/><stop offset="1" stop-color="#0a2d24"/></linearGradient>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c98945"/><stop offset="1" stop-color="#8c5129"/></linearGradient>
+    <linearGradient id="muzzle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b58a6f"/><stop offset="1" stop-color="#805a49"/></linearGradient>
+  </defs>
+  <rect x="4" y="4" width="248" height="248" rx="42" fill="url(#bg)" stroke="#2d8b67" stroke-width="8"/>
+  <ellipse cx="90" cy="68" rx="28" ry="33" fill="#7a4529" stroke="#3a2115" stroke-width="7"/>
+  <ellipse cx="171" cy="65" rx="23" ry="29" fill="#7a4529" stroke="#3a2115" stroke-width="7"/>
+  <path d="M41 204c4-73 30-123 78-139 47-15 89 7 102 54 14 52-11 107-52 125H75c-18-8-29-21-34-40z" fill="url(#fur)" stroke="#3f2618" stroke-width="8"/>
+  <path d="M89 100c30-22 83-18 111 12 18 19 29 42 27 62-2 20-17 34-41 36-23 2-57-7-82-24-34-23-44-62-15-86z" fill="url(#fur)"/>
+  <ellipse cx="189" cy="160" rx="45" ry="34" fill="url(#muzzle)" stroke="#5b3a2e" stroke-width="5"/>
+  <ellipse cx="206" cy="156" rx="11" ry="13" fill="#2d1d18"/>
+  <ellipse cx="136" cy="116" rx="15" ry="17" fill="#221711"/>
+  <circle cx="141" cy="110" r="5" fill="#fff"/>
+  <path d="M174 181c12 8 25 8 38 1" fill="none" stroke="#3e251b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M165 150c-17-4-31-3-43 2M166 160c-19 2-34 7-45 14M210 146c11-4 22-5 32-3M211 158c12 0 22 3 31 8" fill="none" stroke="#f1d9bf" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+</svg>
