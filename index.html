@@ -329,7 +329,7 @@ const animals = {
   bee:{name:"Bee",emoji:"🐝",rarity:"Common",cost:55,range:165,rate:2.22,dmg:12,color:"#fc3",desc:"Chain-lightning attacker that strikes multiple enemies."},
   cat:{name:"Cat",emoji:"🐱",rarity:"Uncommon",cost:75,range:170,rate:1/1.30,dmg:17,color:"#d99",desc:"Fast balanced attacker."},
   dog:{name:"Dog",emoji:"🐶",rarity:"Uncommon",cost:80,range:165,rate:1/1.20,dmg:19,color:"#b87",desc:"Balanced attacker."},
-  raccoon:{name:"Raccoon",emoji:"🦝",rarity:"Uncommon",cost:82,range:180,rate:1/1.15,dmg:20,color:"#888",desc:"Balanced ranged attacker."},
+  raccoon:{name:"Raccoon",emoji:"🦝",rarity:"Uncommon",cost:82,range:180,rate:1/1.15,dmg:20,color:"#888",desc:"Throws dustbins. At Level 10+, trash spills onto the track for 4s and slows enemies."},
   skunk:{name:"Skunk",emoji:"🦨",rarity:"Uncommon",cost:82,range:155,rate:1,dmg:21,color:"#eee",desc:"Solid mid-range attacker."},
   badger:{name:"Badger",emoji:"🦡",rarity:"Uncommon",cost:88,range:140,rate:1/.85,dmg:26,color:"#777",desc:"Hard-hitting close attacker."},
   otter:{name:"Otter",emoji:"🦦",rarity:"Uncommon",cost:82,range:190,rate:1/1.25,dmg:18,color:"#986",desc:"Fast ranged attacker."},
@@ -976,6 +976,18 @@ function towerTick(t,dt){
     return;
   }
 
+  if(t.key==="raccoon"){
+    battle.shots.push({x:t.x,y:t.y-8,tx:target.x,ty:target.y,life:.48,maxLife:.48,type:"raccoonBin"});
+    target.hp-=dmg;
+    if(target.hp<=0)killEnemy(target);
+    if(t.level>=10){
+      battle.trashZones=battle.trashZones||[];
+      battle.trashZones.push({x:target.x,y:target.y,life:4,maxLife:4,radius:78});
+    }
+    t.cd=cardRate(t.key);
+    return;
+  }
+
   let parrotBomb=false;
   if(t.key==="parrot" && t.level>=10){
     t.parrotPineappleCount=(t.parrotPineappleCount||0)+1;
@@ -1175,6 +1187,18 @@ function update(dt){
     }
   });
   battle.pineapples=battle.pineapples.filter(p=>!p.exploded);
+  battle.trashZones=battle.trashZones||[];
+  battle.trashZones.forEach(z=>{
+    z.life-=dt;
+    if(z.life>0){
+      battle.enemies.forEach(e=>{
+        if(!e.dead && Math.hypot(e.x-z.x,e.y-z.y)<=z.radius){
+          e.slowTimer=Math.max(e.slowTimer||0,.12);
+        }
+      });
+    }
+  });
+  battle.trashZones=battle.trashZones.filter(z=>z.life>0);
   battle.needles=battle.needles||[];
   battle.enemies.forEach(e=>moveEnemy(e,dt));
   battle.shots.forEach(s=>{
@@ -1446,8 +1470,23 @@ function draw(){
     ctx.fillText("🍍",0,0);
     ctx.restore();
   });
+  (battle.trashZones||[]).forEach(z=>{
+    const a=Math.max(.25,Math.min(1,z.life/z.maxLife));
+    ctx.save();ctx.globalAlpha=a;
+    ctx.fillStyle="rgba(90,70,45,.55)";
+    ctx.beginPath();ctx.ellipse(z.x,z.y+4,44,22,0,0,Math.PI*2);ctx.fill();
+    ctx.font="24px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillText("🗑️",z.x-18,z.y);
+    ctx.fillText("🧻",z.x+10,z.y+4);
+    ctx.fillText("🥫",z.x+25,z.y-4);
+    ctx.restore();
+  });
   battle.shots?.forEach(s=>{
-    if(s.type==="beeLightning"){
+    if(s.type==="raccoonBin"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.48);
+      const x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q-Math.sin(Math.PI*q)*28;
+      ctx.save();ctx.translate(x,y);ctx.rotate(q*1.6);ctx.font="30px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("🗑️",0,0);ctx.restore();
+    }else if(s.type==="beeLightning"){
       const fade=Math.max(0,Math.min(1,s.life/(s.maxLife||.22)));
       const dx=s.tx-s.x,dy=s.ty-s.y,len=Math.hypot(dx,dy)||1;
       const nx=-dy/len,ny=dx/len;
