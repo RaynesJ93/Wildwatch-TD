@@ -1,0 +1,22 @@
+name: Add Elephant card
+on:
+  push:
+    paths:
+      - '.github/workflows/elephant-card-once.yml'
+permissions:
+  contents: write
+jobs:
+  update-elephant:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply Elephant card
+        run: python3 .github/add_elephant_once.py
+      - name: Commit Elephant update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/elephant-card-once.yml .github/add_elephant_once.py
+          git add index.html
+          git commit -m "Add Epic Elephant water-spray tower"
+          git push
