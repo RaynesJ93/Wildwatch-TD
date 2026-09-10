@@ -308,6 +308,7 @@ Level ${rec.save?.level||1} • ${rec.save?.metaCoins||0} Coins
 Your current autosave will be protected before switching.`))return;
   localStorage.setItem("wildwatchSafetyBackup",JSON.stringify({savedAt:new Date().toISOString(),save}));
   localStorage.setItem(ACTIVE_SLOT_KEY,String(slot));
+  sessionStorage.setItem("critterAutoContinueFromSlot","1");
   localStorage.setItem("wildwatchSave",JSON.stringify(rec.save));
   location.reload();
 }
@@ -1291,6 +1292,18 @@ setTimeout(()=>applyMap(currentSeries,currentMap),0);
 continueBtn.style.display=localStorage.getItem("wildwatchBattleSave")?"inline-block":"none";
 window.addEventListener("pagehide",saveBattleState);
 document.addEventListener("visibilitychange",()=>{if(document.hidden)saveBattleState()});
+// When a player chooses an existing save slot, continue straight into their game
+// instead of making them land on Home and press Continue Battle again.
+setTimeout(()=>{
+  if(sessionStorage.getItem("critterAutoContinueFromSlot")!=="1") return;
+  sessionStorage.removeItem("critterAutoContinueFromSlot");
+  const continueButton=document.getElementById("continueBtn");
+  if(continueButton){
+    continueButton.click();
+  }else{
+    showScreen("battleScreen");
+  }
+},350);
 </script>
 </body>
 </html>
