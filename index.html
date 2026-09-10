@@ -1812,6 +1812,10 @@ const CHALLENGE_QUESTS=[
 function questPlaceholderCards(items){return items.map(q=>`<div class="info-box"><div style="display:flex;justify-content:space-between;gap:8px"><b>${q.icon} ${q.name}</b><b>🟡 ${q.reward}</b></div><div class="small" style="margin-top:6px">${q.text}</div><div class="small" style="margin-top:9px;opacity:.8">Ready for tracking rules</div></div>`).join('')}
 function questState(q){
  let goal=Number(q.goal||1),progress=Math.max(0,Number(q.progress||0));
+ if(q.type&&q.type.startsWith('weekly')){
+   ensureWeeklyQuests();
+   progress=Math.max(0,Number(save.weeklyQuests?.progress?.[q.type]||0));
+ }
  if(q.type==='commonOwned'){
    const commonKeys=Object.keys(animals).filter(k=>animals[k].rarity==='Common');
    progress=(save.unlocked||[]).filter(k=>animals[k]?.rarity==='Common').length;
