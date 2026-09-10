@@ -1,0 +1,22 @@
+name: Fix upgrade currency icon
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-upgrade-currency-once.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update upgrade panel currency
+        run: python3 .github/fix-upgrade-currency.py
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/fix-upgrade-currency-once.yml .github/fix-upgrade-currency.py
+          git add index.html
+          git commit -m "Use meat currency on tower upgrade panel"
+          git push
