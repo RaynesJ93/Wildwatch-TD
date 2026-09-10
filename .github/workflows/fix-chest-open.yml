@@ -1,0 +1,19 @@
+name: Fix chest opening
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-chest-open.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/fix-chest-open.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix chest opening for existing saves"
+          git push
