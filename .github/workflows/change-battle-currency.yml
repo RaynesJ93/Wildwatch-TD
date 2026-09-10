@@ -1,0 +1,22 @@
+name: Change battle currency to meat
+on:
+  push:
+    paths:
+      - '.github/workflows/change-battle-currency.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Change battle currency icon
+        run: python3 .github/change_battle_currency.py
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/change-battle-currency.yml .github/change_battle_currency.py
+          git add index.html
+          git commit -m "Change battle currency icon to meat"
+          git push
