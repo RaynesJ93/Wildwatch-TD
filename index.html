@@ -295,10 +295,18 @@ for(let m=1;m<(save.forestPinesUnlocked||1);m++)save.normalCompleted[`1-${m}`]=t
 if((save.desertDunesUnlocked||0)>0)save.normalCompleted["1-10"]=true;
 for(let m=1;m<(save.desertDunesUnlocked||0);m++)save.normalCompleted[`2-${m}`]=true;
 let hardMode=save.battleDifficulty==="hard";
-const MAX_CARD_LEVEL=20;
+const MAX_CARD_LEVEL=50;
 function cardLevel(k){return Math.max(1,Math.min(MAX_CARD_LEVEL,save.cardLevels[k]||1));}
 function cardLevelCost(k){return 0;}
-function cardXpNeeded(k){const lvl=cardLevel(k);return lvl>=MAX_CARD_LEVEL?0:100+(lvl-1)*50;}
+function cardXpNeeded(k){
+  const lvl=cardLevel(k);
+  if(lvl>=MAX_CARD_LEVEL)return 0;
+  if(lvl===1)return 100;
+  if(lvl===2)return 175;
+  let need=175;
+  for(let level=3;level<=lvl;level++)need=Math.ceil(need*1.60);
+  return need;
+}
 function addCardXp(k,amount){
   if(!save.unlocked.includes(k)||cardLevel(k)>=MAX_CARD_LEVEL)return;
   save.cardXP[k]=(save.cardXP[k]||0)+Math.max(0,Math.floor(amount));
@@ -317,8 +325,8 @@ function awardUsedCardXp(completed){
   used.forEach(k=>addCardXp(k,amount));
   return amount;
 }
-function cardBaseDamage(k){const a=animals[k];return a.dmg*(1+(cardLevel(k)-1)*.05);}
-function cardBaseRange(k){const a=animals[k];return a.range*(1+Math.floor(cardLevel(k)/5)*.025);}
+function cardBaseDamage(k){const a=animals[k];return a.dmg*(1+(cardLevel(k)-1)*.06);}
+function cardBaseRange(k){const a=animals[k];return a.range*(1+(cardLevel(k)-1)*.035);}
 function cardRate(k){const a=animals[k];return a.rate*Math.pow(.98,Math.floor(cardLevel(k)/5));}
 function towerDamage(t){
   const base=cardBaseDamage(t.key);
@@ -430,7 +438,7 @@ function renderCollection(){
   Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).forEach(([k,a])=>{
     const unlocked=save.unlocked.includes(k), d=document.createElement("div"); d.className="card "+(!unlocked?"locked":"")+(save.deck.includes(k)?" selected":"");
     const shardNeed=shardRequirement(a), lvl=cardLevel(k), lvlCost=cardLevelCost(k), dmgNow=cardBaseDamage(k), rangeNow=cardBaseRange(k), maxed=lvl>=MAX_CARD_LEVEL;
-    d.innerHTML=`<span class="rarity">${a.rarity==="Legendary"?"🌟 LEGENDARY":a.rarity==="Epic"?"🟣 EPIC":a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${animalVisual(k,"animal-portrait")}<h3>${a.name}</h3><div class="small">${unlocked?a.desc:`🔒 Locked • Collect ${shardNeed} shards to unlock. 🧩 ${save.shards[k]||0}/${shardNeed}`}</div>${unlocked?`<div class="statrow"><span>⭐ Card Lv ${lvl}/${MAX_CARD_LEVEL}</span><span>⚔️ ${Math.round(dmgNow*10)/10}</span><span>🎯 ${Math.round(rangeNow*10)/10}</span><span>✨ XP ${(save.cardXP[k]||0)}/${cardLevel(k)>=MAX_CARD_LEVEL?"MAX":cardXpNeeded(k)}</span></div><button class="secondary cardLevelBtn" style="width:100%;margin-top:8px;padding:8px;font-size:11px" data-key="${k}" ${maxed?'disabled':''}>${maxed?'⭐ MAX LEVEL':`⬆️ Level Up • 🧩 ${lvlCost}`}</button><div class="small" style="margin-top:4px">Each card level gives +5% base damage. Levels 5, 10, 15 and 20 also improve range and attack speed.</div>`:`<div class="statrow"><span>🔒 Not unlocked</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span></div>`}`;
+    d.innerHTML=`<span class="rarity">${a.rarity==="Legendary"?"🌟 LEGENDARY":a.rarity==="Epic"?"🟣 EPIC":a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${animalVisual(k,"animal-portrait")}<h3>${a.name}</h3><div class="small">${unlocked?a.desc:`🔒 Locked • Collect ${shardNeed} shards to unlock. 🧩 ${save.shards[k]||0}/${shardNeed}`}</div>${unlocked?`<div class="statrow"><span>⭐ Card Lv ${lvl}/${MAX_CARD_LEVEL}</span><span>⚔️ ${Math.round(dmgNow*10)/10}</span><span>🎯 ${Math.round(rangeNow*10)/10}</span><span>✨ XP ${(save.cardXP[k]||0)}/${cardLevel(k)>=MAX_CARD_LEVEL?"MAX":cardXpNeeded(k)}</span></div><button class="secondary cardLevelBtn" style="width:100%;margin-top:8px;padding:8px;font-size:11px" data-key="${k}" ${maxed?'disabled':''}>${maxed?'⭐ MAX LEVEL':`⬆️ Level Up • 🧩 ${lvlCost}`}</button><div class="small" style="margin-top:4px">Each card level gives +6% base damage and +3.5% attack range. Cards can reach Level 50.</div>`:`<div class="statrow"><span>🔒 Not unlocked</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span></div>`}`;
     if(unlocked)d.onclick=()=>toggleDeck(k);
     collectionCards.appendChild(d);
     const levelBtn=d.querySelector(".cardLevelBtn");
