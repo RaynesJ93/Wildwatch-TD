@@ -213,6 +213,7 @@ const defaults = {
   selectedSeries:1,
   selectedSeriesMap:1,
   battleDifficulty:"normal",
+  normalCompleted:{},
   hardCompleted:{},
   deck:["monkey","frog","owl","snake"]
 };
@@ -229,7 +230,12 @@ if(save.damageUpgrades){
   });
 }
 delete save.damageUpgrades;
+save.normalCompleted={...defaults.normalCompleted,...(save.normalCompleted||{})};
 save.hardCompleted={...defaults.hardCompleted,...(save.hardCompleted||{})};
+// Reconstruct obvious Normal completions from existing unlocked-map progress so old saves keep access.
+for(let m=1;m<(save.forestPinesUnlocked||1);m++)save.normalCompleted[`1-${m}`]=true;
+if((save.desertDunesUnlocked||0)>0)save.normalCompleted["1-10"]=true;
+for(let m=1;m<(save.desertDunesUnlocked||0);m++)save.normalCompleted[`2-${m}`]=true;
 let hardMode=save.battleDifficulty==="hard";
 const MAX_CARD_LEVEL=20;
 function cardLevel(k){return Math.max(1,Math.min(MAX_CARD_LEVEL,save.cardLevels[k]||1));}
@@ -321,14 +327,21 @@ function showScreen(id){
 }
 playBtn.onclick=()=>{clearBattleState();battle={};showScreen("battleScreen");};
 continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));if(!loadBattleState())resetBattle();};
+function normalCompleteForCurrentMap(){return !!save.normalCompleted?.[`${currentSeries}-${currentMap}`];}
 function updateDifficultyUI(){
   if(!difficultyBtn)return;
-  difficultyBtn.textContent=hardMode?"🔥 Hard":"🌿 Normal";
-  difficultyBtn.style.borderColor=hardMode?"#ff8a4c":"#4b8469";
-  difficultyBtn.style.background=hardMode?"#6b2d1e":"#285842";
+  const hardUnlocked=normalCompleteForCurrentMap();
+  difficultyBtn.textContent=hardMode?"🔥 Hard":hardUnlocked?"🌿 Normal":"🔒 Hard Locked";
+  difficultyBtn.style.borderColor=hardMode?"#ff8a4c":hardUnlocked?"#4b8469":"#6b6b6b";
+  difficultyBtn.style.background=hardMode?"#6b2d1e":hardUnlocked?"#285842":"#343434";
   if(typeof mapLabel!=="undefined")mapLabel.textContent=`${currentSeries}-${currentMap}${hardMode?" • 🔥 HARD":""}`;
 }
 difficultyBtn.onclick=()=>{
+  if(!hardMode && !normalCompleteForCurrentMap()){
+    alert(`Complete map ${currentSeries}-${currentMap} on Normal Mode before Hard Mode unlocks.`);
+    message.textContent=`🔒 Hard Mode locked — complete ${currentSeries}-${currentMap} on Normal first.`;
+    return;
+  }
   if(battle?.started && (battle.waveActive||battle.towers?.length||battle.wave>1)){
     if(!confirm("Changing difficulty restarts this map. Continue?"))return;
   }
@@ -486,6 +499,9 @@ function applyMap(series,n){
   if(targetSeries===2 && unlocked<1)return false;
   currentSeries=targetSeries;
   currentMap=Math.max(1,Math.min(10,n));
+  if(hardMode && !save.normalCompleted?.[`${currentSeries}-${currentMap}`]){
+    hardMode=false;save.battleDifficulty="normal";
+  }
   const maps=currentSeries===1?forestPinesMaps:desertDunesMaps;
   path=maps[currentMap-1].path;
   pads=maps[currentMap-1].pads;
@@ -520,7 +536,7 @@ function resetBattle(){
   startWave.textContent="Start wave";
   message.textContent="Choose an animal card, then tap anywhere on the grass to place it.";
   selectedCard=null; selectedTower=null; speed=1; speedBtn.textContent="⏩ Speed: 1×";
-  updateHud(); last=performance.now(); loop(last);
+  updateDifficultyUI();updateHud(); last=performance.now(); loop(last);
 }
 function updateHud(){battleCoins.textContent=Math.floor(battle.coins); lives.textContent=battle.lives; wave.textContent=`${Math.min(battle.wave,15)}/15`;document.querySelectorAll(".battle-card").forEach(b=>b.classList.toggle("disabled",animals[b.dataset.key].cost>battle.coins))}
 function enemyForWave(){
@@ -768,6 +784,7 @@ function finishWave(){
   if(clearedWave>=15){
     save.metaCoins+=hardMode?300:200;
     if(hardMode)save.hardCompleted[`${currentSeries}-${currentMap}`]=true;
+    else save.normalCompleted[`${currentSeries}-${currentMap}`]=true;
     if(currentSeries===1){
       if(currentMap<10)save.forestPinesUnlocked=Math.max(save.forestPinesUnlocked||1,currentMap+1);
       else save.desertDunesUnlocked=Math.max(save.desertDunesUnlocked||0,1);
