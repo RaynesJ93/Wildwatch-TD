@@ -1,0 +1,19 @@
+name: Fix card pack screen
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-card-pack-screen.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/fix-card-pack-screen.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix card pack styling and labels"
+          git push
