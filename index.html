@@ -304,7 +304,7 @@ function cardXpNeeded(k){
   if(lvl===1)return 100;
   if(lvl===2)return 175;
   let need=175;
-  for(let level=3;level<=lvl;level++)need=Math.ceil(need*1.60);
+  for(let level=3;level<=lvl;level++)need=Math.ceil(need*1.15);
   return need;
 }
 function addCardXp(k,amount){
