@@ -1,0 +1,19 @@
+name: Add remaining rarity pack assets
+on:
+  push:
+    paths:
+      - '.github/workflows/add-other-pack-assets.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/add-other-pack-assets.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Add Uncommon Rare and Legendary pack assets"
+          git push
