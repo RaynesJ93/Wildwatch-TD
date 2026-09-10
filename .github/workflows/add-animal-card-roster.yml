@@ -1,5 +1,6 @@
 name: Expand animal cards
-on: workflow_dispatch
+on:
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
@@ -7,10 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 .github/add-animal-card-roster.py
-      - run: |
+      - name: Apply chest and level rewards
+        run: python3 .github/chest-and-level-rewards.py
+      - name: Commit reward changes
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "Add expanded animal card roster" || exit 0
+          git commit -m "Guarantee chest cards and rebalance level coins" || exit 0
           git push
