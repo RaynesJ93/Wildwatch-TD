@@ -311,7 +311,7 @@ const animals = {
   hamster:{name:"Hamster",emoji:"🐹",rarity:"Common",cost:48,range:120,rate:1/1.35,dmg:8,color:"#c99b62",desc:"Quick basic attacker."},
   rabbit:{name:"Rabbit",emoji:"🐰",rarity:"Common",cost:52,range:145,rate:1/1.30,dmg:9,color:"#ddd",desc:"Fast basic attacker."},
   squirrel:{name:"Squirrel",emoji:"🐿️",rarity:"Common",cost:58,range:175,rate:1/1.25,dmg:10,color:"#a66b3d",desc:"Fast ranged attacker."},
-  hedgehog:{name:"Hedgehog",emoji:"🦔",rarity:"Common",cost:60,range:135,rate:1,dmg:12,color:"#76543b",desc:"Solid basic attacker."},
+  hedgehog:{name:"Hedgehog",emoji:"🦔",rarity:"Common",cost:60,range:135,rate:3,dmg:12,color:"#76543b",desc:"Solid basic attacker."},
   chicken:{name:"Chicken",emoji:"🐔",rarity:"Common",cost:52,range:150,rate:1/1.20,dmg:9,color:"#eee",desc:"Fast basic attacker."},
   bird:{name:"Bird",emoji:"🐦",rarity:"Common",cost:55,range:190,rate:1/1.30,dmg:8,color:"#58a",desc:"Longer-range basic attacker."},
   duck:{name:"Duck",emoji:"🦆",rarity:"Common",cost:58,range:160,rate:1/1.10,dmg:11,color:"#6b8e45",desc:"Balanced basic attacker."},
@@ -922,14 +922,31 @@ function towerTick(t,dt){
   const a=animals[t.key], range=cardBaseRange(t.key)*(1+(t.level-1)*.06);
   let target=null,best=-1;
   battle.enemies.forEach(e=>{if(e.dead)return;const d=Math.hypot(e.x-t.x,e.y-t.y);if(d<=range){const prog=e.seg+(1-d/1000);if(prog>best){best=prog;target=e}}});
-  if(!target)return;
   if(t.key==="hedgehog"){
+    // Always place a trap during an active wave, even when no enemy is nearby.
+    if(!battle.waveActive){t.cd=.25;return;}
+    let tx,ty;
+    if(target){tx=target.x;ty=target.y;}
+    else{
+      const candidates=[];
+      for(let i=0;i<path.length-1;i++){
+        const [ax,ay]=path[i],[bx,by]=path[i+1];
+        for(let j=0;j<=16;j++){
+          const q=j/16,x=ax+(bx-ax)*q,y=ay+(by-ay)*q;
+          if(Math.hypot(x-t.x,y-t.y)<=range)candidates.push([x,y]);
+        }
+      }
+      if(!candidates.length){t.cd=.5;return;}
+      const pick=candidates[Math.floor(Math.random()*candidates.length)];
+      tx=pick[0];ty=pick[1];
+    }
     battle.needles=battle.needles||[];
     const id=(battle.nextNeedleId=(battle.nextNeedleId||0)+1);
-    battle.shots.push({x:t.x,y:t.y-9,tx:target.x,ty:target.y,life:.42,maxLife:.42,type:"hedgehogNeedles",needleTrapId:id});
+    battle.shots.push({x:t.x,y:t.y-9,tx,ty,life:.42,maxLife:.42,type:"hedgehogNeedles",needleTrapId:id});
     t.cd=cardRate(t.key);
     return;
   }
+  if(!target)return;
   const nearbyLion=battle.towers.some(o=>o.key==="lion"&&o!==t&&Math.hypot(o.x-t.x,o.y-t.y)<145);
   if(t.key==="ant"){
     t.antAttackCount=(t.antAttackCount||0)+1;
