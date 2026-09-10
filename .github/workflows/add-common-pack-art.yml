@@ -1,0 +1,19 @@
+name: Add Common pack artwork
+on:
+  push:
+    paths:
+      - '.github/workflows/add-common-pack-art.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/add-common-pack-art.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Show artwork on Common card pack"
+          git push
