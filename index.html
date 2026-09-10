@@ -980,7 +980,7 @@ function towerTick(t,dt){
     battle.shots.push({x:t.x,y:t.y-8,tx:target.x,ty:target.y,life:.48,maxLife:.48,type:"raccoonBin"});
     target.hp-=dmg;
     if(target.hp<=0)killEnemy(target);
-    if(t.level>=10){
+    if(cardLevel(t.key)>=10){
       battle.trashZones=battle.trashZones||[];
       battle.trashZones.push({x:target.x,y:target.y,life:4,maxLife:4,radius:78});
     }
