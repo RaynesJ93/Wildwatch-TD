@@ -116,7 +116,7 @@
     </div>
     <div class="battle-ui">
       <div class="pill">❤️ <span id="lives">20</span></div>
-      <div class="pill">🪙 <span id="battleCoins">120</span></div>
+      <div class="pill">🥩 <span id="battleCoins">120</span></div>
       <div class="pill">🌊 <span id="wave">1</span></div>
       <button class="secondary" id="startWave">Start wave</button>
     </div>
@@ -363,7 +363,7 @@ function renderDecks(){
   battleDeck.innerHTML="";
   save.deck.forEach(k=>{
     const a=animals[k], b=document.createElement("button");b.className="battle-card";b.dataset.key=k;
-    b.innerHTML=`${animalVisual(k)}<b>${a.name}</b><div class="cost">🪙 ${a.cost}</div>`;
+    b.innerHTML=`${animalVisual(k)}<b>${a.name}</b><div class="cost">🥩 ${a.cost}</div>`;
     b.onclick=()=>{selectedCard=k; document.querySelectorAll(".battle-card").forEach(x=>x.classList.toggle("active",x.dataset.key===k)); message.textContent=`${a.name} selected — tap anywhere on the grass to place it.`};
     battleDeck.appendChild(b);
   });
