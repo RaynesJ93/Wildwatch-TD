@@ -1,0 +1,22 @@
+name: Add save slots once
+on:
+  push:
+    paths:
+      - '.github/workflows/add-save-slots-once.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add save slots and backups
+        run: python3 .github/add_save_slots.py
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/add-save-slots-once.yml .github/add_save_slots.py
+          git add index.html
+          git commit -m "Add save slots and backup system"
+          git push
