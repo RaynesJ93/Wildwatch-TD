@@ -1,0 +1,22 @@
+name: Update Forest Pines enemies
+on:
+  push:
+    paths:
+      - '.github/workflows/update-forest-enemies-once.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply Forest Pines enemy update
+        run: python3 .github/update_forest_enemies_once.py
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/update-forest-enemies-once.yml .github/update_forest_enemies_once.py
+          git add index.html
+          git commit -m "Update Forest Pines enemies"
+          git push
