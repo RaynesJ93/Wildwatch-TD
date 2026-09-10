@@ -91,7 +91,7 @@
     <div class="hero" style="padding:10px 12px;margin-bottom:8px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <div><b id="seriesTitle">🌲 Forest Pines</b><div class="small" id="mapLabel">1-1</div></div>
-        <div style="display:flex;gap:6px"><button class="secondary" id="prevMap" style="padding:8px 11px">◀</button><button class="secondary" id="nextMap" style="padding:8px 11px">▶</button></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="secondary" id="difficultyBtn" style="padding:8px 11px">🌿 Normal</button><button class="secondary" id="prevMap" style="padding:8px 11px">◀</button><button class="secondary" id="nextMap" style="padding:8px 11px">▶</button></div>
       </div>
     </div>
     <div class="battle-ui">
@@ -212,6 +212,8 @@ const defaults = {
   desertDunesUnlocked:0,
   selectedSeries:1,
   selectedSeriesMap:1,
+  battleDifficulty:"normal",
+  hardCompleted:{},
   deck:["monkey","frog","owl","snake"]
 };
 let save;
@@ -219,6 +221,8 @@ try { save={...defaults,...JSON.parse(localStorage.getItem("wildwatchSave")||"{}
 save.shards={...defaults.shards,...save.shards};
 save.cardLevels={...defaults.cardLevels,...save.cardLevels};
 save.damageUpgrades={...defaults.damageUpgrades,...save.damageUpgrades};
+save.hardCompleted={...defaults.hardCompleted,...(save.hardCompleted||{})};
+let hardMode=save.battleDifficulty==="hard";
 function cardBaseDamage(k){const a=animals[k];return a.dmg*(1+(save.damageUpgrades[k]||0)*.075);}
 function towerDamage(t){
   const base=cardBaseDamage(t.key);
@@ -239,8 +243,8 @@ function loadBattleState(){
   try{
     const raw=localStorage.getItem("wildwatchBattleSave"); if(!raw)return false;
     const b=JSON.parse(raw); if(!b?.started||b.ended)return false;
-    cancelAnimationFrame(raf);if(b.mapNumber){currentSeries=b.mapSeries||1;currentMap=b.mapNumber;applyMap(currentSeries,currentMap);}battle=b;battle.shots=[];battle.puddles=battle.puddles||[];selectedCard=null;selectedTower=null;speed=1;
-    speedBtn.textContent="⏩ Speed: 1×";updateHud();last=performance.now();raf=requestAnimationFrame(loop);return true;
+    cancelAnimationFrame(raf);hardMode=!!b.hardMode;save.battleDifficulty=hardMode?"hard":"normal";if(b.mapNumber){currentSeries=b.mapSeries||1;currentMap=b.mapNumber;applyMap(currentSeries,currentMap);}battle=b;battle.shots=[];battle.puddles=battle.puddles||[];selectedCard=null;selectedTower=null;speed=1;
+    speedBtn.textContent="⏩ Speed: 1×";updateDifficultyUI();updateHud();last=performance.now();raf=requestAnimationFrame(loop);return true;
   }catch(e){return false}
 }
 
@@ -301,6 +305,25 @@ function showScreen(id){
 }
 playBtn.onclick=()=>{clearBattleState();battle={};showScreen("battleScreen");};
 continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));if(!loadBattleState())resetBattle();};
+function updateDifficultyUI(){
+  if(!difficultyBtn)return;
+  difficultyBtn.textContent=hardMode?"🔥 Hard":"🌿 Normal";
+  difficultyBtn.style.borderColor=hardMode?"#ff8a4c":"#4b8469";
+  difficultyBtn.style.background=hardMode?"#6b2d1e":"#285842";
+  if(typeof mapLabel!=="undefined")mapLabel.textContent=`${currentSeries}-${currentMap}${hardMode?" • 🔥 HARD":""}`;
+}
+difficultyBtn.onclick=()=>{
+  if(battle?.started && (battle.waveActive||battle.towers?.length||battle.wave>1)){
+    if(!confirm("Changing difficulty restarts this map. Continue?"))return;
+  }
+  hardMode=!hardMode;
+  save.battleDifficulty=hardMode?"hard":"normal";
+  persist();
+  clearBattleState();
+  resetBattle();
+  updateDifficultyUI();
+  message.textContent=hardMode?"🔥 Hard Mode: stronger, faster and more numerous enemies — with 50% better permanent rewards.":"🌿 Normal Mode selected.";
+};
 
 const chestConfig={
   common:{name:"Common Chest",cost:250,rarities:{Common:.65,Rare:.27,Epic:.07,Legendary:.01}},
@@ -454,7 +477,7 @@ function applyMap(series,n){
   save.selectedSeriesMap=currentMap;
   if(currentSeries===1)save.forestPinesSelected=currentMap;
   seriesTitle.textContent=currentSeries===1?"🌲 Forest Pines":"🏜️ Desert Dunes";
-  mapLabel.textContent=`${currentSeries}-${currentMap}`;
+  mapLabel.textContent=`${currentSeries}-${currentMap}${hardMode?" • 🔥 HARD":""}`;
   prevMap.disabled=currentSeries===1&&currentMap===1;
   const seriesUnlocked=currentSeriesUnlocked();
   nextMap.disabled=(currentSeries===1&&currentMap===10&&!(save.desertDunesUnlocked||0)) || (currentMap>=seriesUnlocked && !(currentSeries===1&&currentMap===10&&(save.desertDunesUnlocked||0)>0));
@@ -477,7 +500,7 @@ nextMap.onclick=()=>{
 function resetBattle(){
   cancelAnimationFrame(raf);
   applyMap(currentSeries,currentMap);
-  battle={started:true,coins:130,lives:20,wave:1,enemies:[],towers:[],shots:[],puddles:[],spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false};
+  battle={started:true,hardMode,coins:hardMode?110:130,lives:hardMode?15:20,wave:1,enemies:[],towers:[],shots:[],puddles:[],spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false};
   startWave.textContent="Start wave";
   message.textContent="Choose an animal card, then tap anywhere on the grass to place it.";
   selectedCard=null; selectedTower=null; speed=1; speedBtn.textContent="⏩ Speed: 1×";
@@ -499,6 +522,7 @@ function enemyForWave(){
 }
 function spawnEnemy(){
   const e=enemyForWave();
+  if(hardMode){e.hp=Math.round(e.hp*1.75);e.speed*=1.15;e.reward=Math.ceil(e.reward*1.25);}
   if(battle.wave%10===0 && !battle.eliteSpawned){
     e.hp*=3;
     e.reward*=3;
@@ -531,7 +555,7 @@ startWave.onclick=()=>{
   battle.waveActive=true;
   battle.spawning=true;
   battle.eliteSpawned=false;
-  battle.spawnLeft=6+battle.wave*2;
+  battle.spawnLeft=Math.ceil((6+battle.wave*2)*(hardMode?1.25:1));
   battle.spawnTimer=0;
   spawnEnemy();
   battle.spawnLeft--;
@@ -722,11 +746,12 @@ function finishWave(){
   const clearedWave=battle.wave;
   battle.waveActive=false;
   save.bestWave=Math.max(save.bestWave,clearedWave);
-  save.xp+=12+clearedWave*3;
-  save.metaCoins+=20;
-  if(clearedWave%3===0)save.metaCoins+=50;
+  save.xp+=Math.round((12+clearedWave*3)*(hardMode?1.5:1));
+  save.metaCoins+=hardMode?30:20;
+  if(clearedWave%3===0)save.metaCoins+=hardMode?75:50;
   if(clearedWave>=15){
-    save.metaCoins+=200;
+    save.metaCoins+=hardMode?300:200;
+    if(hardMode)save.hardCompleted[`${currentSeries}-${currentMap}`]=true;
     if(currentSeries===1){
       if(currentMap<10)save.forestPinesUnlocked=Math.max(save.forestPinesUnlocked||1,currentMap+1);
       else save.desertDunesUnlocked=Math.max(save.desertDunesUnlocked||0,1);
