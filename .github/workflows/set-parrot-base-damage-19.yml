@@ -1,0 +1,19 @@
+name: Set Parrot base damage to 19
+on:
+  push:
+    paths:
+      - '.github/workflows/set-parrot-base-damage-19.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/set-parrot-base-damage-19.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Increase Parrot base damage to 19"
+          git push
