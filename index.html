@@ -109,6 +109,10 @@
 /* Keep all card-pack writing the same red colour */
 #packsScreen .chestBtn{color:#e53935!important;text-shadow:none!important}
 
+
+#packsScreen .packArtBtn[data-chest="common"]{height:auto;min-height:0;padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px;background:linear-gradient(135deg,#fff,#d7d7d7 55%,#fff);color:#c62828}
+#packsScreen .packArtwork{display:block;width:min(180px,48vw);height:auto;aspect-ratio:2/3;object-fit:cover;border-radius:9px;box-shadow:0 5px 14px rgba(0,0,0,.3)}
+#packsScreen .packArtBtn span{font-weight:900;color:#c62828}
 </style>
 </head>
 <body>
@@ -201,7 +205,7 @@
       <p>Earn Coins by completing waves. Spend those permanent Coins on card packs to collect animal cards. Every pack contains 1 card from its matching rarity. Battle currency is separate and is only used for towers.</p>
       <div style="height:14px"></div>
       <div style="display:grid;gap:12px">
-        <button class="primary chestBtn" data-chest="common">⚪ Common Pack • 🟡 250 Coins</button>
+        <button class="primary chestBtn packArtBtn" data-chest="common"><img src="assets/common-pack.jpg" alt="Common Pack artwork" class="packArtwork"><span>⚪ Common Pack • 🟡 250 Coins</span></button>
         <button class="primary chestBtn" data-chest="uncommon">🟢 Uncommon Pack • 🟡 500 Coins</button>
         <button class="primary chestBtn" data-chest="epic">🔵 Rare Pack • 🟡 750 Coins</button>
         <button class="primary chestBtn" data-chest="legendary">🟡 Legendary Pack • 🟡 1500 Coins</button>
