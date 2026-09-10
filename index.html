@@ -860,7 +860,7 @@ function draw(){
     const a=animals[t.key];
     if(selectedTower===t){
       ctx.beginPath();ctx.arc(t.x,t.y,a.range*(1+(t.level-1)*.06),0,Math.PI*2);
-      ctx.strokeStyle="#ffd65a66";ctx.lineWidth=3;ctx.stroke();
+      ctx.strokeStyle="#ff2d2dcc";ctx.lineWidth=4;ctx.stroke();
     }
     ctx.save();
     ctx.shadowColor="#000d";ctx.shadowBlur=14;ctx.shadowOffsetY=9;
