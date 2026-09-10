@@ -95,7 +95,17 @@
       body.battle-mode #message{display:none}
     }
 
-  </style>
+  
+/* Card pack shop */
+#chestScreen .chestBtn{min-height:92px;border-radius:14px;border:2px solid rgba(255,255,255,.32);font-size:18px;font-weight:900;letter-spacing:.25px;box-shadow:inset 0 0 18px rgba(255,255,255,.18),0 6px 14px rgba(0,0,0,.24);position:relative;overflow:hidden;text-shadow:0 1px 2px rgba(0,0,0,.55)}
+#chestScreen .chestBtn:before,#chestScreen .chestBtn:after{content:"";position:absolute;left:0;right:0;height:8px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.5) 0 5px,rgba(0,0,0,.12) 5px 9px)}
+#chestScreen .chestBtn:before{top:0}#chestScreen .chestBtn:after{bottom:0}
+#chestScreen .chestBtn[data-chest="common"]{background:linear-gradient(135deg,#fff,#d7d7d7 55%,#fff);color:#242424;text-shadow:none}
+#chestScreen .chestBtn[data-chest="uncommon"]{background:linear-gradient(135deg,#28b94c,#08752b 55%,#42df68);color:#fff}
+#chestScreen .chestBtn[data-chest="epic"]{background:linear-gradient(135deg,#2d8fff,#064ba5 55%,#42a7ff);color:#fff}
+#chestScreen .chestBtn[data-chest="legendary"]{background:linear-gradient(135deg,#ffd84d,#a86d00 55%,#ffe881);color:#241500;border-color:#ffe78a;text-shadow:none}
+
+</style>
 </head>
 <body>
 <div id="app">
@@ -184,13 +194,13 @@
     <div class="hero center">
       <div style="font-size:70px">🧰</div>
       <h1>Animal Chests</h1>
-      <p>Earn Coins by completing waves. Spend those permanent Coins on chests to hunt for rare animal cards. Battle currency is separate and is only used for towers.</p>
+      <p>Earn Coins by completing waves. Spend those permanent Coins on card packs to collect animal cards. Every pack contains 1 card from its matching rarity. Battle currency is separate and is only used for towers.</p>
       <div style="height:14px"></div>
       <div style="display:grid;gap:12px">
-        <button class="primary chestBtn" data-chest="common">🪵 Common Chest • 🟡 250 Coins</button>
-        <button class="primary chestBtn" data-chest="uncommon">🟩 Uncommon Chest • 🟡 500 Coins</button>
-        <button class="primary chestBtn" data-chest="epic">💜 Rare Chest • 🟡 750 Coins</button>
-        <button class="primary chestBtn" data-chest="legendary">🌟 Legendary Chest • 🟡 1500 Coins</button>
+        <button class="primary chestBtn" data-chest="common">⚪ Common Pack • 🟡 250 Coins</button>
+        <button class="primary chestBtn" data-chest="uncommon">🟢 Uncommon Pack • 🟡 500 Coins</button>
+        <button class="primary chestBtn" data-chest="epic">🔵 Rare Pack • 🟡 750 Coins</button>
+        <button class="primary chestBtn" data-chest="legendary">🟡 Legendary Pack • 🟡 1500 Coins</button>
       </div>
     </div>
     <div class="section-title">Next player level</div>
@@ -588,10 +598,10 @@ difficultyBtn.onclick=()=>{
 };
 
 const chestConfig={
-  common:{name:"Common Chest",cost:250,rarities:{Common:1}},
-  uncommon:{name:"Uncommon Chest",cost:500,rarities:{Uncommon:1}},
-  epic:{name:"Rare Chest",cost:750,rarities:{Rare:1}},
-  legendary:{name:"Legendary Chest",cost:1500,rarities:{Legendary:1},legendary:true}
+  common:{name:"Common Pack",cost:250,rarities:{Common:1}},
+  uncommon:{name:"Uncommon Pack",cost:500,rarities:{Uncommon:1}},
+  epic:{name:"Rare Pack",cost:750,rarities:{Rare:1}},
+  legendary:{name:"Legendary Pack",cost:1500,rarities:{Legendary:1},legendary:true}
 };
 function weightedAnimal(pool,weights){
   const weighted=pool.map(k=>({k,w:weights[animals[k].rarity]||0})).filter(x=>x.w>0);
@@ -602,12 +612,12 @@ function weightedAnimal(pool,weights){
 }
 document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   const cfg=chestConfig[btn.dataset.chest];
-  if(save.metaCoins<cfg.cost){alert(`You need ${cfg.cost} Coins for this chest. Earn more by completing levels.`);return}
+  if(save.metaCoins<cfg.cost){alert(`You need ${cfg.cost} Coins for this pack. Earn more by completing levels.`);return}
   save.metaCoins-=cfg.cost;
   const chestTier={common:"Common",uncommon:"Uncommon",epic:"Rare",legendary:"Legendary"}[btn.dataset.chest];
   const allowedPool=Object.keys(animals).filter(k=>animals[k].rarity===chestTier);
   const locked=allowedPool.filter(k=>!save.unlocked.includes(k));
-  if(!allowedPool.length){save.metaCoins+=cfg.cost;alert(`No ${chestTier} cards are available in this chest yet.`);return}
+  if(!allowedPool.length){save.metaCoins+=cfg.cost;alert(`No ${chestTier} cards are available in this pack yet.`);return}
   // Every chest guarantees a complete card. Prefer a card the player has not unlocked yet.
   const pool=locked.length?locked:allowedPool;
   const key=pool[Math.floor(Math.random()*pool.length)];
