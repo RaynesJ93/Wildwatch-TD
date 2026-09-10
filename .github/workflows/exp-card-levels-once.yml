@@ -1,0 +1,22 @@
+name: EXP card levelling update
+on:
+  push:
+    paths:
+      - '.github/workflows/exp-card-levels-once.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply EXP card levelling system
+        run: python3 .github/exp-card-levels.py
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/exp-card-levels-once.yml .github/exp-card-levels.py
+          git add index.html
+          git commit -m "Replace shard card levelling with battle EXP"
+          git push
