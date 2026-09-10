@@ -869,6 +869,7 @@ canvas.addEventListener("pointerdown",ev=>{
   const a=animals[selectedCard]; if(battle.coins<a.cost){message.textContent="Not enough coins.";return}
   battle.coins-=a.cost;
   battle.towers.push({key:selectedCard,x,y,pad:null,cd:0,level:1,spent:a.cost});
+  addQuestProgress("placed",1);
   if(!battle.usedCards.includes(selectedCard))battle.usedCards.push(selectedCard);
   message.textContent=`${a.name} placed!`;updateHud();
 });
@@ -916,7 +917,7 @@ function moveEnemy(e,dt){
   }
   if(e.seg>=path.length-1&&!e.dead){e.dead=true;battle.lives--; if(battle.lives<=0)gameOver();updateHud()}
 }
-function killEnemy(e){if(e.dead)return;e.dead=true;battle.coins+=e.reward;updateHud()}
+function killEnemy(e){if(e.dead)return;e.dead=true;battle.coins+=e.reward;addQuestProgress("kills",1);updateHud()}
 function towerTick(t,dt){
   t.cd-=dt;if(t.cd>0)return;
   const a=animals[t.key], range=cardBaseRange(t.key)*(1+(t.level-1)*.06);
