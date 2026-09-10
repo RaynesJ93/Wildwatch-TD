@@ -1048,6 +1048,10 @@ function gameOver(){
 function finishWave(){
   const clearedWave=battle.wave;
   battle.waveActive=false;
+  // Hedgehog needle stacks only last for the current wave.
+  battle.needles=[];
+  battle.pendingNeedles=[];
+  battle.shots=(battle.shots||[]).filter(s=>s.type!=="hedgehogNeedles");
   save.bestWave=Math.max(save.bestWave,clearedWave);
   addQuestProgress("waves",1);
   if(speed===3)addQuestProgress("speedWaves",1);
