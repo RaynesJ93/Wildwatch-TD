@@ -969,8 +969,8 @@ function finishWave(){
   battle.waveActive=false;
   save.bestWave=Math.max(save.bestWave,clearedWave);
   save.xp+=Math.round((12+clearedWave*3)*(hardMode?1.5:1));
-  // Permanent coin economy: exactly 7 Coins for every cleared wave.
-  save.metaCoins+=7;
+  // Permanent coin economy: 7 Coins per Normal wave, 12 Coins per Hard wave.
+  save.metaCoins+=hardMode?12:7;
   if(autoWave && clearedWave<15 && !battle.ended){
     clearTimeout(autoWaveTimer);
     autoWaveTimer=setTimeout(()=>{if(autoWave && !battle.waveActive && !battle.ended)startWave.click();},900);
