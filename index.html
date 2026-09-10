@@ -584,6 +584,9 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   const key=pool[Math.floor(Math.random()*pool.length)];
   const a=animals[key];
   const fresh=!save.unlocked.includes(key);
+  save.levels=save.levels||{};
+  save.cardXP=save.cardXP||{};
+  save.shards=save.shards||{};
   if(fresh){
     save.unlocked.push(key);
     save.levels[key]=save.levels[key]||1;
