@@ -11,10 +11,10 @@ s=s.replace(needle,quest,1)
 needle2='''  <button data-screen="collectionScreen"><span class="ico">🃏</span>Cards</button>'''
 if needle2 not in s: raise SystemExit('cards nav not found')
 s=s.replace(needle2,needle2+'\n  <button data-screen="questScreen"><span class="ico">📜</span>Quests</button>',1)
-# Add quest system before initial render call / script close using stable marker
-marker='''renderAll();'''
+# Add quest system before closing script tag
+marker='''</script>'''
 idx=s.rfind(marker)
-if idx<0: raise SystemExit('renderAll marker not found')
+if idx<0: raise SystemExit('script close marker not found')
 js=r'''
 // ---- Daily quest board ----
 const DAILY_QUEST_POOL=[
@@ -46,21 +46,28 @@ function renderDailyQuests(){
  el.innerHTML=save.dailyQuests.items.map((x,i)=>{const q=questDef(x.id),done=x.progress>=q.goal;return `<div class="info-box"><div style="display:flex;justify-content:space-between;gap:8px"><b>${q.icon} ${q.name}</b><b>🟡 ${q.reward}</b></div><div class="small" style="margin:5px 0">${q.text}</div><div class="progress"><i style="width:${Math.min(100,x.progress/q.goal*100)}%"></i></div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:7px"><span class="small">${x.progress}/${q.goal}</span><button class="${done&&!x.claimed?'primary':'secondary'} questClaim" data-i="${i}" ${done&&!x.claimed?'':'disabled'}>${x.claimed?'✓ Claimed':done?'Claim':'In progress'}</button></div></div>`}).join('');
  document.getElementById('rerollQuestBtn').disabled=!!save.dailyQuests.rerolled;
  document.getElementById('rerollQuestBtn').textContent=save.dailyQuests.rerolled?'✓ Reroll Used':'🔄 Free Daily Reroll';
- el.querySelectorAll('.questClaim').forEach(b=>b.onclick=()=>{const x=save.dailyQuests.items[+b.dataset.i],q=questDef(x.id);if(!x.claimed&&x.progress>=q.goal){x.claimed=true;save.metaCoins+=q.reward;persist();renderAll();renderDailyQuests()}});
+ el.querySelectorAll('.questClaim').forEach(b=>b.onclick=()=>{const x=save.dailyQuests.items[+b.dataset.i],q=questDef(x.id);if(!x.claimed&&x.progress>=q.goal){x.claimed=true;save.metaCoins+=q.reward;persist();renderHome();renderCards();renderDailyQuests()}});
 }
 document.getElementById('rerollQuestBtn').onclick=()=>{ensureDailyQuests();if(save.dailyQuests.rerolled)return;const used=new Set(save.dailyQuests.items.map(x=>x.id));const choices=DAILY_QUEST_POOL.filter(q=>!used.has(q.id));if(!choices.length)return;const i=save.dailyQuests.items.findIndex(x=>!x.claimed);if(i<0)return;save.dailyQuests.items[i]={id:choices[Math.floor(Math.random()*choices.length)].id,progress:0,claimed:false};save.dailyQuests.rerolled=true;persist();renderDailyQuests()};
-// Hook existing gameplay events without changing their normal behaviour.
-const _questStartWave=startWave; startWave=function(){const before=battle?.wave;const lives=battle?.lives;const r=_questStartWave.apply(this,arguments);if(before&&battle)battle._questWaveStartLives=lives;return r};
-const _questRenderAll=renderAll; renderAll=function(){_questRenderAll.apply(this,arguments);renderDailyQuests()};
 ensureDailyQuests();
+renderDailyQuests();
 '''
 s=s[:idx]+js+s[idx:]
-# Hook known reward/placement/enemy death locations conservatively
-s=s.replace('save.bestWave=Math.max(save.bestWave,clearedWave);','save.bestWave=Math.max(save.bestWave,clearedWave);\n  addQuestProgress("waves",1);\n  if(speed===3)addQuestProgress("speedWaves",1);\n  if(battle?._questWaveStartLives===battle?.lives)addQuestProgress("noLossWaves",1);',1)
-# map completion hook before card XP completion block, matching current completion marker
-s=s.replace('const usedCards=[...(battle.usedCards||[])];','addQuestProgress(hardMode?"hardMaps":"normalMaps",1);\n    const usedCards=[...(battle.usedCards||[])];',1)
-# tower placement: battle.towers.push is stable
-s=s.replace('battle.towers.push(tower);','battle.towers.push(tower);\n    addQuestProgress("placed",1);',1)
-# enemy kill common reward line: add after first dead assignment where hp<=0 if pattern exists
-s=s.replace('e.dead=true;\n        battle.coins+=e.reward;','e.dead=true;\n        battle.coins+=e.reward;\n        addQuestProgress("kills",1);',1)
+# Hook quest rendering when opening quest screen
+show='''function showScreen(id){\n  document.body.classList.toggle("battle-mode",id==="battleScreen");'''
+if show in s:
+    s=s.replace(show,'''function showScreen(id){\n  document.body.classList.toggle("battle-mode",id==="battleScreen");\n  if(id==="questScreen")setTimeout(renderDailyQuests,0);''',1)
+# Hook wave rewards
+old='save.bestWave=Math.max(save.bestWave,clearedWave);'
+if old not in s: raise SystemExit('finishWave marker not found')
+s=s.replace(old,old+'\n  addQuestProgress("waves",1);\n  if(speed===3)addQuestProgress("speedWaves",1);',1)
+# map completion hook
+old='const usedCards=[...(battle.usedCards||[])];'
+if old in s:s=s.replace(old,'addQuestProgress(hardMode?"hardMaps":"normalMaps",1);\n    '+old,1)
+# tower placement hook
+old='battle.towers.push(tower);'
+if old in s:s=s.replace(old,old+'\n    addQuestProgress("placed",1);',1)
+# enemy kill hook
+old='e.dead=true;\n        battle.coins+=e.reward;'
+if old in s:s=s.replace(old,'e.dead=true;\n        battle.coins+=e.reward;\n        addQuestProgress("kills",1);',1)
 p.write_text(s)
