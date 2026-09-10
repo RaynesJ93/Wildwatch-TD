@@ -1,0 +1,42 @@
+name: Rhino horn attack
+on: [push]
+permissions:
+  contents: write
+jobs:
+  update-rhino:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update Rhino projectile
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old='t.key==="penguin"?"ice":t.key==="jaguar"?"claw":t.key==="lion"?"claw":t.key==="fox"?"tailswipe":"beam"'
+          new='t.key==="penguin"?"ice":t.key==="rhino"?"horn":t.key==="jaguar"?"claw":t.key==="lion"?"claw":t.key==="fox"?"tailswipe":"beam"'
+          if old not in s: raise SystemExit('Rhino projectile insertion point not found')
+          s=s.replace(old,new,1)
+          marker='    }else if(s.type==="ice"){' 
+          horn='''    }else if(s.type==="horn"){
+      const p=1-Math.max(0,s.life)/.28;
+      const x=s.x+(s.tx-s.x)*p,y=(s.y-8)+(s.ty-(s.y-8))*p;
+      const ang=Math.atan2(s.ty-(s.y-8),s.tx-s.x);
+      ctx.save();ctx.translate(x,y);ctx.rotate(ang);
+      ctx.shadowColor="#fff3c4";ctx.shadowBlur=8;
+      ctx.fillStyle="#efe0b6";ctx.strokeStyle="#6f5a3d";ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(17,0);ctx.quadraticCurveTo(2,-7,-12,-5);ctx.quadraticCurveTo(-6,0,-12,5);ctx.quadraticCurveTo(3,6,17,0);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.strokeStyle="#fff8dc";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-8,-3);ctx.quadraticCurveTo(4,-2,14,0);ctx.stroke();
+      ctx.restore();
+'''
+          if marker not in s: raise SystemExit('Projectile renderer insertion point not found')
+          s=s.replace(marker,horn+marker,1)
+          p.write_text(s)
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/rhino-horn-once.yml
+          git add index.html
+          git commit -m "Make Rhino shoot horn projectiles"
+          git push
