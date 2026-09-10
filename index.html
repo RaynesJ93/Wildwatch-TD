@@ -235,8 +235,8 @@ const MAX_CARD_LEVEL=20;
 function cardLevel(k){return Math.max(1,Math.min(MAX_CARD_LEVEL,save.cardLevels[k]||1));}
 function cardLevelCost(k){const lvl=cardLevel(k);return lvl>=MAX_CARD_LEVEL?0:3+lvl*2;}
 function cardBaseDamage(k){const a=animals[k];return a.dmg*(1+(cardLevel(k)-1)*.05);}
-function cardBaseRange(k){const a=animals[k];return a.range*(1+Math.floor((cardLevel(k)-1)/5)*.025);}
-function cardRate(k){const a=animals[k];return a.rate*Math.pow(.98,Math.floor((cardLevel(k)-1)/5));}
+function cardBaseRange(k){const a=animals[k];return a.range*(1+Math.floor(cardLevel(k)/5)*.025);}
+function cardRate(k){const a=animals[k];return a.rate*Math.pow(.98,Math.floor(cardLevel(k)/5));}
 function towerDamage(t){
   const base=cardBaseDamage(t.key);
   if(t.level>=10){
