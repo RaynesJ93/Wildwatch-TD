@@ -1,0 +1,22 @@
+name: Make tower range circle red
+
+on: [push]
+
+permissions:
+  contents: write
+
+jobs:
+  update-range-circle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Change selected tower range circle to red
+        shell: bash
+        run: |
+          python3 -c "from pathlib import Path; p=Path('index.html'); s=p.read_text(); old='ctx.strokeStyle=\"#ffd65a66\";ctx.lineWidth=3;ctx.stroke();'; new='ctx.strokeStyle=\"#ff2d2dcc\";ctx.lineWidth=4;ctx.stroke();'; assert old in s, 'range circle target not found'; s=s.replace(old,new,1); p.write_text(s)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/range-circle-red-once.yml
+          git add index.html
+          git commit -m "Make tower range circle red"
+          git push
