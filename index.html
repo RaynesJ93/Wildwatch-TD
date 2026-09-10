@@ -639,6 +639,14 @@ function spawnEnemy(){
   battle.enemies.push(e);
 }
 startWave.onclick=()=>{
+  if(battle.ended && battle.mapComplete){
+    battle.mapComplete=false;
+    clearBattleState();
+    if(currentMap<10){applyMap(currentSeries,currentMap+1);resetBattle();}
+    else if(currentSeries===1 && (save.desertDunesUnlocked||0)>=1){applyMap(2,1);resetBattle();}
+    else{message.textContent="🏆 All available levels complete!";startWave.textContent="Completed";}
+    return;
+  }
   if(battle.ended){resetBattle();return}
   if(!battle.started){resetBattle();}
 
@@ -871,7 +879,8 @@ function finishWave(){
     }
     levelCheck();persist();clearBattleState();
     battle.ended=true;
-    startWave.textContent="Map complete!";
+    battle.mapComplete=true;
+    startWave.textContent="Start Next Level";
     const seriesName=currentSeries===1?"Forest Pines":"Desert Dunes";
     const nextText=currentMap<10?`${currentSeries}-${currentMap+1} unlocked!`:currentSeries===1?"Desert Dunes 2-1 unlocked!":"Desert Dunes series complete!";
     message.textContent=`🏆 ${seriesName} ${currentSeries}-${currentMap} complete! ${nextText} • 🟡 200 bonus Coins!`;
