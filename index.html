@@ -278,7 +278,8 @@ let save;
 try { save={...defaults,...JSON.parse(localStorage.getItem("wildwatchSave")||"{}")}; } catch { save={...defaults}; }
 save.shards={...defaults.shards,...save.shards};
 save.cardLevels={...defaults.cardLevels,...save.cardLevels};
-Object.keys(animals).forEach(k=>{if(save.cardLevels[k]==null)save.cardLevels[k]=1;if(save.shards[k]==null)save.shards[k]=0;});
+save.cardXP=save.cardXP||{};
+Object.keys(animals).forEach(k=>{if(save.cardLevels[k]==null)save.cardLevels[k]=1;if(save.shards[k]==null)save.shards[k]=0;if(save.cardXP[k]==null)save.cardXP[k]=0;});
 // Preserve previous +7.5% damage-upgrade progress by converting each old upgrade into one card level.
 if(save.damageUpgrades){
   Object.keys(save.cardLevels).forEach(k=>{
@@ -296,7 +297,26 @@ for(let m=1;m<(save.desertDunesUnlocked||0);m++)save.normalCompleted[`2-${m}`]=t
 let hardMode=save.battleDifficulty==="hard";
 const MAX_CARD_LEVEL=20;
 function cardLevel(k){return Math.max(1,Math.min(MAX_CARD_LEVEL,save.cardLevels[k]||1));}
-function cardLevelCost(k){const lvl=cardLevel(k);return lvl>=MAX_CARD_LEVEL?0:3+lvl*2;}
+function cardLevelCost(k){return 0;}
+function cardXpNeeded(k){const lvl=cardLevel(k);return lvl>=MAX_CARD_LEVEL?0:100+(lvl-1)*50;}
+function addCardXp(k,amount){
+  if(!save.unlocked.includes(k)||cardLevel(k)>=MAX_CARD_LEVEL)return;
+  save.cardXP[k]=(save.cardXP[k]||0)+Math.max(0,Math.floor(amount));
+  while(cardLevel(k)<MAX_CARD_LEVEL){
+    const need=cardXpNeeded(k);
+    if(save.cardXP[k]<need)break;
+    save.cardXP[k]-=need;
+    save.cardLevels[k]=cardLevel(k)+1;
+  }
+  if(cardLevel(k)>=MAX_CARD_LEVEL)save.cardXP[k]=0;
+}
+function awardUsedCardXp(completed){
+  const used=[...new Set((battle&&battle.usedCards)||[])].filter(k=>save.unlocked.includes(k));
+  if(!used.length)return 0;
+  const amount=completed?(hardMode?150:100):(hardMode?50:35);
+  used.forEach(k=>addCardXp(k,amount));
+  return amount;
+}
 function cardBaseDamage(k){const a=animals[k];return a.dmg*(1+(cardLevel(k)-1)*.05);}
 function cardBaseRange(k){const a=animals[k];return a.range*(1+Math.floor(cardLevel(k)/5)*.025);}
 function cardRate(k){const a=animals[k];return a.rate*Math.pow(.98,Math.floor(cardLevel(k)/5));}
@@ -410,23 +430,14 @@ function renderCollection(){
   Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).forEach(([k,a])=>{
     const unlocked=save.unlocked.includes(k), d=document.createElement("div"); d.className="card "+(!unlocked?"locked":"")+(save.deck.includes(k)?" selected":"");
     const shardNeed=shardRequirement(a), lvl=cardLevel(k), lvlCost=cardLevelCost(k), dmgNow=cardBaseDamage(k), rangeNow=cardBaseRange(k), maxed=lvl>=MAX_CARD_LEVEL;
-    d.innerHTML=`<span class="rarity">${a.rarity==="Legendary"?"🌟 LEGENDARY":a.rarity==="Epic"?"🟣 EPIC":a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${animalVisual(k,"animal-portrait")}<h3>${a.name}</h3><div class="small">${unlocked?a.desc:`🔒 Locked • Collect ${shardNeed} shards to unlock. 🧩 ${save.shards[k]||0}/${shardNeed}`}</div>${unlocked?`<div class="statrow"><span>⭐ Card Lv ${lvl}/${MAX_CARD_LEVEL}</span><span>⚔️ ${Math.round(dmgNow*10)/10}</span><span>🎯 ${Math.round(rangeNow*10)/10}</span><span>🧩 ${save.shards[k]||0}</span></div><button class="secondary cardLevelBtn" style="width:100%;margin-top:8px;padding:8px;font-size:11px" data-key="${k}" ${maxed?'disabled':''}>${maxed?'⭐ MAX LEVEL':`⬆️ Level Up • 🧩 ${lvlCost}`}</button><div class="small" style="margin-top:4px">Each card level gives +5% base damage. Levels 5, 10, 15 and 20 also improve range and attack speed.</div>`:`<div class="statrow"><span>🔒 Not unlocked</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span></div>`}`;
+    d.innerHTML=`<span class="rarity">${a.rarity==="Legendary"?"🌟 LEGENDARY":a.rarity==="Epic"?"🟣 EPIC":a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${animalVisual(k,"animal-portrait")}<h3>${a.name}</h3><div class="small">${unlocked?a.desc:`🔒 Locked • Collect ${shardNeed} shards to unlock. 🧩 ${save.shards[k]||0}/${shardNeed}`}</div>${unlocked?`<div class="statrow"><span>⭐ Card Lv ${lvl}/${MAX_CARD_LEVEL}</span><span>⚔️ ${Math.round(dmgNow*10)/10}</span><span>🎯 ${Math.round(rangeNow*10)/10}</span><span>✨ XP ${(save.cardXP[k]||0)}/${cardLevel(k)>=MAX_CARD_LEVEL?"MAX":cardXpNeeded(k)}</span></div><button class="secondary cardLevelBtn" style="width:100%;margin-top:8px;padding:8px;font-size:11px" data-key="${k}" ${maxed?'disabled':''}>${maxed?'⭐ MAX LEVEL':`⬆️ Level Up • 🧩 ${lvlCost}`}</button><div class="small" style="margin-top:4px">Each card level gives +5% base damage. Levels 5, 10, 15 and 20 also improve range and attack speed.</div>`:`<div class="statrow"><span>🔒 Not unlocked</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span></div>`}`;
     if(unlocked)d.onclick=()=>toggleDeck(k);
     collectionCards.appendChild(d);
     const levelBtn=d.querySelector(".cardLevelBtn");
-    if(levelBtn)levelBtn.onclick=ev=>{ev.stopPropagation();levelUpCard(k)};
+    if(levelBtn){levelBtn.disabled=true;levelBtn.style.opacity=".8";levelBtn.textContent=maxed?"MAX LEVEL":`EXP ${save.cardXP[k]||0}/${cardXpNeeded(k)}`;}
   });
 }
-function levelUpCard(k){
-  if(!save.unlocked.includes(k))return;
-  const lvl=cardLevel(k);
-  if(lvl>=MAX_CARD_LEVEL){alert("This card is already max level.");return}
-  const cost=cardLevelCost(k);
-  if((save.shards[k]||0)<cost){alert(`You need ${cost} duplicate shards to level up ${animals[k].name}.`);return}
-  save.shards[k]-=cost;
-  save.cardLevels[k]=lvl+1;
-  persist();
-}
+function levelUpCard(k){return;}
 function toggleDeck(k){
   if(save.deck.includes(k)){ if(save.deck.length<=1)return; save.deck=save.deck.filter(x=>x!==k);}
   else { if(save.deck.length>=4){alert("Your deck already has 4 animals. Remove one first.");return;} save.deck.push(k);}
@@ -642,7 +653,7 @@ nextMap.onclick=()=>{
 function resetBattle(){
   cancelAnimationFrame(raf);
   applyMap(currentSeries,currentMap);
-  battle={started:true,hardMode,coins:hardMode?110:130,lives:hardMode?15:20,wave:1,enemies:[],towers:[],shots:[],puddles:[],spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false};
+  battle={started:true,hardMode,coins:hardMode?110:130,lives:hardMode?15:20,wave:1,enemies:[],towers:[],shots:[],puddles:[],usedCards:[],spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false};
   startWave.textContent="Start wave";
   message.textContent="Choose an animal card, then tap anywhere on the grass to place it.";
   selectedCard=null; selectedTower=null; speed=1; speedBtn.textContent="⏩ Speed: 1×";
@@ -753,6 +764,7 @@ canvas.addEventListener("pointerdown",ev=>{
   const a=animals[selectedCard]; if(battle.coins<a.cost){message.textContent="Not enough coins.";return}
   battle.coins-=a.cost;
   battle.towers.push({key:selectedCard,x,y,pad:null,cd:0,level:1,spent:a.cost});
+  if(!battle.usedCards.includes(selectedCard))battle.usedCards.push(selectedCard);
   message.textContent=`${a.name} placed!`;updateHud();
 });
 function openTowerModal(){
@@ -908,8 +920,10 @@ function towerTick(t,dt){
   t.cd=cardRate(t.key);
 }
 function gameOver(){
-  battle.ended=true;clearBattleState();save.bestWave=Math.max(save.bestWave,battle.wave);save.metaCoins+=Math.max(10,battle.wave*6);save.xp+=battle.wave*8;levelCheck();persist();
-  message.textContent=`Defeat! You reached wave ${battle.wave}. Tap Start wave to restart.`;startWave.textContent="Restart";
+  battle.ended=true;clearBattleState();save.bestWave=Math.max(save.bestWave,battle.wave);save.metaCoins+=Math.max(10,battle.wave*6);save.xp+=battle.wave*8;
+  const cardXp=awardUsedCardXp(false);
+  levelCheck();persist();
+  message.textContent=`Defeat! You reached wave ${battle.wave}.${cardXp?` Used cards earned +${cardXp} XP each.`:""} Tap Start wave to restart.`;startWave.textContent="Restart";
 }
 function finishWave(){
   const clearedWave=battle.wave;
@@ -923,6 +937,7 @@ function finishWave(){
     autoWaveTimer=setTimeout(()=>{if(autoWave && !battle.waveActive && !battle.ended)startWave.click();},900);
   }
   if(clearedWave>=15){
+    const cardXp=awardUsedCardXp(true);
     save.metaCoins+=hardMode?300:200;
     if(hardMode)save.hardCompleted[`${currentSeries}-${currentMap}`]=true;
     else save.normalCompleted[`${currentSeries}-${currentMap}`]=true;
@@ -938,7 +953,7 @@ function finishWave(){
     startWave.textContent="Start Next Level";
     const seriesName=currentSeries===1?"Forest Pines":"Desert Dunes";
     const nextText=currentMap<10?`${currentSeries}-${currentMap+1} unlocked!`:currentSeries===1?"Desert Dunes 2-1 unlocked!":"Desert Dunes series complete!";
-    message.textContent=`🏆 ${seriesName} ${currentSeries}-${currentMap} complete! ${nextText} • 🟡 200 bonus Coins!`;
+    message.textContent=`🏆 ${seriesName} ${currentSeries}-${currentMap} complete! ${nextText} • 🟡 200 bonus Coins!${cardXp?` • Used cards +${cardXp} XP each`:""}`;
     updateHud();
     return;
   }
