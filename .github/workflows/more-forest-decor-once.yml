@@ -1,0 +1,22 @@
+name: Add more Forest Pines vegetation
+on:
+  push:
+    paths:
+      - '.github/workflows/more-forest-decor-once.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add more trees and bushes
+        run: python3 .github/more-forest-decor.py
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/more-forest-decor-once.yml .github/more-forest-decor.py
+          git add index.html
+          git commit -m "Add denser trees and bushes to Forest Pines"
+          git push
