@@ -125,6 +125,7 @@
     <div class="battle-deck" id="battleDeck"></div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="secondary" style="flex:1" id="speedBtn">⏩ Speed: 1×</button>
+      <button class="secondary" style="flex:1" id="autoWaveBtn">▶️ Auto: OFF</button>
       <button class="danger" id="quitBtn">Quit</button>
     </div>
   </section>
@@ -558,7 +559,7 @@ let currentSeries=Math.max(1,Math.min(2,save.selectedSeries||1));
 let currentMap=Math.max(1,Math.min(10,currentSeries===1?(save.forestPinesSelected||1):(save.selectedSeriesMap||1)));
 let path=(currentSeries===1?forestPinesMaps:desertDunesMaps)[currentMap-1].path;
 let pads=(currentSeries===1?forestPinesMaps:desertDunesMaps)[currentMap-1].pads;
-let battle={}, selectedCard=null, selectedTower=null, raf=0, last=performance.now(), speed=1;
+let battle={}, selectedCard=null, selectedTower=null, raf=0, last=performance.now(), speed=1, autoWave=false, autoWaveTimer=0;
 
 function currentSeriesUnlocked(){
   return currentSeries===1?(save.forestPinesUnlocked||1):(save.desertDunesUnlocked||0);
@@ -606,6 +607,7 @@ function resetBattle(){
   startWave.textContent="Start wave";
   message.textContent="Choose an animal card, then tap anywhere on the grass to place it.";
   selectedCard=null; selectedTower=null; speed=1; speedBtn.textContent="⏩ Speed: 1×";
+  if(typeof autoWaveBtn!=="undefined"&&autoWaveBtn)autoWaveBtn.textContent=`▶️ Auto: ${autoWave?"ON":"OFF"}`;
   updateDifficultyUI();updateHud(); last=performance.now(); loop(last);
 }
 function updateHud(){battleCoins.textContent=Math.floor(battle.coins); lives.textContent=battle.lives; wave.textContent=`${Math.min(battle.wave,15)}/15`;document.querySelectorAll(".battle-card").forEach(b=>b.classList.toggle("disabled",animals[b.dataset.key].cost>battle.coins))}
@@ -668,6 +670,7 @@ startWave.onclick=()=>{
   if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}
 };
 speedBtn.onclick=()=>{speed=speed===1?2:speed===2?3:1;speedBtn.textContent=`⏩ Speed: ${speed}×`};
+autoWaveBtn.onclick=()=>{autoWave=!autoWave;autoWaveBtn.textContent=`▶️ Auto: ${autoWave?"ON":"OFF"}`;autoWaveBtn.classList.toggle("primary",autoWave);autoWaveBtn.classList.toggle("secondary",!autoWave);message.textContent=autoWave?"Auto waves ON — the next wave will start automatically.":"Auto waves OFF.";};
 quitBtn.onclick=()=>{showScreen("homeScreen");cancelAnimationFrame(raf);raf=0;};
 
 function pointToSegmentDistance(px,py,a,b){
@@ -852,6 +855,10 @@ function finishWave(){
   save.xp+=Math.round((12+clearedWave*3)*(hardMode?1.5:1));
   save.metaCoins+=hardMode?30:20;
   if(clearedWave%3===0)save.metaCoins+=hardMode?75:50;
+  if(autoWave && clearedWave<15 && !battle.ended){
+    clearTimeout(autoWaveTimer);
+    autoWaveTimer=setTimeout(()=>{if(autoWave && !battle.waveActive && !battle.ended)startWave.click();},900);
+  }
   if(clearedWave>=15){
     save.metaCoins+=hardMode?300:200;
     if(hardMode)save.hardCompleted[`${currentSeries}-${currentMap}`]=true;
