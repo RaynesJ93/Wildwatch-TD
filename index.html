@@ -49,7 +49,7 @@
     .battle-card.active{border-color:var(--gold);box-shadow:0 0 0 2px #ffd65a33}.battle-card.disabled{opacity:.45}
     .battle-card .emoji{font-size:29px}.battle-card .portrait{width:48px;height:48px;margin:0 auto 3px;border-radius:10px;background-image:url("assets/wildwatch-v2-sheet.jpg");background-repeat:no-repeat;background-size:420px 900px;box-shadow:0 5px 12px #0008,inset 0 0 0 1px #ffffff44}.cost{font-size:11px;color:var(--gold);font-weight:900}
     .message{text-align:center;color:var(--muted);font-size:13px;min-height:18px;margin:6px}
-    .nav{position:fixed;z-index:50;left:0;right:0;bottom:0;background:#0a1712ee;border-top:1px solid #315142;display:grid;grid-template-columns:repeat(4,1fr);padding:7px 8px calc(7px + env(safe-area-inset-bottom));backdrop-filter:blur(12px)}
+    .nav{position:fixed;z-index:50;left:0;right:0;bottom:0;background:#0a1712ee;border-top:1px solid #315142;display:grid;grid-template-columns:repeat(5,1fr);padding:7px 8px calc(7px + env(safe-area-inset-bottom));backdrop-filter:blur(12px)}
     .nav button{background:none;border:0;padding:6px 2px;color:#a9c6b5;font-size:11px;font-weight:800}.nav button.active{color:var(--gold)}.nav .ico{font-size:24px;display:block}
     .modal{position:fixed;z-index:90;inset:0;background:#000b;display:none;align-items:flex-end;justify-content:center;padding:14px}.modal.show{display:flex}
     .sheet{width:min(650px,100%);max-height:85vh;overflow:auto;background:#143326;border:1px solid #46705e;border-radius:24px 24px 16px 16px;padding:16px}
@@ -194,12 +194,26 @@
     <div class="progress"><i id="xpBar" style="width:0%"></i></div>
     <div class="small" id="xpText" style="margin-top:6px"></div>
   </section>
+
+  <section id="questScreen" class="screen">
+    <div class="hero">
+      <div style="font-size:46px;text-align:center">📜</div>
+      <h1 style="text-align:center">Daily Quests</h1>
+      <p style="text-align:center">Complete 3 fresh quests each day for extra rewards.</p>
+    </div>
+    <div id="dailyQuestList" style="display:grid;gap:10px;margin-top:14px"></div>
+    <div class="info-box" style="margin-top:12px;text-align:center">
+      <div class="small" id="questResetText">New quests tomorrow.</div>
+      <button class="secondary" id="rerollQuestBtn" style="width:100%;margin-top:9px">🔄 Free Daily Reroll</button>
+    </div>
+  </section>
 </div>
 
 <nav class="nav">
   <button data-screen="homeScreen" class="active"><span class="ico">🏕️</span>Home</button>
   <button data-screen="battleScreen"><span class="ico">⚔️</span>Battle</button>
   <button data-screen="collectionScreen"><span class="ico">🃏</span>Cards</button>
+  <button data-screen="questScreen"><span class="ico">📜</span>Quests</button>
   <button data-screen="packsScreen"><span class="ico">🧰</span>Chests</button>
 </nav>
 
@@ -525,6 +539,7 @@ function toggleDeck(k){
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>showScreen(b.dataset.screen));
 function showScreen(id){
   document.body.classList.toggle("battle-mode",id==="battleScreen");
+  if(id==="questScreen")setTimeout(renderDailyQuests,0);
   document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===id));
   document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen===id));
   if(id==="battleScreen" && !battle.started) resetBattle();
@@ -968,6 +983,8 @@ function finishWave(){
   const clearedWave=battle.wave;
   battle.waveActive=false;
   save.bestWave=Math.max(save.bestWave,clearedWave);
+  addQuestProgress("waves",1);
+  if(speed===3)addQuestProgress("speedWaves",1);
   save.xp+=Math.round((12+clearedWave*3)*(hardMode?1.5:1));
   // Permanent coin economy: 7 Coins per Normal wave, 12 Coins per Hard wave.
   save.metaCoins+=hardMode?12:7;
@@ -1475,6 +1492,42 @@ setTimeout(()=>{
     showScreen("battleScreen");
   }
 },350);
+
+// ---- Daily quest board ----
+const DAILY_QUEST_POOL=[
+ {id:'waves8',name:'Wave Warrior',icon:'🌊',text:'Clear 8 waves',goal:8,reward:25,type:'waves'},
+ {id:'waves12',name:'Defender',icon:'🛡️',text:'Clear 12 waves',goal:12,reward:35,type:'waves'},
+ {id:'normal1',name:'Map Master',icon:'🗺️',text:'Complete 1 Normal map',goal:1,reward:35,type:'normalMaps'},
+ {id:'hard1',name:'Hard Hitter',icon:'🔥',text:'Complete 1 Hard map',goal:1,reward:50,type:'hardMaps'},
+ {id:'place12',name:'Tower Builder',icon:'🏗️',text:'Place 12 animal towers',goal:12,reward:30,type:'placed'},
+ {id:'kills100',name:'Critter Control',icon:'💥',text:'Defeat 100 enemies',goal:100,reward:30,type:'kills'},
+ {id:'noloss3',name:'Untouchable',icon:'❤️',text:'Clear 3 waves without losing a life',goal:3,reward:35,type:'noLossWaves'},
+ {id:'speed5',name:'Need for Speed',icon:'⏩',text:'Clear 5 waves at 3× speed',goal:5,reward:35,type:'speedWaves'}
+];
+function questDay(){return new Date().toISOString().slice(0,10)}
+function ensureDailyQuests(){
+ save.dailyQuests=save.dailyQuests||{};
+ if(save.dailyQuests.day!==questDay()){
+   const pool=[...DAILY_QUEST_POOL].sort(()=>Math.random()-.5).slice(0,3);
+   save.dailyQuests={day:questDay(),items:pool.map(q=>({id:q.id,progress:0,claimed:false})),rerolled:false};persist();
+ }
+}
+function questDef(id){return DAILY_QUEST_POOL.find(q=>q.id===id)}
+function addQuestProgress(type,n=1){
+ ensureDailyQuests(); let changed=false;
+ save.dailyQuests.items.forEach(x=>{const q=questDef(x.id);if(q&&q.type===type&&!x.claimed){x.progress=Math.min(q.goal,(x.progress||0)+n);changed=true}});
+ if(changed){persist();renderDailyQuests()}
+}
+function renderDailyQuests(){
+ const el=document.getElementById('dailyQuestList'); if(!el)return; ensureDailyQuests();
+ el.innerHTML=save.dailyQuests.items.map((x,i)=>{const q=questDef(x.id),done=x.progress>=q.goal;return `<div class="info-box"><div style="display:flex;justify-content:space-between;gap:8px"><b>${q.icon} ${q.name}</b><b>🟡 ${q.reward}</b></div><div class="small" style="margin:5px 0">${q.text}</div><div class="progress"><i style="width:${Math.min(100,x.progress/q.goal*100)}%"></i></div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:7px"><span class="small">${x.progress}/${q.goal}</span><button class="${done&&!x.claimed?'primary':'secondary'} questClaim" data-i="${i}" ${done&&!x.claimed?'':'disabled'}>${x.claimed?'✓ Claimed':done?'Claim':'In progress'}</button></div></div>`}).join('');
+ document.getElementById('rerollQuestBtn').disabled=!!save.dailyQuests.rerolled;
+ document.getElementById('rerollQuestBtn').textContent=save.dailyQuests.rerolled?'✓ Reroll Used':'🔄 Free Daily Reroll';
+ el.querySelectorAll('.questClaim').forEach(b=>b.onclick=()=>{const x=save.dailyQuests.items[+b.dataset.i],q=questDef(x.id);if(!x.claimed&&x.progress>=q.goal){x.claimed=true;save.metaCoins+=q.reward;persist();renderHome();renderCards();renderDailyQuests()}});
+}
+document.getElementById('rerollQuestBtn').onclick=()=>{ensureDailyQuests();if(save.dailyQuests.rerolled)return;const used=new Set(save.dailyQuests.items.map(x=>x.id));const choices=DAILY_QUEST_POOL.filter(q=>!used.has(q.id));if(!choices.length)return;const i=save.dailyQuests.items.findIndex(x=>!x.claimed);if(i<0)return;save.dailyQuests.items[i]={id:choices[Math.floor(Math.random()*choices.length)].id,progress:0,claimed:false};save.dailyQuests.rerolled=true;persist();renderDailyQuests()};
+ensureDailyQuests();
+renderDailyQuests();
 </script>
 </body>
 </html>
