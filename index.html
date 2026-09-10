@@ -870,6 +870,8 @@ canvas.addEventListener("pointerdown",ev=>{
   battle.coins-=a.cost;
   battle.towers.push({key:selectedCard,x,y,pad:null,cd:0,level:1,spent:a.cost});
   addQuestProgress("placed",1);
+  if(animals[selectedCard]?.rarity==="Common")addWeeklyProgress("weeklyCommonPlaced",1);
+  if(animals[selectedCard]?.rarity==="Legendary")addWeeklyProgress("weeklyLegendaryPlaced",1);
   if(!battle.usedCards.includes(selectedCard))battle.usedCards.push(selectedCard);
   message.textContent=`${a.name} placed!`;updateHud();
 });
@@ -917,7 +919,7 @@ function moveEnemy(e,dt){
   }
   if(e.seg>=path.length-1&&!e.dead){e.dead=true;battle.lives--; if(battle.lives<=0)gameOver();updateHud()}
 }
-function killEnemy(e){if(e.dead)return;e.dead=true;battle.coins+=e.reward;addQuestProgress("kills",1);updateHud()}
+function killEnemy(e){if(e.dead)return;e.dead=true;battle.coins+=e.reward;addQuestProgress("kills",1);addWeeklyProgress("weeklyCoins",e.reward);updateHud()}
 function towerTick(t,dt){
   t.cd-=dt;if(t.cd>0)return;
   const a=animals[t.key], range=cardBaseRange(t.key)*(1+(t.level-1)*.06);
@@ -1118,6 +1120,7 @@ function finishWave(){
   battle.shots=(battle.shots||[]).filter(s=>s.type!=="hedgehogNeedles");
   save.bestWave=Math.max(save.bestWave,clearedWave);
   addQuestProgress("waves",1);
+    addWeeklyProgress("weeklyWaves",1);
   if(speed===3)addQuestProgress("speedWaves",1);
   save.xp+=Math.round((12+clearedWave*3)*(hardMode?1.5:1));
   // Permanent coin economy: 7 Coins per Normal wave, 12 Coins per Hard wave.
@@ -1840,6 +1843,9 @@ function bindMilestoneClaimButtons(){
    save.milestoneClaims.commonAll=true;persist();renderMeta();renderExtraQuestBoards();
  });
 }
+function weekKey(){const d=new Date(),x=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));x.setUTCDate(x.getUTCDate()+4-(x.getUTCDay()||7));const y=new Date(Date.UTC(x.getUTCFullYear(),0,1));return x.getUTCFullYear()+"-W"+String(Math.ceil((((x-y)/86400000)+1)/7)).padStart(2,"0")}
+function ensureWeeklyQuests(){const k=weekKey();if(!save.weeklyQuests||save.weeklyQuests.week!==k)save.weeklyQuests={week:k,progress:{},claimed:{}}}
+function addWeeklyProgress(type,n=1){ensureWeeklyQuests();save.weeklyQuests.progress[type]=(save.weeklyQuests.progress[type]||0)+n;persist();renderExtraQuestBoards()}
 function renderExtraQuestBoards(){
  const w=document.getElementById('weeklyQuestList'),m=document.getElementById('milestoneQuestList'),c=document.getElementById('challengeQuestList');
  if(w)w.innerHTML=questDropdownCards(WEEKLY_QUESTS,'progress');
