@@ -360,7 +360,7 @@ const animals = {
   mouse:{name:"Mouse",emoji:"🐭",rarity:"Common",cost:45,range:125,rate:1/1.45,dmg:7,color:"#aaa",desc:"Quick basic attacker."},
   hamster:{name:"Hamster",emoji:"🐹",rarity:"Common",cost:48,range:120,rate:1/1.35,dmg:8,color:"#c99b62",desc:"Quick basic attacker."},
   rabbit:{name:"Rabbit",emoji:"🐰",rarity:"Common",cost:52,range:145,rate:1/1.30,dmg:9,color:"#ddd",desc:"Fast basic attacker."},
-  squirrel:{name:"Squirrel",emoji:"🐿️",rarity:"Common",cost:58,range:175,rate:1/1.25,dmg:10,color:"#a66b3d",desc:"Fast ranged attacker."},
+  squirrel:{name:"Squirrel",emoji:"🐿️",rarity:"Common",cost:58,range:175,rate:1/1.25,dmg:17,color:"#a66b3d",desc:"Throws nuts at enemies. At tower level 10, every 5th attack splits into 5 nuts, each dealing 2x base damage."},
   hedgehog:{name:"Hedgehog",emoji:"🦔",rarity:"Common",cost:60,range:135,rate:3,dmg:12,color:"#76543b",desc:"Solid basic attacker."},
   chicken:{name:"Chicken",emoji:"🐔",rarity:"Common",cost:52,range:150,rate:1/1.20,dmg:9,color:"#eee",desc:"Fast basic attacker."},
   bird:{name:"Bird",emoji:"🐦",rarity:"Common",cost:55,range:190,rate:1/1.30,dmg:8,color:"#58a",desc:"Longer-range basic attacker."},
@@ -1256,6 +1256,31 @@ function towerTick(t,dt){
     return;
   }
 
+  if(t.key==="squirrel"){
+    let splitNut=false;
+    if(t.level>=10){
+      t.squirrelAttackCount=(t.squirrelAttackCount||0)+1;
+      splitNut=t.squirrelAttackCount%5===0;
+    }
+    battle.shots.push({x:t.x,y:t.y-6,tx:target.x,ty:target.y,life:.38,maxLife:.38,type:"squirrelNut",special:splitNut});
+    if(splitNut){
+      const splitDamage=animals.squirrel.dmg*2;
+      const candidates=battle.enemies.filter(e=>!e.dead).sort((a,b)=>Math.hypot(a.x-target.x,a.y-target.y)-Math.hypot(b.x-target.x,b.y-target.y));
+      const splitTargets=[];
+      for(let i=0;i<5;i++)splitTargets.push(candidates[i%candidates.length]||target);
+      splitTargets.forEach((e,i)=>{
+        const ang=(Math.PI*2*i/5)-Math.PI/2;
+        battle.shots.push({x:target.x,y:target.y,tx:e.x,ty:e.y,life:.32,maxLife:.32,type:"squirrelSplitNut",fanAngle:ang});
+        if(!e.dead){e.hp-=splitDamage;if(e.hp<=0)killEnemy(e);}
+      });
+    }else{
+      target.hp-=dmg;
+      if(target.hp<=0)killEnemy(target);
+    }
+    t.cd=cardRate(t.key);
+    return;
+  }
+
   if(t.key==="crocodile"){
     let deathRoll=false;
     if(t.level>=10){t.crocAttackCount=(t.crocAttackCount||0)+1;deathRoll=t.crocAttackCount%5===0;}
@@ -1983,6 +2008,33 @@ function draw(){
       ctx.fillStyle="#aeeeff";
       ctx.beginPath();ctx.moveTo(-10,-5);ctx.lineTo(-22,0);ctx.lineTo(-10,5);ctx.closePath();ctx.fill();
       ctx.restore();
+    }else if(s.type==="squirrelNut"||s.type==="squirrelSplitNut"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.38);
+      let x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q;
+      if(s.type==="squirrelNut")y-=Math.sin(Math.PI*q)*22;
+      if(s.type==="squirrelSplitNut"){
+        const spread=22*Math.sin(Math.PI*q),a=s.fanAngle||0;
+        x+=Math.cos(a)*spread;
+        y+=Math.sin(a)*spread;
+      }
+      ctx.save();
+      ctx.translate(x,y);
+      ctx.rotate(q*Math.PI*4);
+      ctx.font=s.type==="squirrelSplitNut"?"21px system-ui":"25px system-ui";
+      ctx.textAlign="center";
+      ctx.textBaseline="middle";
+      if(s.special&&s.type==="squirrelNut"){
+        ctx.globalAlpha=.6;
+        ctx.strokeStyle="#ffd45d";
+        ctx.lineWidth=4;
+        ctx.beginPath();
+        ctx.arc(0,0,16+q*10,0,Math.PI*2);
+        ctx.stroke();
+        ctx.globalAlpha=1;
+      }
+      ctx.fillText("🌰",0,0);
+      ctx.restore();
+      return;
     }else if(s.type==="crocTail"||s.type==="crocDeathRoll"){
       const q=1-Math.max(0,s.life)/(s.maxLife||(s.type==="crocDeathRoll"?.62:.34));
       const x=s.x+(s.tx-s.x)*Math.min(1,q*1.15),y=s.y+(s.ty-s.y)*Math.min(1,q*1.15),ang=Math.atan2(s.ty-s.y,s.tx-s.x);
