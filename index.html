@@ -158,6 +158,12 @@
 body:not(.battle-map-menu) #mapSanctuary{display:none!important}
 body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{display:block!important}
 
+
+/* Quest panel visibility repair */
+#questScreen.active .questPanel{visibility:visible!important;opacity:1!important}
+#questScreen.active #dailyQuestList{display:grid}
+#questScreen.active #weeklyQuestList,#questScreen.active #milestoneQuestList,#questScreen.active #challengeQuestList{visibility:visible!important;opacity:1!important}
+
 </style>
 </head>
 <body>
@@ -701,7 +707,11 @@ function showScreen(id){
   const sanctuary=document.getElementById("mapSanctuary");
   if(sanctuary)sanctuary.style.display="none";
 
-  if(id==="questScreen")setTimeout(renderDailyQuests,0);
+  if(id==="questScreen")setTimeout(()=>{
+    renderDailyQuests();
+    if(typeof renderExtraQuestBoards==="function")renderExtraQuestBoards();
+    if(typeof setQuestTab==="function")setQuestTab("daily");
+  },0);
   document.querySelectorAll(".screen").forEach(el=>el.classList.toggle("active",el.id===id));
   document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen===id));
 
