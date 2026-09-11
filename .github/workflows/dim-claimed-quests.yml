@@ -1,0 +1,56 @@
+name: Dim claimed quests
+on:
+  push:
+    paths:
+      - '.github/workflows/dim-claimed-quests.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add claimed quest styling
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+
+          css='''\n/* Claimed quest visual state */\n.quest-claimed{opacity:.48;filter:grayscale(.72);position:relative;transition:opacity .18s ease,filter .18s ease}\n.quest-claimed:after{content:"✓ CLAIMED";position:absolute;right:10px;bottom:9px;background:#0b1913;border:1px solid #6f8d7d;color:#c9ddd2;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:900;letter-spacing:.35px;pointer-events:none}\n.quest-claimed .progress i{background:#789187!important}\n.quest-claimed button{opacity:.72}\n'''
+          if '/* Claimed quest visual state */' not in s:
+              marker='details.questDrop[open] .dropArrow{transform:rotate(180deg)}'
+              if marker not in s: raise SystemExit('CSS insertion point not found')
+              s=s.replace(marker,marker+css,1)
+
+          old='''return `<div class=\\"info-box\\"><div style=\\"display:flex;justify-content:space-between;gap:8px\\"><b>${q.icon} ${q.name}</b><b>${reward}</b></div><div class=\\"small\\" style=\\"margin:6px 0\\">${q.text}</div><div class=\\"progress\\"><i style=\\"width:${Math.min(100,progress/goal*100)}%\\"></i></div><div class=\\"small\\" style=\\"margin-top:7px\\">${Math.min(progress,goal)}/${goal}</div>${button}</div>`;'''
+          new='''return `<div class=\\"info-box ${claimed?'quest-claimed':''}\\"><div style=\\"display:flex;justify-content:space-between;gap:8px\\"><b>${q.icon} ${q.name}</b><b>${reward}</b></div><div class=\\"small\\" style=\\"margin:6px 0\\">${q.text}</div><div class=\\"progress\\"><i style=\\"width:${Math.min(100,progress/goal*100)}%\\"></i></div><div class=\\"small\\" style=\\"margin-top:7px\\">${claimed?'✓ Completed & claimed':`${Math.min(progress,goal)}/${goal}`}</div>${button}</div>`;'''
+          if old in s:
+              s=s.replace(old,new,1)
+          elif "info-box ${claimed?'quest-claimed':''}" not in s:
+              raise SystemExit('Weekly quest render insertion point not found')
+
+          old='''return `<details class=\\"info-box questDrop\\" ${i===0?'open':''}><summary style=\\"cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px\\"><b>${q.icon} ${q.name}</b><b>${reward}</b></summary><div class=\\"small\\" style=\\"margin-top:7px\\">${q.text}</div><div class=\\"small\\" style=\\"margin-top:7px\\">${status}</div>${claim}</details>`;'''
+          new='''return `<details class=\\"info-box questDrop ${claimed?'quest-claimed':''}\\" ${i===0?'open':''}><summary style=\\"cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px\\"><b>${q.icon} ${q.name}</b><b>${reward}</b></summary><div class=\\"small\\" style=\\"margin-top:7px\\">${q.text}</div><div class=\\"small\\" style=\\"margin-top:7px\\">${status}</div>${claim}</details>`;'''
+          if old in s:
+              s=s.replace(old,new,1)
+          elif "questDrop ${claimed?'quest-claimed':''}" not in s:
+              raise SystemExit('Milestone/challenge render insertion point not found')
+
+          old='''return `<div class=\\"info-box\\"><div style=\\"display:flex;justify-content:space-between;gap:8px\\"><b>${q.icon} ${q.name}</b><b>🟡 ${q.reward}</b></div><div class=\\"small\\" style=\\"margin:5px 0\\">${q.text}</div><div class=\\"progress\\"><i style=\\"width:${Math.min(100,x.progress/q.goal*100)}%\\"></i></div><div style=\\"display:flex;align-items:center;justify-content:space-between;margin-top:7px\\"><span class=\\"small\\">${x.progress}/${q.goal}</span><button class=\\"${done&&!x.claimed?'primary':'secondary'} questClaim\\" data-i=\\"${i}\\" ${done&&!x.claimed?'':'disabled'}>${x.claimed?'✓ Claimed':done?'Claim':'In progress'}</button></div></div>`'''
+          new='''return `<div class=\\"info-box ${x.claimed?'quest-claimed':''}\\"><div style=\\"display:flex;justify-content:space-between;gap:8px\\"><b>${q.icon} ${q.name}</b><b>🟡 ${q.reward}</b></div><div class=\\"small\\" style=\\"margin:5px 0\\">${q.text}</div><div class=\\"progress\\"><i style=\\"width:${Math.min(100,x.progress/q.goal*100)}%\\"></i></div><div style=\\"display:flex;align-items:center;justify-content:space-between;margin-top:7px\\"><span class=\\"small\\">${x.claimed?'✓ Completed & claimed':`${x.progress}/${q.goal}`}</span><button class=\\"${done&&!x.claimed?'primary':'secondary'} questClaim\\" data-i=\\"${i}\\" ${done&&!x.claimed?'':'disabled'}>${x.claimed?'✓ Claimed':done?'Claim':'In progress'}</button></div></div>`'''
+          if old in s:
+              s=s.replace(old,new,1)
+          elif "${x.claimed?'quest-claimed':''}" not in s:
+              raise SystemExit('Daily quest render insertion point not found')
+
+          p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Dim completed and claimed quests'
+          git push
