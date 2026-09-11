@@ -1,0 +1,31 @@
+name: Upgrade Caterpillar leaf special
+on:
+  push:
+    paths:
+      - '.github/workflows/upgrade-caterpillar-leaf-special.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Apply Caterpillar upgrade
+        run: python .github/upgrade-caterpillar-leaf-special.py
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No Caterpillar changes needed"
+            exit 0
+          fi
+          git commit -m "Upgrade Caterpillar leaf attack and level 10 special"
+          git push origin main
