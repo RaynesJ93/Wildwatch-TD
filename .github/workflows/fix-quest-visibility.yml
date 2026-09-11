@@ -1,0 +1,28 @@
+name: Fix quest visibility
+
+on:
+  push:
+    paths:
+      - '.github/scripts/fix_quest_visibility.py'
+      - '.github/workflows/fix-quest-visibility.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Repair quest panel visibility
+        run: python3 .github/scripts/fix_quest_visibility.py
+      - name: Commit quest visibility fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Fix blank weekly milestone and challenge quests'
+          git push origin main
