@@ -2432,6 +2432,22 @@ function ensureDailyQuests(){
  }
 }
 function questDef(id){return DAILY_QUEST_POOL.find(q=>q.id===id)}
+// Quest progress compatibility helpers used by battle rewards.
+function addWeeklyProgress(type,n=1){
+  if(typeof save==='undefined')return;
+  save.weeklyProgress=save.weeklyProgress||{};
+  save.weeklyProgress[type]=(save.weeklyProgress[type]||0)+n;
+}
+function addMilestoneProgress(type,n=1){
+  if(typeof save==='undefined')return;
+  save.milestoneProgress=save.milestoneProgress||{};
+  save.milestoneProgress[type]=(save.milestoneProgress[type]||0)+n;
+}
+function addChallengeProgress(type,n=1){
+  if(typeof save==='undefined')return;
+  save.challengeProgress=save.challengeProgress||{};
+  save.challengeProgress[type]=(save.challengeProgress[type]||0)+n;
+}
 function addQuestProgress(type,n=1){
  ensureDailyQuests(); let changed=false;
  save.dailyQuests.items.forEach(x=>{const q=questDef(x.id);if(q&&q.type===type&&!x.claimed){x.progress=Math.min(q.goal,(x.progress||0)+n);changed=true}});
