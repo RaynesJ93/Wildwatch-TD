@@ -1,0 +1,48 @@
+name: Lower remaining tower upgrade costs 35 percent
+
+on:
+  push:
+    paths:
+      - '.github/workflows/lower-all-standard-upgrades-35.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Lower standard tower upgrade costs
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          # Existing individually tuned cards keep their current multipliers.
+          # All other cards now use 0.65, i.e. 35% cheaper than their previous standard upgrade cost.
+          replacements={
+            'const mult=selectedTower.key==="pig"?.8:selectedTower.key==="tiger"?.64:selectedTower.key==="giraffe"?.65:1;':
+            'const mult=selectedTower.key==="pig"?.8:selectedTower.key==="tiger"?.64:selectedTower.key==="giraffe"?.65:.65;',
+            'up=Math.floor(a.cost*.595*t.level*(t.key==="pig"?.8:t.key==="tiger"?.64:t.key==="giraffe"?.65:1));':
+            'up=Math.floor(a.cost*.595*t.level*(t.key==="pig"?.8:t.key==="tiger"?.64:t.key==="giraffe"?.65:.65));',
+            'cost=Math.floor(a.cost*.595*selectedTower.level*(selectedTower.key==="pig"?.8:selectedTower.key==="tiger"?.64:selectedTower.key==="giraffe"?.65:1));':
+            'cost=Math.floor(a.cost*.595*selectedTower.level*(selectedTower.key==="pig"?.8:selectedTower.key==="tiger"?.64:selectedTower.key==="giraffe"?.65:.65));'
+          }
+          changed=0
+          for old,new in replacements.items():
+            if old in s:
+              s=s.replace(old,new,1); changed+=1
+          if changed != 3:
+            raise SystemExit(f'Expected 3 upgrade formulas, changed {changed}. Refusing partial patch.')
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Lower remaining tower upgrade costs by 35 percent'
+          git push origin main
