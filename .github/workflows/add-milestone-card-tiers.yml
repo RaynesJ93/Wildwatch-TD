@@ -1,0 +1,66 @@
+name: Add milestone card tier quests
+on:
+  push:
+    paths:
+      - '.github/workflows/add-milestone-card-tiers.yml'
+permissions:
+  contents: write
+jobs:
+  update-milestones:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Expand milestone quests
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old=""" {id:'uncommonAll',icon:'🏆',name:'Uncommon Collector IV',text:'Collect all Uncommon cards',reward:250,type:'uncommonOwned',goal:'allUncommon'},
+ {id:'growingCollection',icon:'🃏',name:'Growing Collection',text:'Own 10 animal cards',reward:150,type:'allOwned',goal:10},"""
+          new=""" {id:'uncommonAll',icon:'🏆',name:'Uncommon Collector IV',text:'Collect all Uncommon cards',reward:500,rewardType:'exp',type:'uncommonOwned',goal:'allUncommon'},
+ {id:'rare3',icon:'💎',name:'Rare Collector I',text:'Collect 3 Rare cards',reward:75,type:'rareOwned',goal:3},
+ {id:'rare7',icon:'💎',name:'Rare Collector II',text:'Collect 7 Rare cards',reward:150,type:'rareOwned',goal:7},
+ {id:'rare14',icon:'💎',name:'Rare Collector III',text:'Collect 14 Rare cards',reward:300,type:'rareOwned',goal:14},
+ {id:'rareAll',icon:'🏆',name:'Rare Collector IV',text:'Collect all Rare cards',reward:750,rewardType:'exp',type:'rareOwned',goal:'allRare'},
+ {id:'legendary1',icon:'🌟',name:'Legendary Collector I',text:'Collect 1 Legendary card',reward:150,type:'legendaryOwned',goal:1},
+ {id:'legendary3',icon:'🌟',name:'Legendary Collector II',text:'Collect 3 Legendary cards',reward:300,type:'legendaryOwned',goal:3},
+ {id:'legendary7',icon:'🌟',name:'Legendary Collector III',text:'Collect 7 Legendary cards',reward:600,type:'legendaryOwned',goal:7},
+ {id:'legendaryAll',icon:'🏆',name:'Legendary Collector IV',text:'Collect all Legendary cards',reward:1000,rewardType:'exp',type:'legendaryOwned',goal:'allLegendary'},
+ {id:'growingCollection',icon:'🃏',name:'Growing Collection',text:'Own 10 animal cards',reward:150,type:'allOwned',goal:10},"""
+          if old not in s:
+              raise SystemExit('Milestone insertion point not found')
+          s=s.replace(old,new,1)
+          old2=""" if(q.type==='uncommonOwned'){
+   const uncommonKeys=Object.keys(animals).filter(k=>animals[k].rarity==='Uncommon');
+   progress=(save.unlocked||[]).filter(k=>animals[k]?.rarity==='Uncommon').length;
+   goal=q.goal==='allUncommon'?uncommonKeys.length:Number(q.goal||uncommonKeys.length);
+ }"""
+          new2=old2+"""
+ if(q.type==='rareOwned'){
+   const rareKeys=Object.keys(animals).filter(k=>animals[k].rarity==='Rare');
+   progress=(save.unlocked||[]).filter(k=>animals[k]?.rarity==='Rare').length;
+   goal=q.goal==='allRare'?rareKeys.length:Number(q.goal||rareKeys.length);
+ }
+ if(q.type==='legendaryOwned'){
+   const legendaryKeys=Object.keys(animals).filter(k=>animals[k].rarity==='Legendary');
+   progress=(save.unlocked||[]).filter(k=>animals[k]?.rarity==='Legendary').length;
+   goal=q.goal==='allLegendary'?legendaryKeys.length:Number(q.goal||legendaryKeys.length);
+ }"""
+          if old2 not in s:
+              raise SystemExit('questState insertion point not found')
+          s=s.replace(old2,new2,1)
+          old3="const tier=q.type==='commonOwned'?'Common':q.type==='uncommonOwned'?'Uncommon':null;"
+          new3="const tier=q.type==='commonOwned'?'Common':q.type==='uncommonOwned'?'Uncommon':q.type==='rareOwned'?'Rare':q.type==='legendaryOwned'?'Legendary':null;"
+          if old3 not in s:
+              raise SystemExit('reward tier insertion point not found')
+          s=s.replace(old3,new3,1)
+          p.write_text(s)
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Expand milestone quests across card tiers'
+          git push
