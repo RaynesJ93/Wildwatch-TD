@@ -365,7 +365,7 @@ const animals = {
   octopus:{name:"Octopus",emoji:"🐙",rarity:"Rare",cost:130,range:195,rate:1/1.10,dmg:40,color:"#b58",desc:"Strong quick attacker."},
   squid:{name:"Squid",emoji:"🦑",rarity:"Rare",cost:130,range:215,rate:1/1.05,dmg:38,color:"#b79",desc:"Long-range attacker."},
   shark:{name:"Shark",emoji:"🦈",rarity:"Rare",cost:155,range:150,rate:1/.65,dmg:64,color:"#789",desc:"Devastating attacker."},
-  tiger:{name:"Tiger",emoji:"🐯",rarity:"Legendary",cost:175,range:185,rate:1/1.10,dmg:70,color:"#e83",desc:"Elite fast attacker."},
+  tiger:{name:"Tiger",emoji:"🐯",rarity:"Legendary",cost:175,range:185,rate:1/1.10,dmg:70,color:"#e83",desc:"Swipes enemies. At tower level 10 every 9th attack roars, forcing nearby enemies back toward the start for 2 seconds."},
   leopard:{name:"Leopard",emoji:"🐆",rarity:"Legendary",cost:170,range:200,rate:1/1.30,dmg:61,color:"#d95",desc:"Extremely fast elite attacker."},
   bear:{name:"Bear",emoji:"🐻",rarity:"Legendary",cost:190,range:165,rate:1/.75,dmg:82,color:"#754",desc:"Massive damage attacker."},
   polarBear:{name:"Polar Bear",emoji:"🐻‍❄️",rarity:"Legendary",cost:195,range:160,rate:1/.70,dmg:88,color:"#eef",desc:"Massive damage attacker."},
@@ -898,6 +898,20 @@ sellTower.onclick=()=>{
 };
 
 function moveEnemy(e,dt){
+  if((e.tigerRoar||0)>0){
+    e.tigerRoar=Math.max(0,e.tigerRoar-dt);
+    let dist=e.speed*dt;
+    while(dist>0){
+      const seg=Math.max(0,e.seg||0);
+      const [tx,ty]=path[seg],dx=tx-e.x,dy=ty-e.y,len=Math.hypot(dx,dy);
+      if(len>.001){
+        e.dirX=dx/len;e.dirY=dy/len;e.walkPhase=(e.walkPhase||0)+dt*e.speed*.16;
+        if(dist>=len){e.x=tx;e.y=ty;dist-=len;if(e.seg>0)e.seg--;else dist=0;}
+        else{e.x+=dx/len*dist;e.y+=dy/len*dist;dist=0;}
+      }else if(e.seg>0)e.seg--;else break;
+    }
+    return;
+  }
   if((e.pigStop||0)>0){e.pigStop=Math.max(0,e.pigStop-dt);return;}
   if(e.poison>0){
     e.poison-=dt;
@@ -991,6 +1005,27 @@ function towerTick(t,dt){
     battle.shots.push({x:t.x,y:t.y-8,tx:target.x,ty:target.y,life:.48,maxLife:.48,type:"raccoonBin",special:raccoonSpecial});
     target.hp-=dmg;
     if(target.hp<=0)killEnemy(target);
+    t.cd=cardRate(t.key);
+    return;
+  }
+
+  if(t.key==="tiger"){
+    let tigerRoar=false;
+    if(t.level>=10){
+      t.tigerAttackCount=(t.tigerAttackCount||0)+1;
+      tigerRoar=t.tigerAttackCount%9===0;
+    }
+    battle.shots.push({x:t.x,y:t.y-5,tx:target.x,ty:target.y,life:.28,maxLife:.28,type:"tigerSwipe"});
+    target.hp-=dmg;
+    if(target.hp<=0)killEnemy(target);
+    if(tigerRoar){
+      battle.roars=battle.roars||[];
+      battle.roars.push({x:t.x,y:t.y,life:.65,maxLife:.65,radius:range});
+      battle.enemies.forEach(e=>{
+        if(e.dead)return;
+        if(Math.hypot(e.x-t.x,e.y-t.y)<=range)e.tigerRoar=Math.max(e.tigerRoar||0,2);
+      });
+    }
     t.cd=cardRate(t.key);
     return;
   }
@@ -1247,6 +1282,10 @@ function update(dt){
     }
   });
   battle.trashZones=battle.trashZones.filter(z=>z.life>0);
+  battle.roars=battle.roars||[];
+  battle.roars.forEach(r=>r.life-=dt);
+  battle.roars=battle.roars.filter(r=>r.life>0);
+
   battle.pigHamZones=battle.pigHamZones||[];
   battle.pigHamZones.forEach(z=>{
     z.life-=dt;
@@ -1563,6 +1602,12 @@ function draw(){
     ctx.fillText("🥓",z.x-16,z.y+2);ctx.fillText("🥓",z.x+16,z.y-4);ctx.fillText("🥓",z.x,z.y+18);
     ctx.restore();
   });
+  (battle.roars||[]).forEach(r=>{
+    const q=1-Math.max(0,r.life)/(r.maxLife||.65);
+    ctx.save();ctx.globalAlpha=Math.max(0,1-q);ctx.strokeStyle="#ffb84d";ctx.lineWidth=6;
+    ctx.beginPath();ctx.arc(r.x,r.y,20+(r.radius||180)*q,0,Math.PI*2);ctx.stroke();
+    ctx.font="30px sans-serif";ctx.textAlign="center";ctx.fillText("ROAR!",r.x,r.y-34);ctx.restore();
+  });
   (battle.eggSplashes||[]).forEach(z=>{
     const a=Math.max(.28,Math.min(1,z.life/z.maxLife));
     ctx.save();ctx.globalAlpha=a;
@@ -1590,6 +1635,15 @@ function draw(){
     ctx.restore();
   });
   battle.shots?.forEach(s=>{
+    if(s.type==="tigerSwipe"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.28);
+      const x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q;
+      const ang=Math.atan2(s.ty-s.y,s.tx-s.x);
+      ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.strokeStyle="#ffd36a";ctx.lineWidth=5;ctx.lineCap="round";
+      [-10,0,10].forEach(off=>{ctx.beginPath();ctx.arc(0,off,18,-.85,.85);ctx.stroke()});
+      ctx.restore();
+      return;
+    }
     if(s.type==="caterpillarLeaf"||s.type==="caterpillarBigLeaf"){
       const q=1-Math.max(0,s.life)/(s.maxLife||.42);
       const x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q-Math.sin(Math.PI*q)*18;
