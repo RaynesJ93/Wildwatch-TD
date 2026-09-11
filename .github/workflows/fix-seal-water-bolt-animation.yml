@@ -1,0 +1,22 @@
+name: Fix Seal water bolt animation
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-seal-water-bolt-animation.yml'
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply Seal water bolt fix
+        run: python .github/fix-seal-water-bolt-animation.py
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix Seal water bolt attack animation"
+          git push
