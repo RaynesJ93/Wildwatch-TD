@@ -760,7 +760,7 @@ nextMap.onclick=()=>{
 function resetBattle(){
   cancelAnimationFrame(raf);
   applyMap(currentSeries,currentMap);
-  battle={started:true,hardMode,coins:hardMode?110:130,lives:hardMode?15:20,wave:1,enemies:[],towers:[],shots:[],puddles:[],needles:[],pineapples:[],usedCards:[],spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false};
+  battle={started:true,hardMode,coins:hardMode?110:130,lives:hardMode?15:20,wave:1,enemies:[],towers:[],shots:[],puddles:[],needles:[],pineapples:[],usedCards:[],mapKills:0,mapCoinsEarned:0,spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false};
   startWave.textContent="Start wave";
   message.textContent="Choose an animal card, then tap anywhere on the grass to place it.";
   selectedCard=null; selectedTower=null; speed=1; speedBtn.textContent="⏩ Speed: 1×";
@@ -936,7 +936,7 @@ function moveEnemy(e,dt){
   }
   if(e.seg>=path.length-1&&!e.dead){e.dead=true;battle.lives--; if(battle.lives<=0)gameOver();updateHud()}
 }
-function killEnemy(e){if(e.dead)return;e.dead=true;battle.coins+=e.reward;addQuestProgress("kills",1);addWeeklyProgress("weeklyCoins",e.reward);updateHud()}
+function killEnemy(e){if(e.dead)return;e.dead=true;battle.coins+=e.reward;battle.mapKills=(battle.mapKills||0)+1;addQuestProgress("kills",1);addWeeklyProgress("weeklyCoins",e.reward);updateHud()}
 function towerTick(t,dt){
   t.cd-=dt;if(t.cd>0)return;
   const a=animals[t.key], range=cardBaseRange(t.key)*(1+(t.level-1)*.06);
@@ -1184,6 +1184,45 @@ function towerTick(t,dt){
   }
   t.cd=cardRate(t.key);
 }
+function showMapSummary(cardXp){
+  const towers=(battle&&battle.towers)||[];
+  let strongest=null;
+  towers.forEach(t=>{
+    const power=towerDamage(t);
+    if(!strongest || power>strongest.power || (power===strongest.power&&t.level>strongest.t.level))strongest={t,power};
+  });
+  const strongestHtml=strongest
+    ? `${animals[strongest.t.key].emoji} <b>${animals[strongest.t.key].name}</b><div class="small">Tower Lv ${strongest.t.level} • ${Math.round(strongest.power)} damage</div>`
+    : `<b>No towers deployed</b>`;
+  let modal=document.getElementById('mapSummaryModal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='mapSummaryModal';
+    modal.className='modal';
+    modal.style.zIndex='140';
+    modal.innerHTML=`<div class="sheet" style="max-width:430px;text-align:center">
+      <div style="font-size:46px;margin-bottom:4px">🏆</div>
+      <h2 style="margin:0 0 4px">Map Complete!</h2>
+      <div class="small" id="mapSummarySubtitle" style="margin-bottom:14px"></div>
+      <div class="info-grid" style="text-align:left">
+        <div class="info-box"><div class="small">Enemies defeated</div><div id="mapSummaryKills" style="font-size:25px;font-weight:900;margin-top:3px">0</div></div>
+        <div class="info-box"><div class="small">Coins earned</div><div id="mapSummaryCoins" style="font-size:25px;font-weight:900;margin-top:3px">🟡 0</div></div>
+      </div>
+      <div class="info-box" style="text-align:left;margin-top:9px"><div class="small" style="margin-bottom:5px">Strongest tower deployed</div><div id="mapSummaryTower"></div></div>
+      <div class="info-box" style="text-align:left;margin-top:9px"><div class="small">Card EXP earned</div><div id="mapSummaryXp" style="font-size:18px;font-weight:900;margin-top:3px"></div></div>
+      <button class="primary" id="closeMapSummary" style="width:100%;margin-top:13px">Continue</button>
+    </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('#closeMapSummary').onclick=()=>modal.classList.remove('show');
+  }
+  const seriesName=currentSeries===1?'Forest Pines':'Desert Dunes';
+  modal.querySelector('#mapSummarySubtitle').textContent=`${seriesName} ${currentMap} • ${hardMode?'Hard':'Normal'}`;
+  modal.querySelector('#mapSummaryKills').textContent=String(battle.mapKills||0);
+  modal.querySelector('#mapSummaryCoins').textContent=`🟡 ${battle.mapCoinsEarned||0}`;
+  modal.querySelector('#mapSummaryTower').innerHTML=strongestHtml;
+  modal.querySelector('#mapSummaryXp').textContent=cardXp?`+${cardXp} EXP to each used card`:'No card EXP earned';
+  modal.classList.add('show');
+}
 function gameOver(){
   battle.ended=true;clearBattleState();save.bestWave=Math.max(save.bestWave,battle.wave);save.metaCoins+=Math.max(10,battle.wave*6);save.xp+=battle.wave*8;
   const cardXp=awardUsedCardXp(false);
@@ -1204,12 +1243,14 @@ function finishWave(){
   save.xp+=Math.round((12+clearedWave*3)*(hardMode?1.5:1));
   // Permanent coin economy: 7 Coins per Normal wave, 12 Coins per Hard wave.
   save.metaCoins+=hardMode?12:7;
+  battle.mapCoinsEarned=(battle.mapCoinsEarned||0)+(hardMode?12:7);
   if(autoWave && clearedWave<15 && !battle.ended){
     clearTimeout(autoWaveTimer);
     autoWaveTimer=setTimeout(()=>{if(autoWave && !battle.waveActive && !battle.ended)startWave.click();},900);
   }
   if(clearedWave>=15){
     const cardXp=awardUsedCardXp(true);
+    setTimeout(()=>showMapSummary(cardXp),120);
     if(hardMode)save.hardCompleted[`${currentSeries}-${currentMap}`]=true;
     else save.normalCompleted[`${currentSeries}-${currentMap}`]=true;
     if(currentSeries===1){
