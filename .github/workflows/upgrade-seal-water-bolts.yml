@@ -1,0 +1,22 @@
+name: Upgrade Seal water bolts
+on:
+  push:
+    paths:
+      - '.github/workflows/upgrade-seal-water-bolts.yml'
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply Seal water bolt attack
+        run: python .github/upgrade-seal-water-bolts.py
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Add Seal water bolt triple-shot ability"
+          git push
