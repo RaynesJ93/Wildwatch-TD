@@ -1,0 +1,70 @@
+name: Fix daily quest initialization order
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-daily-quest-init.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Move daily quest pool before battle startup
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          start_marker = "// ---- Daily quest board ----\nconst DAILY_QUEST_POOL=["
+          next_marker = "function questDay(){return new Date().toISOString().slice(0,10)}"
+          insert_marker = "renderMeta();"
+
+          start = text.find(start_marker)
+          if start == -1:
+              raise SystemExit('Daily quest pool block not found')
+
+          const_start = text.find('const DAILY_QUEST_POOL=[', start)
+          const_end = text.find(next_marker, const_start)
+          if const_start == -1 or const_end == -1:
+              raise SystemExit('Could not isolate DAILY_QUEST_POOL block')
+
+          pool_block = text[const_start:const_end]
+          if '];' not in pool_block:
+              raise SystemExit('DAILY_QUEST_POOL block looks incomplete')
+
+          # Remove only the constant declaration from its late position.
+          text = text[:const_start] + text[const_end:]
+
+          # Put it before renderMeta(), which can indirectly render quests while
+          # the main script is still initializing.
+          insert_at = text.find(insert_marker)
+          if insert_at == -1:
+              raise SystemExit('renderMeta() startup marker not found')
+
+          text = text[:insert_at] + "// Daily quest definitions must exist before startup rendering.\n" + pool_block + "\n" + text[insert_at:]
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit fix
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo 'No index.html changes were needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Fix DAILY_QUEST_POOL initialization order'
+          git push origin main
