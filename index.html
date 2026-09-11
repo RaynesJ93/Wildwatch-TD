@@ -898,6 +898,7 @@ sellTower.onclick=()=>{
 };
 
 function moveEnemy(e,dt){
+  if((e.pigStop||0)>0){e.pigStop=Math.max(0,e.pigStop-dt);return;}
   if(e.poison>0){
     e.poison-=dt;
     e.poisonTick-=dt;
@@ -995,7 +996,12 @@ function towerTick(t,dt){
   }
 
   if(t.key==="pig"){
-    battle.shots.push({x:t.x,y:t.y-7,tx:target.x,ty:target.y,life:.44,maxLife:.44,type:"pigHam"});
+    let pigSpecial=false;
+    if(t.level>=10){
+      t.pigAttackCount=(t.pigAttackCount||0)+1;
+      pigSpecial=t.pigAttackCount%3===0;
+    }
+    battle.shots.push({x:t.x,y:t.y-7,tx:target.x,ty:target.y,life:.44,maxLife:.44,type:"pigHam",special:pigSpecial});
     target.hp-=dmg;
     if(target.hp<=0)killEnemy(target);
     t.cd=cardRate(t.key);
@@ -1241,6 +1247,15 @@ function update(dt){
     }
   });
   battle.trashZones=battle.trashZones.filter(z=>z.life>0);
+  battle.pigHamZones=battle.pigHamZones||[];
+  battle.pigHamZones.forEach(z=>{
+    z.life-=dt;
+    battle.enemies.forEach(e=>{
+      if(e.dead)return;
+      if(Math.hypot(e.x-z.x,e.y-z.y)<=z.radius)e.pigStop=Math.max(e.pigStop||0,3);
+    });
+  });
+  battle.pigHamZones=battle.pigHamZones.filter(z=>z.life>0);
   battle.eggSplashes=battle.eggSplashes||[];
   battle.eggSplashes.forEach(z=>{
     z.life-=dt;
@@ -1258,6 +1273,11 @@ function update(dt){
   battle.needles=battle.needles||[];
   battle.enemies.forEach(e=>moveEnemy(e,dt));
   battle.shots.forEach(s=>{
+    if(s.type==="pigHam" && s.special && !s.dropped && s.life-dt<=0){
+      s.dropped=true;
+      battle.pigHamZones=battle.pigHamZones||[];
+      battle.pigHamZones.push({x:s.tx,y:s.ty,life:3,maxLife:3,radius:78});
+    }
     if(s.type==="gooseEgg" && s.special && !s.splashed && s.life-dt<=0){
       s.splashed=true;
       battle.eggSplashes=battle.eggSplashes||[];
@@ -1534,6 +1554,13 @@ function draw(){
     const pulse=1+Math.sin((2-p.life)*10)*.08;
     ctx.scale(pulse,pulse);ctx.font="78px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
     ctx.fillText("🍍",0,0);
+    ctx.restore();
+  });
+  (battle.pigHamZones||[]).forEach(z=>{
+    const a=Math.max(.25,Math.min(1,z.life/z.maxLife));
+    ctx.save();ctx.globalAlpha=a;
+    ctx.font="34px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillText("🥓",z.x-16,z.y+2);ctx.fillText("🥓",z.x+16,z.y-4);ctx.fillText("🥓",z.x,z.y+18);
     ctx.restore();
   });
   (battle.eggSplashes||[]).forEach(z=>{
