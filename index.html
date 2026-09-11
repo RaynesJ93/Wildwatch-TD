@@ -2514,52 +2514,53 @@ const MILESTONE_QUESTS=[
  {id:'masterCollector',icon:'🏆',name:'Master Collector',text:'Own your first Legendary card',reward:300,type:'legendaryOwned',goal:1}
 ];
 // QUEST_TIERS_V1: 3 permanent tiers for every Challenge Quest.
+// QUEST_REWARD_VARIETY_V1: challenge tiers now mix coins and card XP.
 const CHALLENGE_QUESTS=[
- {id:'challengeCommonMap1',icon:'⚪',name:'Common Ground I',text:'Complete 1 map using only Common cards',reward:100,type:'challengeCommonMap',goal:1,tier:1},
- {id:'challengeCommonMap2',icon:'⚪',name:'Common Ground II',text:'Complete 3 maps using only Common cards',reward:200,type:'challengeCommonMap',goal:3,tier:2},
- {id:'challengeCommonMap3',icon:'⚪',name:'Common Ground III',text:'Complete 5 maps using only Common cards',reward:300,type:'challengeCommonMap',goal:5,tier:3},
- {id:'challengeNoLifeMap1',icon:'❤️',name:'Untouchable I',text:'Complete 1 map without losing a life',reward:125,type:'challengeNoLifeMap',goal:1,tier:1},
- {id:'challengeNoLifeMap2',icon:'❤️',name:'Untouchable II',text:'Complete 3 maps without losing a life',reward:250,type:'challengeNoLifeMap',goal:3,tier:2},
- {id:'challengeNoLifeMap3',icon:'❤️',name:'Untouchable III',text:'Complete 5 maps without losing a life',reward:375,type:'challengeNoLifeMap',goal:5,tier:3},
- {id:'challengeSpeedWaves1',icon:'⏩',name:'Full Speed Ahead I',text:'Clear 5 waves at 3× speed',reward:75,type:'challengeSpeedWaves',goal:5,tier:1},
- {id:'challengeSpeedWaves2',icon:'⏩',name:'Full Speed Ahead II',text:'Clear 15 waves at 3× speed',reward:150,type:'challengeSpeedWaves',goal:15,tier:2},
- {id:'challengeSpeedWaves3',icon:'⏩',name:'Full Speed Ahead III',text:'Clear 30 waves at 3× speed',reward:225,type:'challengeSpeedWaves',goal:30,tier:3},
- {id:'challengeOneAnimal1',icon:'🐾',name:'One Animal Army I',text:'Complete 1 map using only one animal type',reward:175,type:'challengeOneAnimal',goal:1,tier:1},
- {id:'challengeOneAnimal2',icon:'🐾',name:'One Animal Army II',text:'Complete 3 maps using only one animal type',reward:350,type:'challengeOneAnimal',goal:3,tier:2},
- {id:'challengeOneAnimal3',icon:'🐾',name:'One Animal Army III',text:'Complete 5 maps using only one animal type',reward:525,type:'challengeOneAnimal',goal:5,tier:3},
- {id:'challengeNoUpgrades1',icon:'💰',name:'Big Spender I',text:'Complete 1 map without upgrading any towers',reward:150,type:'challengeNoUpgrades',goal:1,tier:1},
- {id:'challengeNoUpgrades2',icon:'💰',name:'Big Spender II',text:'Complete 3 maps without upgrading any towers',reward:300,type:'challengeNoUpgrades',goal:3,tier:2},
- {id:'challengeNoUpgrades3',icon:'💰',name:'Big Spender III',text:'Complete 5 maps without upgrading any towers',reward:450,type:'challengeNoUpgrades',goal:5,tier:3},
- {id:'challengeFourLevel101',icon:'🛠️',name:'Master Builder I',text:'Get 4 towers to Level 10 in 1 battle',reward:150,type:'challengeFourLevel10',goal:1,tier:1},
- {id:'challengeFourLevel102',icon:'🛠️',name:'Master Builder II',text:'Do this in 3 battles',reward:300,type:'challengeFourLevel10',goal:3,tier:2},
- {id:'challengeFourLevel103',icon:'🛠️',name:'Master Builder III',text:'Do this in 5 battles',reward:450,type:'challengeFourLevel10',goal:5,tier:3},
- {id:'challengePerfect1',icon:'🎯',name:'Perfect Defence I',text:'Complete 1 map without losing a life',reward:150,type:'challengePerfect3',goal:1,tier:1},
- {id:'challengePerfect2',icon:'🎯',name:'Perfect Defence II',text:'Complete 3 maps without losing a life',reward:300,type:'challengePerfect3',goal:3,tier:2},
- {id:'challengePerfect3',icon:'🎯',name:'Perfect Defence III',text:'Complete 5 maps without losing a life',reward:450,type:'challengePerfect3',goal:5,tier:3},
- {id:'challengeRareMap1',icon:'💎',name:'Rare Breed I',text:'Complete 1 map using only Rare cards',reward:175,type:'challengeRareMap',goal:1,tier:1},
- {id:'challengeRareMap2',icon:'💎',name:'Rare Breed II',text:'Complete 3 maps using only Rare cards',reward:350,type:'challengeRareMap',goal:3,tier:2},
- {id:'challengeRareMap3',icon:'💎',name:'Rare Breed III',text:'Complete 5 maps using only Rare cards',reward:525,type:'challengeRareMap',goal:5,tier:3},
- {id:'challengeLegendaryMap1',icon:'🌟',name:'Legendary Squad I',text:'Complete 1 map using only Legendary cards',reward:250,type:'challengeLegendaryMap',goal:1,tier:1},
- {id:'challengeLegendaryMap2',icon:'🌟',name:'Legendary Squad II',text:'Complete 3 maps using only Legendary cards',reward:500,type:'challengeLegendaryMap',goal:3,tier:2},
- {id:'challengeLegendaryMap3',icon:'🌟',name:'Legendary Squad III',text:'Complete 5 maps using only Legendary cards',reward:750,type:'challengeLegendaryMap',goal:5,tier:3},
- {id:'challengeFourTowers1',icon:'⚔️',name:'Minimalist I',text:'Complete 1 map with 4 or fewer towers placed',reward:250,type:'challengeFourTowers',goal:1,tier:1},
- {id:'challengeFourTowers2',icon:'⚔️',name:'Minimalist II',text:'Complete 3 maps with 4 or fewer towers placed',reward:500,type:'challengeFourTowers',goal:3,tier:2},
- {id:'challengeFourTowers3',icon:'⚔️',name:'Minimalist III',text:'Complete 5 maps with 4 or fewer towers placed',reward:750,type:'challengeFourTowers',goal:5,tier:3},
- {id:'challengeNoSell1',icon:'🚫',name:'No Second Chances I',text:'Complete 1 map without selling a tower',reward:100,type:'challengeNoSell',goal:1,tier:1},
- {id:'challengeNoSell2',icon:'🚫',name:'No Second Chances II',text:'Complete 3 maps without selling a tower',reward:200,type:'challengeNoSell',goal:3,tier:2},
- {id:'challengeNoSell3',icon:'🚫',name:'No Second Chances III',text:'Complete 5 maps without selling a tower',reward:300,type:'challengeNoSell',goal:5,tier:3},
- {id:'challengeHardPerfect1',icon:'🔥',name:'Hardcore Defender I',text:'Complete 1 Hard Mode map without losing a life',reward:350,type:'challengeHardPerfect',goal:1,tier:1},
- {id:'challengeHardPerfect2',icon:'🔥',name:'Hardcore Defender II',text:'Complete 3 Hard Mode maps without losing a life',reward:700,type:'challengeHardPerfect',goal:3,tier:2},
- {id:'challengeHardPerfect3',icon:'🔥',name:'Hardcore Defender III',text:'Complete 5 Hard Mode maps without losing a life',reward:1050,type:'challengeHardPerfect',goal:5,tier:3},
- {id:'challenge1000Coins1',icon:'🪙',name:'Penny Pincher I',text:'Finish 1 map with at least 1,000 battle coins remaining',reward:200,type:'challenge1000Coins',goal:1,tier:1},
- {id:'challenge1000Coins2',icon:'🪙',name:'Penny Pincher II',text:'Finish 3 maps with at least 1,000 battle coins remaining',reward:400,type:'challenge1000Coins',goal:3,tier:2},
- {id:'challenge1000Coins3',icon:'🪙',name:'Penny Pincher III',text:'Finish 5 maps with at least 1,000 battle coins remaining',reward:600,type:'challenge1000Coins',goal:5,tier:3},
- {id:'challengeFull3x1',icon:'🌊',name:'Speed Demon I',text:'Complete 1 entire map at 3× speed',reward:300,type:'challengeFull3x',goal:1,tier:1},
- {id:'challengeFull3x2',icon:'🌊',name:'Speed Demon II',text:'Complete 3 entire maps at 3× speed',reward:600,type:'challengeFull3x',goal:3,tier:2},
- {id:'challengeFull3x3',icon:'🌊',name:'Speed Demon III',text:'Complete 5 entire maps at 3× speed',reward:900,type:'challengeFull3x',goal:5,tier:3},
- {id:'challengeUltimate1',icon:'👑',name:'Ultimate Defender I',text:'Complete 1 Hard Mode map using only 4 towers, without losing a life',reward:750,type:'challengeUltimate',goal:1,tier:1},
- {id:'challengeUltimate2',icon:'👑',name:'Ultimate Defender II',text:'Complete 2 Hard Mode maps using only 4 towers, without losing a life',reward:1250,type:'challengeUltimate',goal:2,tier:2},
- {id:'challengeUltimate3',icon:'👑',name:'Ultimate Defender III',text:'Complete 3 Hard Mode maps using only 4 towers, without losing a life',reward:2000,type:'challengeUltimate',goal:3,tier:3}
+ {id:'challengeCommonMap1',icon:'⚪',name:'Common Ground I',text:'Complete 1 map using only Common cards',reward:100,rewardKind:'coins',type:'challengeCommonMap',goal:1,tier:1},
+ {id:'challengeCommonMap2',icon:'⚪',name:'Common Ground II',text:'Complete 3 maps using only Common cards',reward:125,rewardKind:'xp',type:'challengeCommonMap',goal:3,tier:2},
+ {id:'challengeCommonMap3',icon:'⚪',name:'Common Ground III',text:'Complete 5 maps using only Common cards',reward:225,rewardXp:100,rewardKind:'coinsXp',type:'challengeCommonMap',goal:5,tier:3},
+ {id:'challengeNoLifeMap1',icon:'❤️',name:'Untouchable I',text:'Complete 1 map without losing a life',reward:125,rewardKind:'coins',type:'challengeNoLifeMap',goal:1,tier:1},
+ {id:'challengeNoLifeMap2',icon:'❤️',name:'Untouchable II',text:'Complete 3 maps without losing a life',reward:150,rewardKind:'xp',type:'challengeNoLifeMap',goal:3,tier:2},
+ {id:'challengeNoLifeMap3',icon:'❤️',name:'Untouchable III',text:'Complete 5 maps without losing a life',reward:275,rewardXp:125,rewardKind:'coinsXp',type:'challengeNoLifeMap',goal:5,tier:3},
+ {id:'challengeSpeedWaves1',icon:'⏩',name:'Full Speed Ahead I',text:'Clear 5 waves at 3× speed',reward:75,rewardKind:'coins',type:'challengeSpeedWaves',goal:5,tier:1},
+ {id:'challengeSpeedWaves2',icon:'⏩',name:'Full Speed Ahead II',text:'Clear 15 waves at 3× speed',reward:100,rewardKind:'xp',type:'challengeSpeedWaves',goal:15,tier:2},
+ {id:'challengeSpeedWaves3',icon:'⏩',name:'Full Speed Ahead III',text:'Clear 30 waves at 3× speed',reward:175,rewardXp:100,rewardKind:'coinsXp',type:'challengeSpeedWaves',goal:30,tier:3},
+ {id:'challengeOneAnimal1',icon:'🐾',name:'One Animal Army I',text:'Complete 1 map using only one animal type',reward:175,rewardKind:'coins',type:'challengeOneAnimal',goal:1,tier:1},
+ {id:'challengeOneAnimal2',icon:'🐾',name:'One Animal Army II',text:'Complete 3 maps using only one animal type',reward:200,rewardKind:'xp',type:'challengeOneAnimal',goal:3,tier:2},
+ {id:'challengeOneAnimal3',icon:'🐾',name:'One Animal Army III',text:'Complete 5 maps using only one animal type',reward:400,rewardXp:175,rewardKind:'coinsXp',type:'challengeOneAnimal',goal:5,tier:3},
+ {id:'challengeNoUpgrades1',icon:'💰',name:'Big Spender I',text:'Complete 1 map without upgrading any towers',reward:150,rewardKind:'coins',type:'challengeNoUpgrades',goal:1,tier:1},
+ {id:'challengeNoUpgrades2',icon:'💰',name:'Big Spender II',text:'Complete 3 maps without upgrading any towers',reward:175,rewardKind:'xp',type:'challengeNoUpgrades',goal:3,tier:2},
+ {id:'challengeNoUpgrades3',icon:'💰',name:'Big Spender III',text:'Complete 5 maps without upgrading any towers',reward:350,rewardXp:150,rewardKind:'coinsXp',type:'challengeNoUpgrades',goal:5,tier:3},
+ {id:'challengeFourLevel101',icon:'🛠️',name:'Master Builder I',text:'Get 4 towers to Level 10 in 1 battle',reward:150,rewardKind:'coins',type:'challengeFourLevel10',goal:1,tier:1},
+ {id:'challengeFourLevel102',icon:'🛠️',name:'Master Builder II',text:'Do this in 3 battles',reward:175,rewardKind:'xp',type:'challengeFourLevel10',goal:3,tier:2},
+ {id:'challengeFourLevel103',icon:'🛠️',name:'Master Builder III',text:'Do this in 5 battles',reward:350,rewardXp:150,rewardKind:'coinsXp',type:'challengeFourLevel10',goal:5,tier:3},
+ {id:'challengePerfect1',icon:'🎯',name:'Perfect Defence I',text:'Complete 1 map without losing a life',reward:150,rewardKind:'coins',type:'challengePerfect3',goal:1,tier:1},
+ {id:'challengePerfect2',icon:'🎯',name:'Perfect Defence II',text:'Complete 3 maps without losing a life',reward:175,rewardKind:'xp',type:'challengePerfect3',goal:3,tier:2},
+ {id:'challengePerfect3',icon:'🎯',name:'Perfect Defence III',text:'Complete 5 maps without losing a life',reward:350,rewardXp:150,rewardKind:'coinsXp',type:'challengePerfect3',goal:5,tier:3},
+ {id:'challengeRareMap1',icon:'💎',name:'Rare Breed I',text:'Complete 1 map using only Rare cards',reward:175,rewardKind:'coins',type:'challengeRareMap',goal:1,tier:1},
+ {id:'challengeRareMap2',icon:'💎',name:'Rare Breed II',text:'Complete 3 maps using only Rare cards',reward:200,rewardKind:'xp',type:'challengeRareMap',goal:3,tier:2},
+ {id:'challengeRareMap3',icon:'💎',name:'Rare Breed III',text:'Complete 5 maps using only Rare cards',reward:400,rewardXp:175,rewardKind:'coinsXp',type:'challengeRareMap',goal:5,tier:3},
+ {id:'challengeLegendaryMap1',icon:'🌟',name:'Legendary Squad I',text:'Complete 1 map using only Legendary cards',reward:250,rewardKind:'coins',type:'challengeLegendaryMap',goal:1,tier:1},
+ {id:'challengeLegendaryMap2',icon:'🌟',name:'Legendary Squad II',text:'Complete 3 maps using only Legendary cards',reward:300,rewardKind:'xp',type:'challengeLegendaryMap',goal:3,tier:2},
+ {id:'challengeLegendaryMap3',icon:'🌟',name:'Legendary Squad III',text:'Complete 5 maps using only Legendary cards',reward:550,rewardXp:250,rewardKind:'coinsXp',type:'challengeLegendaryMap',goal:5,tier:3},
+ {id:'challengeFourTowers1',icon:'⚔️',name:'Minimalist I',text:'Complete 1 map with 4 or fewer towers placed',reward:250,rewardKind:'coins',type:'challengeFourTowers',goal:1,tier:1},
+ {id:'challengeFourTowers2',icon:'⚔️',name:'Minimalist II',text:'Complete 3 maps with 4 or fewer towers placed',reward:300,rewardKind:'xp',type:'challengeFourTowers',goal:3,tier:2},
+ {id:'challengeFourTowers3',icon:'⚔️',name:'Minimalist III',text:'Complete 5 maps with 4 or fewer towers placed',reward:550,rewardXp:250,rewardKind:'coinsXp',type:'challengeFourTowers',goal:5,tier:3},
+ {id:'challengeNoSell1',icon:'🚫',name:'No Second Chances I',text:'Complete 1 map without selling a tower',reward:100,rewardKind:'coins',type:'challengeNoSell',goal:1,tier:1},
+ {id:'challengeNoSell2',icon:'🚫',name:'No Second Chances II',text:'Complete 3 maps without selling a tower',reward:125,rewardKind:'xp',type:'challengeNoSell',goal:3,tier:2},
+ {id:'challengeNoSell3',icon:'🚫',name:'No Second Chances III',text:'Complete 5 maps without selling a tower',reward:225,rewardXp:100,rewardKind:'coinsXp',type:'challengeNoSell',goal:5,tier:3},
+ {id:'challengeHardPerfect1',icon:'🔥',name:'Hardcore Defender I',text:'Complete 1 Hard Mode map without losing a life',reward:350,rewardKind:'coins',type:'challengeHardPerfect',goal:1,tier:1},
+ {id:'challengeHardPerfect2',icon:'🔥',name:'Hardcore Defender II',text:'Complete 3 Hard Mode maps without losing a life',reward:425,rewardKind:'xp',type:'challengeHardPerfect',goal:3,tier:2},
+ {id:'challengeHardPerfect3',icon:'🔥',name:'Hardcore Defender III',text:'Complete 5 Hard Mode maps without losing a life',reward:800,rewardXp:375,rewardKind:'coinsXp',type:'challengeHardPerfect',goal:5,tier:3},
+ {id:'challenge1000Coins1',icon:'🪙',name:'Penny Pincher I',text:'Finish 1 map with at least 1,000 battle coins remaining',reward:200,rewardKind:'coins',type:'challenge1000Coins',goal:1,tier:1},
+ {id:'challenge1000Coins2',icon:'🪙',name:'Penny Pincher II',text:'Finish 3 maps with at least 1,000 battle coins remaining',reward:250,rewardKind:'xp',type:'challenge1000Coins',goal:3,tier:2},
+ {id:'challenge1000Coins3',icon:'🪙',name:'Penny Pincher III',text:'Finish 5 maps with at least 1,000 battle coins remaining',reward:450,rewardXp:200,rewardKind:'coinsXp',type:'challenge1000Coins',goal:5,tier:3},
+ {id:'challengeFull3x1',icon:'🌊',name:'Speed Demon I',text:'Complete 1 entire map at 3× speed',reward:300,rewardKind:'coins',type:'challengeFull3x',goal:1,tier:1},
+ {id:'challengeFull3x2',icon:'🌊',name:'Speed Demon II',text:'Complete 3 entire maps at 3× speed',reward:350,rewardKind:'xp',type:'challengeFull3x',goal:3,tier:2},
+ {id:'challengeFull3x3',icon:'🌊',name:'Speed Demon III',text:'Complete 5 entire maps at 3× speed',reward:675,rewardXp:325,rewardKind:'coinsXp',type:'challengeFull3x',goal:5,tier:3},
+ {id:'challengeUltimate1',icon:'👑',name:'Ultimate Defender I',text:'Complete 1 Hard Mode map using only 4 towers, without losing a life',reward:750,rewardKind:'coins',type:'challengeUltimate',goal:1,tier:1},
+ {id:'challengeUltimate2',icon:'👑',name:'Ultimate Defender II',text:'Complete 2 Hard Mode maps using only 4 towers, without losing a life',reward:750,rewardKind:'xp',type:'challengeUltimate',goal:2,tier:2},
+ {id:'challengeUltimate3',icon:'👑',name:'Ultimate Defender III',text:'Complete 3 Hard Mode maps using only 4 towers, without losing a life',reward:1500,rewardXp:700,rewardKind:'coinsXp',type:'challengeUltimate',goal:3,tier:3}
 ];
 function evaluateMapChallenges(){
   const used=[...new Set(battle.usedCards||[])];
@@ -2624,6 +2625,23 @@ function sortQuestItems(items,mode){
  if(mode==='progress')return a.sort((x,y)=>questState(y).ratio-questState(x).ratio);
  return a;
 }
+function challengeRewardLabel(q){
+ if(q.rewardKind==='xp')return `✨ ${q.reward} Card XP`;
+ if(q.rewardKind==='coinsXp')return `🟡 ${q.reward} + ✨ ${q.rewardXp||0} Card XP`;
+ return `🟡 ${q.reward}`;
+}
+function giveChallengeReward(q){
+ if(q.rewardKind==='xp'){
+   const owned=(save.unlocked||[]).filter(k=>animals[k]);
+   if(owned.length){const k=owned[Math.floor(Math.random()*owned.length)];addCardXp(k,Number(q.reward||0));}
+   return;
+ }
+ save.metaCoins=(save.metaCoins||0)+Number(q.reward||0);
+ if(q.rewardKind==='coinsXp'){
+   const owned=(save.unlocked||[]).filter(k=>animals[k]);
+   if(owned.length){const k=owned[Math.floor(Math.random()*owned.length)];addCardXp(k,Number(q.rewardXp||0));}
+ }
+}
 function questDropdownCards(items,mode='not-completed'){
  const sorted=sortQuestItems(items,mode);
  if(!sorted.length)return `<div class="info-box center small">No quests in this category yet.</div>`;
@@ -2634,7 +2652,7 @@ function questDropdownCards(items,mode='not-completed'){
    const st=questState(q);
    const claimed=isMilestone?!!save.milestoneClaims[q.id]:isChallenge?!!save.challengeQuests.claimed[q.id]:false;
    const status=claimed?'✓ Reward claimed':st.completed?'✓ Completed — reward ready':st.progress>0?`${Math.min(st.progress,st.goal)}/${st.goal}`:'Not started';
-   let reward=q.rewardType==='exp'?`✨ ${q.reward} EXP each`:`🟡 ${q.reward}`;
+   let reward=isChallenge?challengeRewardLabel(q):q.rewardType==='exp'?`✨ ${q.reward} EXP each`:`🟡 ${q.reward}`;
    let claim='';
    if(q.id&&st.completed&&!claimed){
      if(isMilestone)claim=`<button class="primary milestoneClaimBtn" data-id="${q.id}" style="width:100%;margin-top:10px">Claim ${reward}</button>`;
@@ -2656,7 +2674,7 @@ function bindMilestoneClaimButtons(){
  });
  document.querySelectorAll('.challengeClaimBtn').forEach(btn=>btn.onclick=()=>{
    ensureChallengeQuests();const q=CHALLENGE_QUESTS.find(x=>x.id===btn.dataset.id);if(!q||save.challengeQuests.claimed[q.id]||!questState(q).completed)return;
-   save.metaCoins=(save.metaCoins||0)+Number(q.reward||0);save.challengeQuests.claimed[q.id]=true;btn.textContent='✓ Claimed';btn.disabled=true;btn.className='secondary';persist();renderHome();renderCards();renderExtraQuestBoards();
+   giveChallengeReward(q);save.challengeQuests.claimed[q.id]=true;btn.textContent='✓ Claimed';btn.disabled=true;btn.className='secondary';persist();renderHome();renderCards();renderExtraQuestBoards();
  });
 }
 function renderExtraQuestBoards(){
