@@ -1,0 +1,72 @@
+name: Add Squirrel nut attack special
+
+on:
+  push:
+    paths:
+      - '.github/workflows/add-squirrel-nut-special.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Update squirrel stats and attack
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          old='squirrel:{name:"Squirrel",emoji:"🐿️",rarity:"Common",cost:58,range:175,rate:1/1.25,dmg:10,color:"#a66b3d",desc:"Fast ranged attacker."},'
+          new='squirrel:{name:"Squirrel",emoji:"🐿️",rarity:"Common",cost:58,range:175,rate:1/1.25,dmg:17,color:"#a66b3d",desc:"Throws nuts. At tower level 10, every 5th attack splits into 5 nuts that each deal 2x base damage."},'
+          if old not in s:
+              raise SystemExit('Squirrel card marker not found')
+          s=s.replace(old,new,1)
+
+          marker='''  let parrotBomb=false;\n  if(t.key==="parrot" && t.level>=10){\n    t.parrotPineappleCount=(t.parrotPineappleCount||0)+1;\n    parrotBomb=t.parrotPineappleCount%3===0;\n  }'''
+          insert='''  let parrotBomb=false;\n  if(t.key==="parrot" && t.level>=10){\n    t.parrotPineappleCount=(t.parrotPineappleCount||0)+1;\n    parrotBomb=t.parrotPineappleCount%3===0;\n  }\n  let squirrelSplit=false;\n  if(t.key==="squirrel" && t.level>=10){\n    t.squirrelNutCount=(t.squirrelNutCount||0)+1;\n    squirrelSplit=t.squirrelNutCount%5===0;\n  }'''
+          if marker not in s:
+              raise SystemExit('Parrot attack counter marker not found')
+          s=s.replace(marker,insert,1)
+
+          old='t.key==="butterfly"?.34:(t.key==="parrot"&&t.level>=10)?.30:.12'
+          new='t.key==="butterfly"?.34:t.key==="squirrel"?.30:(t.key==="parrot"&&t.level>=10)?.30:.12'
+          if old not in s:
+              raise SystemExit('Projectile life marker not found')
+          s=s.replace(old,new,1)
+
+          old='t.key==="butterfly"?"seedpod":(t.key==="parrot"&&t.level>=10)?"pineapple":"beam"'
+          new='t.key==="butterfly"?"seedpod":t.key==="squirrel"?"nut":(t.key==="parrot"&&t.level>=10)?"pineapple":"beam"'
+          if old not in s:
+              raise SystemExit('Projectile type marker not found')
+          s=s.replace(old,new,1)
+
+          marker='''  if(t.key==="parrot" && t.level>=10 && parrotBomb){\n    // Every third pineapple becomes a 2-second track bomb instead of dealing instant damage.\n  }else if(t.key==="eagle"){'''
+          insert='''  if(t.key==="squirrel" && squirrelSplit){\n    const squirrelTargets=battle.enemies\n      .filter(e=>!e.dead&&Math.hypot(e.x-t.x,e.y-t.y)<=range)\n      .sort((a,b)=>(b.seg||0)-(a.seg||0));\n    const splitDamage=cardBaseDamage("squirrel")*2;\n    const chosen=[];\n    for(let i=0;i<5;i++){\n      const v=squirrelTargets.length?squirrelTargets[i%squirrelTargets.length]:target;\n      chosen.push(v);\n    }\n    chosen.forEach((e,i)=>{\n      if(i>0)battle.shots.push({x:t.x,y:t.y,tx:e.x,ty:e.y,life:.30,type:"nutSplit",spread:i});\n      if(!e.dead){e.hp-=splitDamage;if(e.hp<=0)killEnemy(e);}\n    });\n  }else if(t.key==="parrot" && t.level>=10 && parrotBomb){\n    // Every third pineapple becomes a 2-second track bomb instead of dealing instant damage.\n  }else if(t.key==="eagle"){'''
+          if marker not in s:
+              raise SystemExit('Damage branch marker not found')
+          s=s.replace(marker,insert,1)
+
+          marker='''    if(s.type==="pineapple"){'''
+          insert='''    if(s.type==="nut" || s.type==="nutSplit"){\n      const lifeMax=.30,pct=1-Math.max(0,s.life)/lifeMax;\n      const x=s.x+(s.tx-s.x)*pct,y=s.y+(s.ty-s.y)*pct;\n      ctx.save();ctx.translate(x,y);ctx.rotate(pct*10+(s.spread||0)*.35);\n      ctx.font=s.type==="nutSplit"?"20px system-ui":"22px system-ui";\n      ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("🌰",0,0);ctx.restore();\n    }else if(s.type==="pineapple"){'''
+          if marker not in s:
+              raise SystemExit('Projectile draw marker not found')
+          s=s.replace(marker,insert,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Commit update
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Buff Squirrel and add level 10 split nut attack'
+          git push origin main
