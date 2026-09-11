@@ -591,7 +591,25 @@ function loadBattleState(){
   try{
     const raw=localStorage.getItem("wildwatchBattleSave"); if(!raw)return false;
     const b=JSON.parse(raw); if(!b?.started||b.ended)return false;
-    cancelAnimationFrame(raf);hardMode=!!b.hardMode;save.battleDifficulty=hardMode?"hard":"normal";if(b.mapNumber){currentSeries=b.mapSeries||1;currentMap=b.mapNumber;applyMap(currentSeries,currentMap);}battle=b;battle.shots=[];battle.puddles=battle.puddles||[];selectedCard=null;selectedTower=null;speed=1;
+    cancelAnimationFrame(raf);hardMode=!!b.hardMode;save.battleDifficulty=hardMode?"hard":"normal";if(b.mapNumber){currentSeries=b.mapSeries||1;currentMap=b.mapNumber;applyMap(currentSeries,currentMap);}battle=b;
+    // BATTLE_RUNTIME_STATE_FIX: normalize every transient battle collection.
+    battle.enemies=Array.isArray(battle.enemies)?battle.enemies:[];
+    battle.towers=Array.isArray(battle.towers)?battle.towers:[];
+    battle.shots=[];
+    battle.puddles=Array.isArray(battle.puddles)?battle.puddles:[];
+    battle.needles=Array.isArray(battle.needles)?battle.needles:[];
+    battle.pendingNeedles=Array.isArray(battle.pendingNeedles)?battle.pendingNeedles:[];
+    battle.pineapples=Array.isArray(battle.pineapples)?battle.pineapples:[];
+    battle.trashZones=Array.isArray(battle.trashZones)?battle.trashZones:[];
+    battle.roars=Array.isArray(battle.roars)?battle.roars:[];
+    battle.pigHamZones=Array.isArray(battle.pigHamZones)?battle.pigHamZones:[];
+    battle.eggSplashes=Array.isArray(battle.eggSplashes)?battle.eggSplashes:[];
+    battle.usedCards=Array.isArray(battle.usedCards)?battle.usedCards:[];
+    battle.spawnLeft=Number.isFinite(battle.spawnLeft)?battle.spawnLeft:0;
+    battle.spawnTimer=Number.isFinite(battle.spawnTimer)?battle.spawnTimer:0;
+    battle.waveActive=!!battle.waveActive;
+    battle.spawning=!!battle.spawning;
+    selectedCard=null;selectedTower=null;speed=1;
     speedBtn.textContent="⏩ Speed: 1×";updateDifficultyUI();updateHud();last=performance.now();raf=requestAnimationFrame(loop);return true;
   }catch(e){return false}
 }
@@ -920,7 +938,7 @@ function resetBattle(){
     lives:hardMode?15:20,
     mapStartLives:hardMode?15:20,
     wave:1,
-    enemies:[],towers:[],shots:[],puddles:[],needles:[],pineapples:[],
+    enemies:[],towers:[],shots:[],puddles:[],needles:[],pendingNeedles:[],pineapples:[],
     trashZones:[],roars:[],pigHamZones:[],eggSplashes:[],usedCards:[],
     mapKills:0,mapCoinsEarned:0,
     spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false
@@ -1019,6 +1037,19 @@ startWave.onclick=()=>{
     return;
   }
 
+  // Ensure transient collections exist before the first enemy is spawned.
+  battle.enemies=Array.isArray(battle.enemies)?battle.enemies:[];
+  battle.towers=Array.isArray(battle.towers)?battle.towers:[];
+  battle.shots=Array.isArray(battle.shots)?battle.shots:[];
+  battle.puddles=Array.isArray(battle.puddles)?battle.puddles:[];
+  battle.needles=Array.isArray(battle.needles)?battle.needles:[];
+  battle.pendingNeedles=Array.isArray(battle.pendingNeedles)?battle.pendingNeedles:[];
+  battle.pineapples=Array.isArray(battle.pineapples)?battle.pineapples:[];
+  battle.trashZones=Array.isArray(battle.trashZones)?battle.trashZones:[];
+  battle.roars=Array.isArray(battle.roars)?battle.roars:[];
+  battle.pigHamZones=Array.isArray(battle.pigHamZones)?battle.pigHamZones:[];
+  battle.eggSplashes=Array.isArray(battle.eggSplashes)?battle.eggSplashes:[];
+  battle.usedCards=Array.isArray(battle.usedCards)?battle.usedCards:[];
   battle.waveStartLives=battle.lives;
   battle.waveActive=true;
   battle.spawning=true;
