@@ -1,0 +1,31 @@
+name: Lower Pig upgrade cost 20 percent
+on:
+  push:
+    paths:
+      - '.github/workflows/lower-pig-upgrade-cost-20.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Apply Pig upgrade cost reduction
+        run: python .github/lower-pig-upgrade-cost-20.py
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No Pig upgrade cost changes needed"
+            exit 0
+          fi
+          git commit -m "Lower Pig tower upgrade costs by 20 percent"
+          git push origin main
