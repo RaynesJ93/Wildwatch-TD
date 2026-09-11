@@ -729,10 +729,12 @@ function showScreen(id){
     renderMapSanctuary();
   }else if(id==="battleScreen"){
     document.body.classList.add("battle-mode");
+    draw();
+    if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}
   }
 }
 playBtn.onclick=()=>{clearBattleState();battle={};showScreen("battleScreen");};
-continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));if(!loadBattleState())resetBattle();};
+continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));document.body.classList.add("battle-mode");if(!loadBattleState())resetBattle();/* MAP_VISUAL_FIX_V2: force canvas render on every battle entry path */draw();if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}};
 function normalCompleteForCurrentMap(){return !!save.normalCompleted?.[`${currentSeries}-${currentMap}`];}
 function updateDifficultyUI(){
   if(!difficultyBtn)return;
@@ -756,6 +758,8 @@ difficultyBtn.onclick=()=>{
   persist();
   clearBattleState();
   resetBattle();
+  draw();
+  if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}
   updateDifficultyUI();
   message.textContent=hardMode?"🔥 Hard Mode: stronger, faster and more numerous enemies — with 50% better permanent rewards.":"🌿 Normal Mode selected.";
 };
