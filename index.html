@@ -899,21 +899,51 @@ function applyMap(series,n){
   return true;
 }
 prevMap.onclick=()=>{
-  if(currentMap>1){clearBattleState();applyMap(currentSeries,currentMap-1);resetBattle();return;}
-  if(currentSeries>1){clearBattleState();applyMap(currentSeries-1,10);resetBattle();}
+  if(currentMap>1){clearBattleState();applyMap(currentSeries,currentMap-1);resetBattle();draw();return;}
+  if(currentSeries>1){clearBattleState();applyMap(currentSeries-1,10);resetBattle();draw();}
 };
 nextMap.onclick=()=>{
   if(currentMap<10){
-    if(currentMap<currentSeriesUnlocked()){clearBattleState();applyMap(currentSeries,currentMap+1);resetBattle();}
+    if(currentMap<currentSeriesUnlocked()){clearBattleState();applyMap(currentSeries,currentMap+1);resetBattle();draw();}
     return;
   }
-  if(currentSeries<3&&seriesUnlockedCount(currentSeries+1)>0){clearBattleState();applyMap(currentSeries+1,1);resetBattle();}
+  if(currentSeries<3&&seriesUnlockedCount(currentSeries+1)>0){clearBattleState();applyMap(currentSeries+1,1);resetBattle();draw();}
 };
+
+// GLOBAL_MAP_RESET_FIX: restore shared battle initialisation used by every map.
+function resetBattle(){
+  cancelAnimationFrame(raf);raf=0;
+  battle={
+    started:true,
+    hardMode,
+    coins:hardMode?110:130,
+    lives:hardMode?15:20,
+    mapStartLives:hardMode?15:20,
+    wave:1,
+    enemies:[],towers:[],shots:[],puddles:[],needles:[],pineapples:[],
+    trashZones:[],roars:[],pigHamZones:[],eggSplashes:[],usedCards:[],
+    mapKills:0,mapCoinsEarned:0,
+    spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false
+  };
+  selectedCard=null;selectedTower=null;
+  speed=1;autoWave=false;autoWaveTimer=0;
+  if(typeof speedBtn!=="undefined"&&speedBtn)speedBtn.textContent="⏩ Speed: 1×";
+  if(typeof autoWaveBtn!=="undefined"&&autoWaveBtn){autoWaveBtn.textContent="▶️ Auto: OFF";autoWaveBtn.classList.remove("primary");autoWaveBtn.classList.add("secondary");}
+  if(typeof startWave!=="undefined"&&startWave)startWave.textContent="Start wave";
+  if(typeof message!=="undefined"&&message)message.textContent="Choose an animal card, then tap anywhere on the grass to place it.";
+  if(typeof renderDecks==="function")renderDecks();
+  if(typeof updateHud==="function")updateHud();
+  if(typeof updateDifficultyUI==="function")updateDifficultyUI();
+  if(typeof draw==="function")draw();
+  last=performance.now();
+  raf=requestAnimationFrame(loop);
+}
+
 startWave.onclick=()=>{
   if(battle.ended && battle.mapComplete){
     battle.mapComplete=false;
     clearBattleState();
-    if(currentMap<10){applyMap(currentSeries,currentMap+1);resetBattle();}
+    if(currentMap<10){applyMap(currentSeries,currentMap+1);resetBattle();draw();}
     else if(currentSeries===1 && (save.desertDunesUnlocked||0)>=1){applyMap(2,1);resetBattle();}
     else{message.textContent="🏆 All available levels complete!";startWave.textContent="Completed";}
     return;
