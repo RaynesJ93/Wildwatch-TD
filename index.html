@@ -444,7 +444,7 @@ function animalVisual(k, cls="mini-portrait"){
 }
 
 const defaults = {
-  metaCoins:250, level:1, xp:0, packTokens:0, bestWave:0,
+  metaCoins:250, level:1, xp:0, packTokens:0, bestWave:0, totalPacksOpened:0,totalCardsCollected:0,totalWaves:0,
   unlocked:["monkey","frog","owl","snake"],
   shards:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0,capybara:0,whiteRhino:0,fox:0,silverback:0,penguin:0,jaguar:0},
   cardLevels:{monkey:1,frog:1,owl:1,snake:1,rhino:1,eagle:1,panda:1,lion:1,capybara:1,whiteRhino:1,fox:1,silverback:1,penguin:1,jaguar:1},
@@ -467,6 +467,7 @@ try { save={...defaults,...JSON.parse(localStorage.getItem("wildwatchSave")||"{}
 save.shards={...defaults.shards,...save.shards};
 save.cardLevels={...defaults.cardLevels,...save.cardLevels};
 save.cardXP=save.cardXP||{};
+save.totalCardsCollected=Math.max(Number(save.totalCardsCollected||0),(save.unlocked||[]).length);
 Object.keys(animals).forEach(k=>{if(save.cardLevels[k]==null)save.cardLevels[k]=1;if(save.shards[k]==null)save.shards[k]=0;if(save.cardXP[k]==null)save.cardXP[k]=0;});
 // Preserve previous +7.5% damage-upgrade progress by converting each old upgrade into one card level.
 if(save.damageUpgrades){
@@ -870,6 +871,8 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   const key=pool[Math.floor(Math.random()*pool.length)];
   const a=animals[key];
   const fresh=!save.unlocked.includes(key);
+  save.totalPacksOpened=Math.max(0,Number(save.totalPacksOpened||0))+1;
+  save.totalCardsCollected=Math.max(0,Number(save.totalCardsCollected||0))+1;
   save.levels=save.levels||{};
   save.cardXP=save.cardXP||{};
   save.shards=save.shards||{};
@@ -2737,9 +2740,28 @@ const MILESTONE_QUESTS=[
  {id:'uncommon3',icon:'🟢',name:'Uncommon Collector I',text:'Collect 3 Uncommon cards',reward:30,type:'uncommonOwned',goal:3},
  {id:'uncommon7',icon:'🟢',name:'Uncommon Collector II',text:'Collect 7 Uncommon cards',reward:60,type:'uncommonOwned',goal:7},
  {id:'uncommon14',icon:'🟢',name:'Uncommon Collector III',text:'Collect 14 Uncommon cards',reward:125,type:'uncommonOwned',goal:14},
- {id:'uncommonAll',icon:'🏆',name:'Uncommon Collector IV',text:'Collect all Uncommon cards',reward:250,type:'uncommonOwned',goal:'allUncommon'},
+ {id:'uncommonAll',icon:'🏆',name:'Uncommon Collector IV',text:'Collect all Uncommon cards',reward:500,rewardType:'exp',type:'uncommonOwned',goal:'allUncommon'},
+ {id:'rare3',icon:'💎',name:'Rare Collector I',text:'Collect 3 Rare cards',reward:75,type:'rareOwned',goal:3},
+ {id:'rare7',icon:'💎',name:'Rare Collector II',text:'Collect 7 Rare cards',reward:150,type:'rareOwned',goal:7},
+ {id:'rare14',icon:'💎',name:'Rare Collector III',text:'Collect 14 Rare cards',reward:300,type:'rareOwned',goal:14},
+ {id:'rareAll',icon:'🏆',name:'Rare Collector IV',text:'Collect all Rare cards',reward:750,rewardType:'exp',type:'rareOwned',goal:'allRare'},
+ {id:'legendary1',icon:'🌟',name:'Legendary Collector I',text:'Collect 1 Legendary card',reward:150,type:'legendaryOwned',goal:1},
+ {id:'legendary3',icon:'🌟',name:'Legendary Collector II',text:'Collect 3 Legendary cards',reward:300,type:'legendaryOwned',goal:3},
+ {id:'legendary7',icon:'🌟',name:'Legendary Collector III',text:'Collect 7 Legendary cards',reward:600,type:'legendaryOwned',goal:7},
+ {id:'legendaryAll',icon:'🏆',name:'Legendary Collector IV',text:'Collect all Legendary cards',reward:1000,rewardType:'exp',type:'legendaryOwned',goal:'allLegendary'},
  {id:'growingCollection',icon:'🃏',name:'Growing Collection',text:'Own 10 animal cards',reward:150,type:'allOwned',goal:10},
- {id:'veteranDefender',icon:'⭐',name:'Veteran Defender',text:'Clear 100 total waves',reward:250,type:'totalWaves',goal:100},
+ {id:'cardsCollected10',icon:'🃏',name:'Card Haul I',text:'Collect 10 cards from packs',reward:100,type:'cardsCollected',goal:10},
+ {id:'cardsCollected25',icon:'🃏',name:'Card Haul II',text:'Collect 25 cards from packs',reward:150,rewardType:'exp',type:'cardsCollected',goal:25},
+ {id:'cardsCollected50',icon:'🃏',name:'Card Haul III',text:'Collect 50 cards from packs',reward:300,type:'cardsCollected',goal:50},
+ {id:'cardsCollected100',icon:'🏆',name:'Card Haul IV',text:'Collect 100 cards from packs',reward:350,rewardType:'exp',type:'cardsCollected',goal:100},
+ {id:'veteranDefender',icon:'🌊',name:'Wave Veteran I',text:'Clear 100 total waves',reward:250,type:'totalWaves',goal:100},
+ {id:'waves250',icon:'🌊',name:'Wave Veteran II',text:'Clear 250 total waves',reward:300,rewardType:'exp',type:'totalWaves',goal:250},
+ {id:'waves500',icon:'🌊',name:'Wave Veteran III',text:'Clear 500 total waves',reward:750,type:'totalWaves',goal:500},
+ {id:'waves1000',icon:'🏆',name:'Wave Legend',text:'Clear 1,000 total waves',reward:750,rewardType:'exp',type:'totalWaves',goal:1000},
+ {id:'packs5',icon:'🎁',name:'Pack Opener I',text:'Open 5 card packs',reward:75,type:'packsOpened',goal:5},
+ {id:'packs15',icon:'🎁',name:'Pack Opener II',text:'Open 15 card packs',reward:125,rewardType:'exp',type:'packsOpened',goal:15},
+ {id:'packs30',icon:'🎁',name:'Pack Opener III',text:'Open 30 card packs',reward:250,type:'packsOpened',goal:30},
+ {id:'packs75',icon:'🏆',name:'Pack Opener IV',text:'Open 75 card packs',reward:300,rewardType:'exp',type:'packsOpened',goal:75},
  {id:'masterCollector',icon:'🏆',name:'Master Collector',text:'Own your first Legendary card',reward:300,type:'legendaryOwned',goal:1}
 ];
 // QUEST_TIERS_V1: 3 permanent tiers for every Challenge Quest.
@@ -2829,6 +2851,8 @@ function questState(q){
  if(q.type&&q.type.startsWith('challenge')){ensureChallengeQuests();progress=Math.max(0,Number(save.challengeQuests.progress[q.type]||0));}
  if(q.type==='allOwned')progress=(save.unlocked||[]).length;
  if(q.type==='totalWaves')progress=Math.max(0,Number(save.totalWaves||0));
+ if(q.type==='cardsCollected')progress=Math.max(0,Number(save.totalCardsCollected||0));
+ if(q.type==='packsOpened')progress=Math.max(0,Number(save.totalPacksOpened||0));
  if(q.type==='legendaryOwned')progress=(save.unlocked||[]).filter(k=>animals[k]?.rarity==='Legendary').length;
  if(q.type&&q.type.startsWith('weekly')){
    ensureWeeklyQuests();
@@ -2843,6 +2867,16 @@ function questState(q){
    const uncommonKeys=Object.keys(animals).filter(k=>animals[k].rarity==='Uncommon');
    progress=(save.unlocked||[]).filter(k=>animals[k]?.rarity==='Uncommon').length;
    goal=q.goal==='allUncommon'?uncommonKeys.length:Number(q.goal||uncommonKeys.length);
+ }
+ if(q.type==='rareOwned'){
+   const rareKeys=Object.keys(animals).filter(k=>animals[k].rarity==='Rare');
+   progress=(save.unlocked||[]).filter(k=>animals[k]?.rarity==='Rare').length;
+   goal=q.goal==='allRare'?rareKeys.length:Number(q.goal||rareKeys.length);
+ }
+ if(q.type==='legendaryOwned'){
+   const legendaryKeys=Object.keys(animals).filter(k=>animals[k].rarity==='Legendary');
+   progress=(save.unlocked||[]).filter(k=>animals[k]?.rarity==='Legendary').length;
+   goal=q.goal==='allLegendary'?legendaryKeys.length:Number(q.goal||legendaryKeys.length);
  }
  const completed=!!q.completed||progress>=goal;
  return {goal,progress,completed,ratio:goal?Math.min(1,progress/goal):0};
@@ -2896,7 +2930,7 @@ function bindMilestoneClaimButtons(){
    const q=MILESTONE_QUESTS.find(x=>x.id===btn.dataset.id);if(!q||save.milestoneClaims[q.id]||!questState(q).completed)return;
    if(q.rewardType==='exp'){
      save.cardXP=save.cardXP||{};
-     const tier=q.type==='commonOwned'?'Common':q.type==='uncommonOwned'?'Uncommon':null;
+     const tier=q.type==='commonOwned'?'Common':q.type==='uncommonOwned'?'Uncommon':q.type==='rareOwned'?'Rare':q.type==='legendaryOwned'?'Legendary':null;
      Object.keys(animals).filter(k=>!tier||animals[k].rarity===tier).forEach(k=>{if((save.unlocked||[]).includes(k))addCardXp(k,q.reward)});
    }else save.metaCoins=(save.metaCoins||0)+Number(q.reward||0);
    save.milestoneClaims[q.id]=true;btn.textContent='✓ Claimed';btn.disabled=true;btn.className='secondary';persist();renderHome();renderCards();renderExtraQuestBoards();
