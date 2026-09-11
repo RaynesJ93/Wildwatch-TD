@@ -134,7 +134,8 @@
 
 
 /* Sanctuary-style map selection screen */
-#battleScreen.map-select-mode{display:block!important;height:auto!important;overflow:visible!important}
+#battleScreen.active.map-select-mode{display:block!important;height:auto!important;overflow:visible!important}
+#battleScreen.map-select-mode:not(.active){display:none!important}
 #battleScreen.map-select-mode>:not(#mapSanctuary){display:none!important}
 #mapSanctuary{display:none;min-height:calc(100vh - 96px);padding:8px 2px 24px}
 #battleScreen.map-select-mode #mapSanctuary{display:block}
