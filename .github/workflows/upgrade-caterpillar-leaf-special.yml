@@ -27,5 +27,6 @@ jobs:
             echo "No Caterpillar changes needed"
             exit 0
           fi
-          git commit -m "Upgrade Caterpillar leaf attack and level 10 special"
+          git commit -m "Fix Caterpillar damage and leaf special"
           git push origin main
+# retry 2
