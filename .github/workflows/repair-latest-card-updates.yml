@@ -3,6 +3,7 @@ name: Repair latest card updates
 on:
   push:
     paths:
+      - '.github/scripts/repair_squirrel.py'
       - '.github/workflows/repair-latest-card-updates.yml'
 
 permissions:
@@ -15,59 +16,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - name: Repair Squirrel nut attack
-        shell: bash
+      - name: Apply Squirrel repair
+        run: python3 .github/scripts/repair_squirrel.py
+      - name: Commit repaired game
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-
-          old='squirrel:{name:"Squirrel",emoji:"🐿️",rarity:"Common",cost:58,range:175,rate:1/1.25,dmg:10,color:"#a66b3d",desc:"Fast ranged attacker."},'
-          new='squirrel:{name:"Squirrel",emoji:"🐿️",rarity:"Common",cost:58,range:175,rate:1/1.25,dmg:17,color:"#a66b3d",desc:"Throws nuts at enemies. At tower level 10, every 5th attack splits into 5 nuts, each dealing 2x base damage."},'
-          if old in s:
-            s=s.replace(old,new,1)
-
-          attack_marker='  if(t.key==="crocodile"){\n'
-          attack_block='''  if(t.key==="squirrel"){
-    let splitNut=false;
-    if(t.level>=10){t.squirrelAttackCount=(t.squirrelAttackCount||0)+1;splitNut=t.squirrelAttackCount%5===0;}
-    battle.shots.push({x:t.x,y:t.y-6,tx:target.x,ty:target.y,life:.38,maxLife:.38,type:"squirrelNut",special:splitNut});
-    if(splitNut){
-      const splitDamage=animals.squirrel.dmg*2;
-      const candidates=battle.enemies.filter(e=>!e.dead).sort((a,b)=>Math.hypot(a.x-target.x,a.y-target.y)-Math.hypot(b.x-target.x,b.y-target.y));
-      const splitTargets=[];
-      for(let i=0;i<5;i++)splitTargets.push(candidates[i%candidates.length]||target);
-      splitTargets.forEach((e,i)=>{
-        const ang=(Math.PI*2*i/5)-Math.PI/2;
-        battle.shots.push({x:target.x,y:target.y,tx:e.x,ty:e.y,life:.32,maxLife:.32,type:"squirrelSplitNut",fanAngle:ang});
-        if(!e.dead){e.hp-=splitDamage;if(e.hp<=0)killEnemy(e);}
-      });
-    }else{target.hp-=dmg;if(target.hp<=0)killEnemy(target);}
-    t.cd=cardRate(t.key);return;
-  }
-
-'''
-          if 'type:"squirrelNut"' not in s:
-            if attack_marker not in s: raise SystemExit('Squirrel attack marker missing')
-            s=s.replace(attack_marker,attack_block+attack_marker,1)
-
-          draw_marker='    }else if(s.type==="crocTail"||s.type==="crocDeathRoll"){\n'
-          draw_block='''    }else if(s.type==="squirrelNut"||s.type==="squirrelSplitNut"){
-      const q=1-Math.max(0,s.life)/(s.maxLife||.38);
-      let x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q;
-      if(s.type==="squirrelNut")y-=Math.sin(Math.PI*q)*22;
-      if(s.type==="squirrelSplitNut"){const spread=22*Math.sin(Math.PI*q),a=s.fanAngle||0;x+=Math.cos(a)*spread;y+=Math.sin(a)*spread;}
-      ctx.save();ctx.translate(x,y);ctx.rotate(q*Math.PI*4);ctx.font=s.type==="squirrelSplitNut"?"21px system-ui":"25px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
-      if(s.special&&s.type==="squirrelNut"){ctx.globalAlpha=.6;ctx.strokeStyle="#ffd45d";ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,16+q*10,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;}
-      ctx.fillText("🌰",0,0);ctx.restore();return;
-'''
-          if 's.type==="squirrelNut"||s.type==="squirrelSplitNut"' not in s:
-            if draw_marker not in s: raise SystemExit('Squirrel draw marker missing')
-            s=s.replace(draw_marker,draw_block+draw_marker,1)
-
-          p.write_text(s,encoding='utf-8')
-          PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
