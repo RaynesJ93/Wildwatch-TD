@@ -1,0 +1,39 @@
+name: Fix missing quest progress helpers
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-missing-quest-progress.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Add safe quest progress helpers
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='function addQuestProgress(type,n=1){'
+          i=s.find(marker)
+          if i<0: raise SystemExit('addQuestProgress not found')
+          # Insert immediately before daily progress helper so all battle callers can see these.
+          block="""// Quest progress compatibility helpers used by battle rewards.\nfunction addWeeklyProgress(type,n=1){\n  if(typeof save==='undefined')return;\n  save.weeklyProgress=save.weeklyProgress||{};\n  save.weeklyProgress[type]=(save.weeklyProgress[type]||0)+n;\n}\nfunction addMilestoneProgress(type,n=1){\n  if(typeof save==='undefined')return;\n  save.milestoneProgress=save.milestoneProgress||{};\n  save.milestoneProgress[type]=(save.milestoneProgress[type]||0)+n;\n}\nfunction addChallengeProgress(type,n=1){\n  if(typeof save==='undefined')return;\n  save.challengeProgress=save.challengeProgress||{};\n  save.challengeProgress[type]=(save.challengeProgress[type]||0)+n;\n}\n"""
+          if 'function addWeeklyProgress(' not in s:
+              s=s[:i]+block+s[i:]
+              p.write_text(s,encoding='utf-8')
+          PY
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Fix missing quest progress helpers'
+          git push origin main
