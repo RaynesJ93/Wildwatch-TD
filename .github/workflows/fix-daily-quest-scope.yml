@@ -1,0 +1,77 @@
+name: Fix daily quest pool scope
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-daily-quest-scope.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Move DAILY_QUEST_POOL to global script scope
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          persist_marker = 'function persist(){'
+          pool_marker = 'const DAILY_QUEST_POOL=['
+          quest_marker = 'function questDay(){return new Date().toISOString().slice(0,10)}'
+
+          persist_at = text.find(persist_marker)
+          pool_at = text.find(pool_marker)
+          if persist_at == -1 or pool_at == -1:
+              raise SystemExit('Required markers not found')
+
+          # The previous fix accidentally placed the constant inside persist().
+          if pool_at < persist_at:
+              print('DAILY_QUEST_POOL is already in global scope; no change needed.')
+              raise SystemExit(0)
+
+          end = text.find('];', pool_at)
+          if end == -1:
+              raise SystemExit('Could not find end of DAILY_QUEST_POOL')
+          end += 2
+          pool_block = text[pool_at:end]
+
+          # Remove the misplaced block and its nearby explanatory comment.
+          comment = '  // Daily quest definitions must exist before startup rendering.\n'
+          comment_at = text.rfind(comment, persist_at, pool_at + 1)
+          remove_start = comment_at if comment_at != -1 else pool_at
+          remove_end = end
+          while remove_end < len(text) and text[remove_end] in '\r\n':
+              remove_end += 1
+          text = text[:remove_start] + text[remove_end:]
+
+          # Insert the definition at top-level immediately before persist().
+          persist_at = text.find(persist_marker)
+          insertion = '// Daily quest definitions (global scope).\n' + pool_block + '\n\n'
+          text = text[:persist_at] + insertion + text[persist_at:]
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit corrected scope
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo 'No index.html changes were needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Put DAILY_QUEST_POOL in global scope'
+          git push origin main
