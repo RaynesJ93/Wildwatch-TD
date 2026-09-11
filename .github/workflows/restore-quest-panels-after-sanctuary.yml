@@ -1,0 +1,22 @@
+name: Restore quest panels after Sanctuary fix
+on:
+  push:
+    paths:
+      - '.github/workflows/restore-quest-panels-after-sanctuary.yml'
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair quest panels
+        run: python .github/restore-quest-panels-after-sanctuary.py
+      - name: Commit game update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Restore quest lists after Sanctuary visibility fix"
+          git push
