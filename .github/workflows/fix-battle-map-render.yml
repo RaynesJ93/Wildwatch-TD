@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '.github/workflows/fix-battle-map-render.yml'
+      - '.github/fix-battle-map-render.py'
 jobs:
   update:
     runs-on: ubuntu-latest
