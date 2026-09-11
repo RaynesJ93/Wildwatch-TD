@@ -1,0 +1,28 @@
+name: Fix daily quest claim UI
+
+on:
+  push:
+    paths:
+      - '.github/scripts/fix_daily_quest_claim.py'
+      - '.github/workflows/fix-daily-quest-claim.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply daily quest claim fix
+        run: python3 .github/scripts/fix_daily_quest_claim.py
+      - name: Commit updated game
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Fix daily quest claimed state refresh'
+          git push origin main
