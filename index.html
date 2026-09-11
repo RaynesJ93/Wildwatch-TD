@@ -773,7 +773,7 @@ function updateHud(){
   wave.textContent=`${Math.min(battle.wave,15)}/15`;
   document.querySelectorAll(".battle-card").forEach(b=>b.classList.toggle("disabled",animals[b.dataset.key].cost>battle.coins));
   if(selectedTower && towerModal.classList.contains("show")){
-    const a=animals[selectedTower.key], up=Math.floor(a.cost*.595*selectedTower.level), cash=Math.floor(battle.coins);
+    const a=animals[selectedTower.key], up=Math.floor(a.cost*.595*selectedTower.level*(selectedTower.key==="pig"?.8:1)), cash=Math.floor(battle.coins);
     towerInfo.textContent=`Damage ${Math.round(towerDamage(selectedTower))} • Range ${Math.round(cardBaseRange(selectedTower.key)*(1+(selectedTower.level-1)*.06))} • Upgrade cost 🥩 ${up} • You have 🥩 ${cash}`;
     upgradeTower.textContent=`Upgrade • 🥩 ${up}`;
     upgradeTower.disabled=cash<up;
@@ -878,7 +878,7 @@ canvas.addEventListener("pointerdown",ev=>{
   message.textContent=`${a.name} placed!`;updateHud();
 });
 function openTowerModal(){
-  const t=selectedTower,a=animals[t.key], up=Math.floor(a.cost*.595*t.level);
+  const t=selectedTower,a=animals[t.key], up=Math.floor(a.cost*.595*t.level*(t.key==="pig"?.8:1));
   towerName.textContent=`${a.name} • Level ${t.level}`;
   const cash=Math.floor(battle.coins);
   towerInfo.textContent=`Damage ${Math.round(towerDamage(t))} • Range ${Math.round(cardBaseRange(t.key)*(1+(t.level-1)*.06))} • Upgrade cost 🥩 ${up} • You have 🥩 ${cash}`;
@@ -889,7 +889,7 @@ function openTowerModal(){
 }
 closeTower.onclick=()=>{towerModal.classList.remove("show");selectedTower=null;};
 upgradeTower.onclick=()=>{
-  if(!selectedTower)return; const a=animals[selectedTower.key], cost=Math.floor(a.cost*.595*selectedTower.level);
+  if(!selectedTower)return; const a=animals[selectedTower.key], cost=Math.floor(a.cost*.595*selectedTower.level*(selectedTower.key==="pig"?.8:1));
   if(battle.coins<cost){alert("Not enough battle coins.");return}
   battle.coins-=cost;selectedTower.spent+=cost;selectedTower.level++;updateHud();openTowerModal();
 };
