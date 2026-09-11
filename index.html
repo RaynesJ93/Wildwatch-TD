@@ -163,6 +163,7 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
 #questScreen.active .questPanel{visibility:visible!important;opacity:1!important}
 #questScreen.active #dailyQuestList{display:grid}
 #questScreen.active #weeklyQuestList,#questScreen.active #milestoneQuestList,#questScreen.active #challengeQuestList{visibility:visible!important;opacity:1!important}
+#questScreen.active .questPanel[style*='display: grid']{display:grid!important}
 
 </style>
 </head>
@@ -2566,9 +2567,12 @@ function setQuestTab(tab){
  const cs=document.getElementById('challengeSortWrap');if(cs)cs.style.display=tab==='challenges'?'block':'none';
  const title=document.querySelector('#questScreen h1');if(title)title.textContent={daily:'Daily Quests',weekly:'Weekly Quests',milestones:'Milestone Quests',challenges:'Challenge Quests'}[tab];
 }
-document.querySelectorAll('.questTab').forEach(b=>b.onclick=()=>setQuestTab(b.dataset.qtab));
+document.querySelectorAll('.questTab').forEach(b=>b.onclick=()=>{renderExtraQuestBoards();setQuestTab(b.dataset.qtab)});
 renderExtraQuestBoards();
 setQuestTab('daily');
+// Refresh quest contents every time the Quests screen becomes active, so Weekly/Milestones/Challenges never open blank.
+const _questObserver=new MutationObserver(()=>{const qs=document.getElementById('questScreen');if(qs?.classList.contains('active'))renderExtraQuestBoards();});
+const _questScreen=document.getElementById('questScreen');if(_questScreen)_questObserver.observe(_questScreen,{attributes:true,attributeFilter:['class']});
 
 // ---- Daily quest board ----
 function questDay(){return new Date().toISOString().slice(0,10)}
