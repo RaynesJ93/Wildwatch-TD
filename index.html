@@ -528,11 +528,7 @@ function getSlotRecord(slot){
 }
 const SAVE_SLOT_PREFIX="wildwatchSaveSlot";
 const ACTIVE_SLOT_KEY="wildwatchActiveSlot";
-function persist(){
-  localStorage.setItem("wildwatchSave",JSON.stringify(save));
-  const active=localStorage.getItem(ACTIVE_SLOT_KEY);
-  if(active){const old=getSlotRecord(active);const name=old?.name||`Save ${active}`;localStorage.setItem(SAVE_SLOT_PREFIX+active,JSON.stringify({version:2,name,savedAt:new Date().toISOString(),save}));}
-  // Daily quest definitions must exist before startup rendering.
+// Daily quest definitions (global scope).
 const DAILY_QUEST_POOL=[
  {id:'waves8',name:'Wave Warrior',icon:'🌊',text:'Clear 8 waves',goal:8,reward:25,type:'waves'},
  {id:'waves12',name:'Defender',icon:'🛡️',text:'Clear 12 waves',goal:12,reward:35,type:'waves'},
@@ -544,6 +540,10 @@ const DAILY_QUEST_POOL=[
  {id:'speed5',name:'Need for Speed',icon:'⏩',text:'Clear 5 waves at 3× speed',goal:5,reward:35,type:'speedWaves'}
 ];
 
+function persist(){
+  localStorage.setItem("wildwatchSave",JSON.stringify(save));
+  const active=localStorage.getItem(ACTIVE_SLOT_KEY);
+  if(active){const old=getSlotRecord(active);const name=old?.name||`Save ${active}`;localStorage.setItem(SAVE_SLOT_PREFIX+active,JSON.stringify({version:2,name,savedAt:new Date().toISOString(),save}));}
 renderMeta();renderSaveSlots();
 }
 function setSaveStatus(msg){const el=document.getElementById("saveStatus");if(el)el.textContent=msg;}
