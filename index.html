@@ -1082,10 +1082,21 @@ function enemyForWave(){
 }
 
 
+function finalMapBossForWave(){
+  if(currentMap!==10 || battle.wave!==15 || battle.finalBossSpawned)return null;
+  const bosses={
+    1:{type:"alphaBearBoss",emoji:"🐻",name:"Alpha Bear",hp:4200,speed:31,reward:150,size:42,boss:true,bossAbility:"roar"},
+    2:{type:"giantScorpionBoss",emoji:"🦂",name:"Giant Scorpion",hp:4700,speed:29,reward:175,size:43,boss:true,bossAbility:"venom"},
+    3:{type:"hauntedReaperBoss",emoji:"💀",name:"Haunted Reaper",hp:5200,speed:27,reward:200,size:45,boss:true,bossAbility:"terror"}
+  };
+  return {...bosses[currentSeries]};
+}
 function spawnEnemy(){
-  const e=enemyForWave();
+  const boss=finalMapBossForWave();
+  const e=boss||enemyForWave();
+  if(boss)battle.finalBossSpawned=true;
   if(hardMode){e.hp=Math.round(e.hp*1.75);e.speed*=1.15;e.reward=Math.ceil(e.reward*1.25);}
-  if(battle.wave%10===0 && !battle.eliteSpawned){
+  if(!boss && battle.wave%10===0 && !battle.eliteSpawned){
     e.hp*=3;
     e.reward*=3;
     e.size=Math.round(e.size*1.18);
@@ -1143,7 +1154,13 @@ startWave.onclick=()=>{
   battle.waveActive=true;
   battle.spawning=true;
   battle.eliteSpawned=false;
-  battle.spawnLeft=Math.ceil((6+battle.wave*2)*(hardMode?1.25:1));
+  battle.finalBossSpawned=false;
+  const isFinalBossWave=currentMap===10&&battle.wave===15;
+  if(isFinalBossWave){
+    const bossNames={1:"ALPHA BEAR",2:"GIANT SCORPION",3:"HAUNTED REAPER"};
+    message.textContent=`⚠️ BOSS WAVE — ${bossNames[currentSeries]}!`;
+  }
+  battle.spawnLeft=isFinalBossWave?1:Math.ceil((6+battle.wave*2)*(hardMode?1.25:1));
   battle.spawnTimer=0;
   spawnEnemy();
   battle.spawnLeft--;
