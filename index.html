@@ -1991,9 +1991,31 @@ function addWeeklyProgress(type,n=1){
  persist();
  renderExtraQuestBoards();
 }
+function weeklyRewardLabel(q){return q.rewardType==='tierExp'?`✨ ${q.reward} EXP • ${q.rewardTier} cards`:`🟡 ${q.reward} Coins`}
+function weeklyQuestCards(){
+ ensureWeeklyQuests();
+ return WEEKLY_QUESTS.map((q,i)=>{
+  const progress=Math.max(0,Number(save.weeklyQuests.progress[q.type]||0)), done=progress>=q.goal, claimed=!!save.weeklyQuests.claimed[q.id];
+  const status=claimed?'✓ Reward claimed':done?'✓ Completed — reward ready':`${Math.min(progress,q.goal)}/${q.goal}`;
+  const btn=done&&!claimed?`<button class="primary" style="margin-top:9px;width:100%" onclick="claimWeeklyQuest('${q.id}')">Claim ${weeklyRewardLabel(q)}</button>`:'';
+  return `<details class="info-box questDrop" ${i===0?'open':''}><summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px"><b>${q.icon} ${q.name}</b><b>${weeklyRewardLabel(q)}</b></summary><div class="small" style="margin-top:7px">${q.text}</div><div class="small" style="margin-top:7px">${status}</div>${btn}</details>`;
+ }).join('')
+}
+function claimWeeklyQuest(id){
+ ensureWeeklyQuests();
+ const q=WEEKLY_QUESTS.find(x=>x.id===id);if(!q)return;
+ const progress=Math.max(0,Number(save.weeklyQuests.progress[q.type]||0));
+ if(progress<q.goal||save.weeklyQuests.claimed[q.id])return;
+ if(q.rewardType==='tierExp'){
+  save.cardXP=save.cardXP||{};
+  Object.keys(animals).filter(k=>animals[k].rarity===q.rewardTier&&save.unlocked.includes(k)).forEach(k=>save.cardXP[k]=(save.cardXP[k]||0)+q.reward);
+ }else save.metaCoins=(save.metaCoins||0)+q.reward;
+ save.weeklyQuests.claimed[q.id]=true;
+ persist();renderMeta();renderExtraQuestBoards();renderHome();
+}
 function renderExtraQuestBoards(){
  const w=document.getElementById('weeklyQuestList'),m=document.getElementById('milestoneQuestList'),c=document.getElementById('challengeQuestList');
- if(w)w.innerHTML=questDropdownCards(WEEKLY_QUESTS,'progress');
+ if(w)w.innerHTML=weeklyQuestCards();
  if(m)m.innerHTML=questDropdownCards(MILESTONE_QUESTS,document.getElementById('milestoneSort')?.value||'not-completed');
  if(c)c.innerHTML=questDropdownCards(CHALLENGE_QUESTS,document.getElementById('challengeSort')?.value||'not-completed');
  bindMilestoneClaimButtons();
