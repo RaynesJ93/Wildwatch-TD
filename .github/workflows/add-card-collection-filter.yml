@@ -17,3 +17,4 @@ jobs:
           git add index.html
           git diff --cached --quiet || git commit -m "Add card collection filter dropdown"
           git push
+# retry 2026-09-11
