@@ -532,7 +532,19 @@ function persist(){
   localStorage.setItem("wildwatchSave",JSON.stringify(save));
   const active=localStorage.getItem(ACTIVE_SLOT_KEY);
   if(active){const old=getSlotRecord(active);const name=old?.name||`Save ${active}`;localStorage.setItem(SAVE_SLOT_PREFIX+active,JSON.stringify({version:2,name,savedAt:new Date().toISOString(),save}));}
-  renderMeta();renderSaveSlots();
+  // Daily quest definitions must exist before startup rendering.
+const DAILY_QUEST_POOL=[
+ {id:'waves8',name:'Wave Warrior',icon:'🌊',text:'Clear 8 waves',goal:8,reward:25,type:'waves'},
+ {id:'waves12',name:'Defender',icon:'🛡️',text:'Clear 12 waves',goal:12,reward:35,type:'waves'},
+ {id:'normal1',name:'Map Master',icon:'🗺️',text:'Complete 1 Normal map',goal:1,reward:35,type:'normalMaps'},
+ {id:'hard1',name:'Hard Hitter',icon:'🔥',text:'Complete 1 Hard map',goal:1,reward:50,type:'hardMaps'},
+ {id:'place12',name:'Tower Builder',icon:'🏗️',text:'Place 12 animal towers',goal:12,reward:30,type:'placed'},
+ {id:'kills100',name:'Critter Control',icon:'💥',text:'Defeat 100 enemies',goal:100,reward:30,type:'kills'},
+ {id:'noloss3',name:'Untouchable',icon:'❤️',text:'Clear 3 waves without losing a life',goal:3,reward:35,type:'noLossWaves'},
+ {id:'speed5',name:'Need for Speed',icon:'⏩',text:'Clear 5 waves at 3× speed',goal:5,reward:35,type:'speedWaves'}
+];
+
+renderMeta();renderSaveSlots();
 }
 function setSaveStatus(msg){const el=document.getElementById("saveStatus");if(el)el.textContent=msg;}
 function slotSummary(rec,slot){
@@ -2411,16 +2423,6 @@ renderExtraQuestBoards();
 setQuestTab('daily');
 
 // ---- Daily quest board ----
-const DAILY_QUEST_POOL=[
- {id:'waves8',name:'Wave Warrior',icon:'🌊',text:'Clear 8 waves',goal:8,reward:25,type:'waves'},
- {id:'waves12',name:'Defender',icon:'🛡️',text:'Clear 12 waves',goal:12,reward:35,type:'waves'},
- {id:'normal1',name:'Map Master',icon:'🗺️',text:'Complete 1 Normal map',goal:1,reward:35,type:'normalMaps'},
- {id:'hard1',name:'Hard Hitter',icon:'🔥',text:'Complete 1 Hard map',goal:1,reward:50,type:'hardMaps'},
- {id:'place12',name:'Tower Builder',icon:'🏗️',text:'Place 12 animal towers',goal:12,reward:30,type:'placed'},
- {id:'kills100',name:'Critter Control',icon:'💥',text:'Defeat 100 enemies',goal:100,reward:30,type:'kills'},
- {id:'noloss3',name:'Untouchable',icon:'❤️',text:'Clear 3 waves without losing a life',goal:3,reward:35,type:'noLossWaves'},
- {id:'speed5',name:'Need for Speed',icon:'⏩',text:'Clear 5 waves at 3× speed',goal:5,reward:35,type:'speedWaves'}
-];
 function questDay(){return new Date().toISOString().slice(0,10)}
 function ensureDailyQuests(){
  save.dailyQuests=save.dailyQuests||{};
