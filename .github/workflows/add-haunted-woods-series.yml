@@ -20,3 +20,4 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "Add Haunted Woods third map series"
           git push
+# retry 2
