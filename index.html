@@ -513,8 +513,8 @@ function awardUsedCardXp(completed){
   used.forEach(k=>addCardXp(k,amount));
   return amount;
 }
-function cardBaseDamage(k){const a=animals[k];return a.dmg*(1+(cardLevel(k)-1)*.06);}
-function cardBaseRange(k){const a=animals[k];return a.range*(1+(cardLevel(k)-1)*.035);}
+function cardBaseDamage(k){const a=animals[k];return a.dmg*(1+(cardLevel(k)-1)*.06)*masteryDamageMult(k);}
+function cardBaseRange(k){const a=animals[k];return a.range*(1+(cardLevel(k)-1)*.035)*masteryRangeMult(k);}
 function cardRate(k){const a=animals[k];return a.rate*Math.pow(.98,Math.floor(cardLevel(k)/5));}
 function towerDamage(t){
   const base=cardBaseDamage(t.key);
@@ -672,7 +672,7 @@ function renderCollection(){
   Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).forEach(([k,a])=>{
     const unlocked=save.unlocked.includes(k), d=document.createElement("div"); d.className="card "+(!unlocked?"locked":"")+(save.deck.includes(k)?" selected":"");
     const shardNeed=shardRequirement(a), lvl=cardLevel(k), lvlCost=cardLevelCost(k), dmgNow=cardBaseDamage(k), rangeNow=cardBaseRange(k), maxed=lvl>=MAX_CARD_LEVEL;
-    d.innerHTML=`<span class="rarity">${a.rarity==="Legendary"?"🌟 LEGENDARY":a.rarity==="Epic"?"🟣 EPIC":a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${animalVisual(k,"animal-portrait")}<h3>${a.name}</h3><div class="small">${unlocked?a.desc:`🔒 Locked • Collect ${shardNeed} shards to unlock. 🧩 ${save.shards[k]||0}/${shardNeed}`}</div>${unlocked?`<div class="statrow"><span>⭐ Card Lv ${lvl}/${MAX_CARD_LEVEL}</span><span>⚔️ ${Math.round(dmgNow*10)/10}</span><span>🎯 ${Math.round(rangeNow*10)/10}</span><span>✨ XP ${(save.cardXP[k]||0)}/${cardLevel(k)>=MAX_CARD_LEVEL?"MAX":cardXpNeeded(k)}</span></div><button class="secondary cardLevelBtn" style="width:100%;margin-top:8px;padding:8px;font-size:11px" data-key="${k}" ${maxed?'disabled':''}>${maxed?'⭐ MAX LEVEL':`⬆️ Level Up • 🧩 ${lvlCost}`}</button>`:`<div class="statrow"><span>🔒 Not unlocked</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span></div>`}`;
+    d.innerHTML=`<span class="rarity">${a.rarity==="Legendary"?"🌟 LEGENDARY":a.rarity==="Epic"?"🟣 EPIC":a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${animalVisual(k,"animal-portrait")}<h3>${a.name}</h3><div class="small">${unlocked?a.desc:`🔒 Locked • Collect ${shardNeed} shards to unlock. 🧩 ${save.shards[k]||0}/${shardNeed}`}</div>${unlocked?`<div class="statrow"><span>⭐ Card Lv ${lvl}/${MAX_CARD_LEVEL}</span><span>⚔️ ${Math.round(dmgNow*10)/10}</span><span>🎯 ${Math.round(rangeNow*10)/10}</span><span>✨ XP ${(save.cardXP[k]||0)}/${cardLevel(k)>=MAX_CARD_LEVEL?"MAX":cardXpNeeded(k)}</span><span>⭐ M ${masteryLevel(k)}/${MASTERY_MAX}</span></div><button class="secondary cardLevelBtn" style="width:100%;margin-top:8px;padding:8px;font-size:11px" data-key="${k}" ${maxed?'disabled':''}>${maxed?'⭐ MAX LEVEL':`⬆️ Level Up • 🧩 ${lvlCost}`}</button>`:`<div class="statrow"><span>🔒 Not unlocked</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span></div>`}`;
     if(unlocked)d.onclick=()=>toggleDeck(k);
     collectionCards.appendChild(d);
     const levelBtn=d.querySelector(".cardLevelBtn");
@@ -815,6 +815,41 @@ const chestConfig={
   epic:{name:"Rare Pack",cost:750,rarities:{Rare:1}},
   legendary:{name:"Legendary Pack",cost:1500,rarities:{Legendary:1},legendary:true}
 };
+// ENDGAME_MASTERY_V1: post-collection pack progression.
+const MASTERY_MAX=10;
+function fullCollectionOwned(){return Object.keys(animals).every(k=>save.unlocked.includes(k));}
+function ensureMastery(){
+  save.masteryShards=save.masteryShards||{};
+  save.masteryLevels=save.masteryLevels||{};
+  save.mythicShards=Math.max(0,Number(save.mythicShards||0));
+  save.mythicAnimals=save.mythicAnimals||{};
+}
+function masteryLevel(k){ensureMastery();return Math.max(0,Math.min(MASTERY_MAX,Number(save.masteryLevels[k]||0)));}
+function masteryNeed(k){return 20+masteryLevel(k)*15;}
+function addMasteryShards(k,n){
+  ensureMastery();
+  save.masteryShards[k]=(save.masteryShards[k]||0)+Math.max(1,Math.floor(n));
+  while(masteryLevel(k)<MASTERY_MAX && save.masteryShards[k]>=masteryNeed(k)){
+    const need=masteryNeed(k);save.masteryShards[k]-=need;save.masteryLevels[k]=masteryLevel(k)+1;
+  }
+  if(masteryLevel(k)>=MASTERY_MAX)save.masteryShards[k]=Math.max(0,save.masteryShards[k]||0);
+}
+function masteryRewardText(k){
+  const lv=masteryLevel(k),skin=lv>=10?' • 🥇 Golden skin':lv>=5?' • 🥉 Bronze skin':'';
+  return `⭐ Mastery ${lv}/${MASTERY_MAX}${skin}`;
+}
+function masteryDamageMult(k){const lv=masteryLevel(k);return 1+(lv>=3?.02:0)+(lv>=9?.03:0);}
+function masteryRangeMult(k){return masteryLevel(k)>=7?1.02:1;}
+function mythicChanceForChest(tier){return tier==='Legendary'?.03:tier==='Rare'?.02:.01;}
+function postCollectionPackReward(key,chestTier){
+  ensureMastery();
+  const shardGain={Common:5,Uncommon:6,Rare:8,Legendary:10}[chestTier]||5;
+  addMasteryShards(key,shardGain);
+  let mythic=false;
+  if(Math.random()<mythicChanceForChest(chestTier)){save.mythicShards++;mythic=true;}
+  return {shardGain,mythic};
+}
+
 function weightedAnimal(pool,weights){
   const weighted=pool.map(k=>({k,w:weights[animals[k].rarity]||0})).filter(x=>x.w>0);
   if(!weighted.length)return pool[Math.floor(Math.random()*pool.length)];
@@ -843,8 +878,12 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
     save.levels[key]=save.levels[key]||1;
     save.cardXP[key]=save.cardXP[key]||0;
   }else{
-    // Once every card in the tier is owned, duplicate pulls still count as a card and add one shard.
-    save.shards[key]=(save.shards[key]||0)+1;
+    if(fullCollectionOwned()){
+      const endgame=postCollectionPackReward(key,chestTier);
+      a._lastEndgameReward=endgame;
+    }else{
+      save.shards[key]=(save.shards[key]||0)+1;
+    }
   }
   packEmoji.className="reward";
   packEmoji.style.backgroundImage="none";
@@ -852,7 +891,13 @@ document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   packEmoji.textContent=a.emoji;
   const rarityLabel=a.rarity==="Legendary"?"🌟 LEGENDARY • ":a.rarity==="Rare"?"💎 RARE • ":a.rarity==="Uncommon"?"🟩 UNCOMMON • ":"⚪ COMMON • ";
   packTitle.textContent=`${rarityLabel}${fresh?"New ":""}${a.name}!`;
-  packDesc.textContent=fresh?`Guaranteed ${a.rarity} card from your ${cfg.name}!`:`Guaranteed ${a.rarity} card from your ${cfg.name}! Duplicate converted to 1 ${a.name} shard.`;
+  if(fresh)packDesc.textContent=`Guaranteed ${a.rarity} card from your ${cfg.name}!`;
+  else if(fullCollectionOwned()){
+    const r=a._lastEndgameReward||{shardGain:0,mythic:false};
+    packTitle.textContent=`⭐ ${a.name} Mastery!`;
+    packDesc.textContent=`+${r.shardGain} ${a.name} Mastery Shards • ${masteryRewardText(key)}${r.mythic?` • ✨ MYTHIC SHARD! (${save.mythicShards}/50)`: ` • ✨ Mythic Shards ${save.mythicShards}/50`}`;
+    delete a._lastEndgameReward;
+  }else packDesc.textContent=`Guaranteed ${a.rarity} card from your ${cfg.name}! Duplicate converted to 1 ${a.name} shard.`;
   packModal.classList.add("show");persist();renderCards();renderHome();
 });
 closePack.onclick=()=>packModal.classList.remove("show");
