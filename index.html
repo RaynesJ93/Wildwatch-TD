@@ -1011,6 +1011,8 @@ function spawnEnemy(){
 }
 
 startWave.onclick=()=>{
+  // START_WAVE_ERROR_GUARD: the animation-loop guard below will expose any
+  // runtime failure on screen instead of leaving the battle apparently crashed.
   if(battle.ended && battle.mapComplete){
     battle.mapComplete=false;
     clearBattleState();
@@ -2239,9 +2241,24 @@ let lastAutoSave=0;
 function loop(now){
   const raw=Math.min(.04,(now-last)/1000);last=now;const dt=raw*speed;
   if(battle.started){
-    update(dt);draw();
-    if(!battle.ended&&now-lastAutoSave>2000){saveBattleState();lastAutoSave=now}
-    raf=requestAnimationFrame(loop);
+    try{
+      update(dt);
+      draw();
+      if(!battle.ended&&now-lastAutoSave>2000){saveBattleState();lastAutoSave=now}
+      raf=requestAnimationFrame(loop);
+    }catch(err){
+      console.error("Battle loop crash",err);
+      raf=0;
+      battle.waveActive=false;
+      battle.spawning=false;
+      const text=(err&&err.message)?err.message:String(err);
+      if(typeof message!=="undefined"&&message){
+        message.textContent=`⚠️ Battle error: ${text}`;
+        message.style.whiteSpace="normal";
+        message.style.overflow="visible";
+      }
+      if(typeof startWave!=="undefined"&&startWave)startWave.textContent="Retry wave";
+    }
   }else{
     raf=0;
   }
