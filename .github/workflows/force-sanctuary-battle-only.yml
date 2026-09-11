@@ -1,0 +1,22 @@
+name: Force Sanctuary Battle only
+on:
+  push:
+    paths:
+      - '.github/workflows/force-sanctuary-battle-only.yml'
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Force Sanctuary to Battle only
+        run: python .github/force-sanctuary-battle-only.py
+      - name: Commit game update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Force Sanctuary to Battle screen only"
+          git push
