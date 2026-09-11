@@ -320,7 +320,7 @@ const animals = {
   parrot:{name:"Parrot",emoji:"🦜",rarity:"Common",cost:64,range:205,rate:1/1.20,dmg:19,color:"#e44",desc:"Long-range basic attacker."},
   penguin:{name:"Penguin",emoji:"🐧",rarity:"Common",cost:65,range:150,rate:1/.90,dmg:15,color:"#eee",desc:"Heavy basic attacker."},
   snail:{name:"Snail",emoji:"🐌",rarity:"Common",cost:55,range:110,rate:1/.55,dmg:18,color:"#a87",desc:"Slow but heavy basic attacker."},
-  caterpillar:{name:"Caterpillar",emoji:"🐛",rarity:"Common",cost:40,range:120,rate:1/1.20,dmg:6,color:"#7c5",desc:"Cheap basic attacker."},
+  caterpillar:{name:"Caterpillar",emoji:"🐛",rarity:"Common",cost:40,range:120,rate:1/1.20,dmg:12,color:"#7c5",desc:"Fires leaves; at tower level 10 every 4th attack launches a giant leaf for 5x base damage."},
   ant:{name:"Ant",emoji:"🐜",rarity:"Common",cost:38,range:105,rate:1/1.60,dmg:5,color:"#633",desc:"Fast pincer attacker. Every 3rd attack has a 25% chance to permanently boost this tower’s damage by 5% for the battle."},
   beetle:{name:"Beetle",emoji:"🪲",rarity:"Common",cost:52,range:115,rate:1/1.05,dmg:12,color:"#385",desc:"Close-range basic attacker."},
   cricket:{name:"Cricket",emoji:"🦗",rarity:"Common",cost:48,range:145,rate:1/1.45,dmg:8,color:"#697",desc:"Very fast basic attacker."},
@@ -1007,6 +1007,20 @@ function towerTick(t,dt){
     return;
   }
 
+  if(t.key==="caterpillar"){
+    let bigLeaf=false;
+    if(t.level>=10){
+      t.caterpillarAttackCount=(t.caterpillarAttackCount||0)+1;
+      bigLeaf=t.caterpillarAttackCount%4===0;
+    }
+    battle.shots.push({x:t.x,y:t.y-6,tx:target.x,ty:target.y,life:.42,maxLife:.42,type:bigLeaf?"caterpillarBigLeaf":"caterpillarLeaf"});
+    const leafDamage=bigLeaf?animals.caterpillar.dmg*5:dmg;
+    target.hp-=leafDamage;
+    if(target.hp<=0)killEnemy(target);
+    t.cd=cardRate(t.key);
+    return;
+  }
+
   let parrotBomb=false;
   if(t.key==="parrot" && t.level>=10){
     t.parrotPineappleCount=(t.parrotPineappleCount||0)+1;
@@ -1541,6 +1555,14 @@ function draw(){
     ctx.restore();
   });
   battle.shots?.forEach(s=>{
+    if(s.type==="caterpillarLeaf"||s.type==="caterpillarBigLeaf"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.42);
+      const x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q-Math.sin(Math.PI*q)*18;
+      ctx.save();ctx.translate(x,y);ctx.rotate(q*2.5);
+      ctx.font=(s.type==="caterpillarBigLeaf"?"58px":"26px")+" sans-serif";
+      ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("🍃",0,0);ctx.restore();
+      return;
+    }
     if(s.type==="gooseEgg"){
       const q=1-Math.max(0,s.life)/(s.maxLife||.42);
       const x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q-Math.sin(Math.PI*q)*24;
