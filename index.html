@@ -693,6 +693,11 @@ function startSanctuaryStage(stage){
   const battleScreen=document.getElementById('battleScreen');battleScreen?.classList.remove('map-select-mode');
   document.body.classList.add('battle-mode');
   resetBattle();
+  // MAP_VISUAL_FIX: render battlefield immediately when a map is loaded
+  // Keep the animation loop alive so the road, pads and placed towers are
+  // visible before the player presses Start wave.
+  draw();
+  if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}
   updateDifficultyUI();
 }
 
