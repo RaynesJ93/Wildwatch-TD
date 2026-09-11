@@ -1472,7 +1472,7 @@ function draw(){
   battle.pineapples?.forEach(p=>{
     ctx.save();ctx.translate(p.x,p.y);
     const pulse=1+Math.sin((2-p.life)*10)*.08;
-    ctx.scale(pulse,pulse);ctx.font="26px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.scale(pulse,pulse);ctx.font="78px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
     ctx.fillText("🍍",0,0);
     ctx.restore();
   });
