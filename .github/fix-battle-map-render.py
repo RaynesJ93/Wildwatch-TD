@@ -2,44 +2,67 @@ from pathlib import Path
 
 p=Path('index.html')
 s=p.read_text(encoding='utf-8')
-marker='// MAP_VISUAL_FIX_V2: force canvas render on every battle entry path'
-if marker in s:
-    raise SystemExit('battle map render v2 already present')
+changed=False
 
-# 1) Continue Playing previously bypassed showScreen(), so force the canvas to draw
-# immediately and restart the animation loop even when a saved battle loads successfully.
-old='''continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));if(!loadBattleState())resetBattle();};'''
-new='''continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));document.body.classList.add("battle-mode");if(!loadBattleState())resetBattle();/* MAP_VISUAL_FIX_V2: force canvas render on every battle entry path */draw();if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}};'''
-if old not in s:
-    raise SystemExit('continue button marker not found')
-s=s.replace(old,new,1)
+# The blank-map failure affects every region because the shared battle reset/render
+# pipeline can be missing even though the map data (paths/pads) is still present.
+# Restore a safe resetBattle implementation if it is absent.
+if 'function resetBattle' not in s:
+    marker='startWave.onclick=()=>{'
+    if marker not in s:
+        raise SystemExit('startWave marker not found')
+    reset_fn=r'''
+// GLOBAL_MAP_RESET_FIX: restore shared battle initialisation used by every map.
+function resetBattle(){
+  cancelAnimationFrame(raf);raf=0;
+  battle={
+    started:true,
+    hardMode,
+    coins:hardMode?110:130,
+    lives:hardMode?15:20,
+    mapStartLives:hardMode?15:20,
+    wave:1,
+    enemies:[],towers:[],shots:[],puddles:[],needles:[],pineapples:[],
+    trashZones:[],roars:[],pigHamZones:[],eggSplashes:[],usedCards:[],
+    mapKills:0,mapCoinsEarned:0,
+    spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false
+  };
+  selectedCard=null;selectedTower=null;
+  speed=1;autoWave=false;autoWaveTimer=0;
+  if(typeof speedBtn!=="undefined"&&speedBtn)speedBtn.textContent="⏩ Speed: 1×";
+  if(typeof autoWaveBtn!=="undefined"&&autoWaveBtn){autoWaveBtn.textContent="▶️ Auto: OFF";autoWaveBtn.classList.remove("primary");autoWaveBtn.classList.add("secondary");}
+  if(typeof startWave!=="undefined"&&startWave)startWave.textContent="Start wave";
+  if(typeof message!=="undefined"&&message)message.textContent="Choose an animal card, then tap anywhere on the grass to place it.";
+  if(typeof renderDecks==="function")renderDecks();
+  if(typeof updateHud==="function")updateHud();
+  if(typeof updateDifficultyUI==="function")updateDifficultyUI();
+  if(typeof draw==="function")draw();
+  last=performance.now();
+  raf=requestAnimationFrame(loop);
+}
 
-# 2) Opening an already-active battle via the Battle tab must also repaint immediately.
-old2='''  }else if(id==="battleScreen"){
-    document.body.classList.add("battle-mode");
-  }
-}'''
-new2='''  }else if(id==="battleScreen"){
-    document.body.classList.add("battle-mode");
-    draw();
-    if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}
-  }
-}'''
-if old2 not in s:
-    raise SystemExit('battle-screen entry marker not found')
-s=s.replace(old2,new2,1)
+'''
+    s=s.replace(marker,reset_fn+marker,1)
+    changed=True
 
-# 3) Restarting after a difficulty change should repaint without waiting for Start wave.
-old3='''  clearBattleState();
-  resetBattle();
-  updateDifficultyUI();'''
-new3='''  clearBattleState();
-  resetBattle();
-  draw();
-  if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}
-  updateDifficultyUI();'''
-if old3 in s:
-    s=s.replace(old3,new3,1)
+# Make all map-entry routes repaint immediately. These replacements are deliberately
+# idempotent so re-running the workflow does not duplicate code.
+if '// MAP_VISUAL_FIX: render battlefield immediately when a map is loaded' not in s:
+    old='''  resetBattle();\n  updateDifficultyUI();'''
+    new='''  resetBattle();\n  // MAP_VISUAL_FIX: render battlefield immediately when a map is loaded\n  draw();\n  if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}\n  updateDifficultyUI();'''
+    if old in s:
+        s=s.replace(old,new,1);changed=True
+
+old_continue='''continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));if(!loadBattleState())resetBattle();};'''
+new_continue='''continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));document.body.classList.add("battle-mode");if(!loadBattleState())resetBattle();draw();if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}};'''
+if old_continue in s:
+    s=s.replace(old_continue,new_continue,1);changed=True
+
+# Also repaint when using previous/next map arrows or advancing to the next map.
+s=s.replace('applyMap(currentSeries,currentMap-1);resetBattle();return;','applyMap(currentSeries,currentMap-1);resetBattle();draw();return;')
+s=s.replace('applyMap(currentSeries-1,10);resetBattle();','applyMap(currentSeries-1,10);resetBattle();draw();')
+s=s.replace('applyMap(currentSeries,currentMap+1);resetBattle();}','applyMap(currentSeries,currentMap+1);resetBattle();draw();}')
+s=s.replace('applyMap(currentSeries+1,1);resetBattle();}','applyMap(currentSeries+1,1);resetBattle();draw();}')
 
 p.write_text(s,encoding='utf-8')
-print('Applied battle-map render repair to Continue, Battle tab, and difficulty reset paths')
+print('Restored shared battle reset/render pipeline for all maps')
