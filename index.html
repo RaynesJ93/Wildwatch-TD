@@ -982,7 +982,7 @@ function towerTick(t,dt){
   }
 
   if(t.key==="raccoon"){
-    const raccoonSpecial=cardLevel(t.key)>=10;
+    const raccoonSpecial=t.level>=10;
     battle.shots.push({x:t.x,y:t.y-8,tx:target.x,ty:target.y,life:.48,maxLife:.48,type:"raccoonBin",special:raccoonSpecial});
     target.hp-=dmg;
     if(target.hp<=0)killEnemy(target);
