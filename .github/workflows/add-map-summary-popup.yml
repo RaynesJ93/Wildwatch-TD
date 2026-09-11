@@ -1,0 +1,22 @@
+name: Add map completion summary popup
+on:
+  push:
+    paths:
+      - '.github/workflows/add-map-summary-popup.yml'
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add map summary popup
+        run: python .github/add-map-summary-popup.py
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Add map completion stats popup"
+          git push
