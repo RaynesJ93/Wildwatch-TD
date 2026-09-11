@@ -528,6 +528,12 @@ function getSlotRecord(slot){
 }
 const SAVE_SLOT_PREFIX="wildwatchSaveSlot";
 const ACTIVE_SLOT_KEY="wildwatchActiveSlot";
+const BATTLE_SAVE_PREFIX="wildwatchBattleSave";
+function battleSaveKey(){
+  const active=localStorage.getItem(ACTIVE_SLOT_KEY);
+  return active?`${BATTLE_SAVE_PREFIX}${active}`:BATTLE_SAVE_PREFIX;
+}
+
 // Daily quest definitions (global scope).
 const DAILY_QUEST_POOL=[
  {id:'waves8',name:'Wave Warrior',icon:'🌊',text:'Clear 8 waves',goal:8,reward:25,type:'waves'},
@@ -571,6 +577,7 @@ Level ${rec.save?.level||1} • ${rec.save?.metaCoins||0} Coins
 
 Your current autosave will be protected before switching.`))return;
   localStorage.setItem("wildwatchSafetyBackup",JSON.stringify({savedAt:new Date().toISOString(),save}));
+  saveBattleState();
   localStorage.setItem(ACTIVE_SLOT_KEY,String(slot));
   sessionStorage.setItem("critterAutoContinueFromSlot","1");
   localStorage.setItem("wildwatchSave",JSON.stringify(rec.save));
@@ -595,13 +602,20 @@ setTimeout(()=>{
 },0);
 function saveBattleState(){
   if(!battle?.started || battle.ended)return;
-  localStorage.setItem("wildwatchBattleSave",JSON.stringify({...battle,mapNumber:currentMap,mapSeries:currentSeries,shots:[]}));
+  localStorage.setItem(battleSaveKey(),JSON.stringify({...battle,mapNumber:currentMap,mapSeries:currentSeries,shots:[]}));
   continueBtn.style.display="inline-block";
 }
-function clearBattleState(){localStorage.removeItem("wildwatchBattleSave");continueBtn.style.display="none"}
+function clearBattleState(){localStorage.removeItem(battleSaveKey());continueBtn.style.display="none"}
 function loadBattleState(){
   try{
-    const raw=localStorage.getItem("wildwatchBattleSave"); if(!raw)return false;
+    const key=battleSaveKey();
+    let raw=localStorage.getItem(key);
+    if(!raw){
+      const active=localStorage.getItem(ACTIVE_SLOT_KEY);
+      const legacy=localStorage.getItem(BATTLE_SAVE_PREFIX);
+      if(active&&legacy){raw=legacy;localStorage.setItem(key,legacy);localStorage.removeItem(BATTLE_SAVE_PREFIX);}
+    }
+    if(!raw)return false;
     const b=JSON.parse(raw); if(!b?.started||b.ended)return false;
     cancelAnimationFrame(raf);hardMode=!!b.hardMode;save.battleDifficulty=hardMode?"hard":"normal";if(b.mapNumber){currentSeries=b.mapSeries||1;currentMap=b.mapNumber;applyMap(currentSeries,currentMap);}battle=b;
     // BATTLE_RUNTIME_STATE_FIX: normalize every transient battle collection.
@@ -2368,7 +2382,7 @@ function loop(now){
 }
 renderMeta();
 setTimeout(()=>applyMap(currentSeries,currentMap),0);
-continueBtn.style.display=localStorage.getItem("wildwatchBattleSave")?"inline-block":"none";
+continueBtn.style.display=localStorage.getItem(battleSaveKey())?"inline-block":"none";
 window.addEventListener("pagehide",saveBattleState);
 document.addEventListener("visibilitychange",()=>{if(document.hidden)saveBattleState()});
 // When a player chooses an existing save slot, continue straight into their game
