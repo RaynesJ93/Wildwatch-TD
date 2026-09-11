@@ -1,0 +1,21 @@
+name: Add endgame mastery
+on:
+  push:
+    paths:
+      - '.github/workflows/add-endgame-mastery.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add mastery system
+        run: python3 .github/scripts/add_endgame_mastery.py
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Add endgame animal mastery system"
+          git push
