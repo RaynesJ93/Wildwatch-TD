@@ -760,7 +760,7 @@ nextMap.onclick=()=>{
 function resetBattle(){
   cancelAnimationFrame(raf);
   applyMap(currentSeries,currentMap);
-  battle={started:true,hardMode,coins:hardMode?110:130,lives:hardMode?15:20,wave:1,enemies:[],towers:[],shots:[],puddles:[],needles:[],pineapples:[],usedCards:[],mapKills:0,mapCoinsEarned:0,spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false};
+  battle={started:true,hardMode,coins:hardMode?110:130,lives:hardMode?15:20,mapStartLives:hardMode?15:20,wave:1,enemies:[],towers:[],shots:[],puddles:[],needles:[],pineapples:[],usedCards:[],mapKills:0,mapCoinsEarned:0,spawning:false,spawnLeft:0,spawnTimer:0,waveActive:false,ended:false};
   startWave.textContent="Start wave";
   message.textContent="Choose an animal card, then tap anywhere on the grass to place it.";
   selectedCard=null; selectedTower=null; speed=1; speedBtn.textContent="⏩ Speed: 1×";
@@ -834,6 +834,7 @@ startWave.onclick=()=>{
     return;
   }
 
+  battle.waveStartLives=battle.lives;
   battle.waveActive=true;
   battle.spawning=true;
   battle.eliteSpawned=false;
@@ -1254,8 +1255,10 @@ function finishWave(){
   battle.shots=(battle.shots||[]).filter(s=>s.type!=="hedgehogNeedles");
   save.bestWave=Math.max(save.bestWave,clearedWave);
   addQuestProgress("waves",1);
-    addWeeklyProgress("weeklyWaves",1);
-  if(speed===3)addQuestProgress("speedWaves",1);
+  addWeeklyProgress("weeklyWaves",1);
+  save.totalWaves=Math.max(0,Number(save.totalWaves||0))+1;
+  if(battle.lives===(battle.waveStartLives??battle.lives))addQuestProgress("noLossWaves",1);
+  if(speed===3){addQuestProgress("speedWaves",1);addChallengeProgress("challengeSpeedWaves",1);}
   save.xp+=Math.round((12+clearedWave*3)*(hardMode?1.5:1));
   // Permanent coin economy: 7 Coins per Normal wave, 12 Coins per Hard wave.
   save.metaCoins+=hardMode?12:7;
@@ -1265,6 +1268,10 @@ function finishWave(){
     autoWaveTimer=setTimeout(()=>{if(autoWave && !battle.waveActive && !battle.ended)startWave.click();},900);
   }
   if(clearedWave>=15){
+    addQuestProgress(hardMode?"hardMaps":"normalMaps",1);
+    const usedForChallenge=[...new Set(battle.usedCards||[])];
+    if(usedForChallenge.length&&usedForChallenge.every(k=>animals[k]?.rarity==='Common'))addChallengeProgress("challengeCommonMap",1);
+    if(battle.lives===(battle.mapStartLives??battle.lives))addChallengeProgress("challengeNoLifeMap",1);
     const cardXp=awardUsedCardXp(true);
     setTimeout(()=>showMapSummary(cardXp),120);
     if(hardMode)save.hardCompleted[`${currentSeries}-${currentMap}`]=true;
@@ -2046,18 +2053,34 @@ const MILESTONE_QUESTS=[
  {id:'uncommon7',icon:'🟢',name:'Uncommon Collector II',text:'Collect 7 Uncommon cards',reward:60,type:'uncommonOwned',goal:7},
  {id:'uncommon14',icon:'🟢',name:'Uncommon Collector III',text:'Collect 14 Uncommon cards',reward:125,type:'uncommonOwned',goal:14},
  {id:'uncommonAll',icon:'🏆',name:'Uncommon Collector IV',text:'Collect all Uncommon cards',reward:250,type:'uncommonOwned',goal:'allUncommon'},
- {icon:'🃏',name:'Growing Collection',text:'Own 10 animal cards',reward:150},
- {icon:'⭐',name:'Veteran Defender',text:'Clear 100 total waves',reward:250},
- {icon:'🏆',name:'Master Collector',text:'Own your first Legendary card',reward:300}
+ {id:'growingCollection',icon:'🃏',name:'Growing Collection',text:'Own 10 animal cards',reward:150,type:'allOwned',goal:10},
+ {id:'veteranDefender',icon:'⭐',name:'Veteran Defender',text:'Clear 100 total waves',reward:250,type:'totalWaves',goal:100},
+ {id:'masterCollector',icon:'🏆',name:'Master Collector',text:'Own your first Legendary card',reward:300,type:'legendaryOwned',goal:1}
 ];
 const CHALLENGE_QUESTS=[
- {icon:'⚪',name:'Common Ground',text:'Complete a map using only Common cards',reward:100},
- {icon:'❤️',name:'Untouchable',text:'Complete a map without losing a life',reward:125},
- {icon:'⏩',name:'Full Speed Ahead',text:'Clear 5 waves at 3× speed',reward:75}
+ {id:'challengeCommonMap',icon:'⚪',name:'Common Ground',text:'Complete a map using only Common cards',reward:100,type:'challengeCommonMap',goal:1},
+ {id:'challengeNoLifeMap',icon:'❤️',name:'Untouchable',text:'Complete a map without losing a life',reward:125,type:'challengeNoLifeMap',goal:1},
+ {id:'challengeSpeedWaves',icon:'⏩',name:'Full Speed Ahead',text:'Clear 5 waves at 3× speed',reward:75,type:'challengeSpeedWaves',goal:5}
 ];
 function questPlaceholderCards(items){return items.map(q=>`<div class="info-box"><div style="display:flex;justify-content:space-between;gap:8px"><b>${q.icon} ${q.name}</b><b>🟡 ${q.reward}</b></div><div class="small" style="margin-top:6px">${q.text}</div><div class="small" style="margin-top:9px;opacity:.8">Ready for tracking rules</div></div>`).join('')}
+function ensureChallengeQuests(){
+ save.challengeQuests=save.challengeQuests&&typeof save.challengeQuests==='object'?save.challengeQuests:{progress:{},claimed:{}};
+ save.challengeQuests.progress=save.challengeQuests.progress&&typeof save.challengeQuests.progress==='object'?save.challengeQuests.progress:{};
+ save.challengeQuests.claimed=save.challengeQuests.claimed&&typeof save.challengeQuests.claimed==='object'?save.challengeQuests.claimed:{};
+}
+function addChallengeProgress(type,n=1){
+ ensureChallengeQuests();
+ const q=CHALLENGE_QUESTS.find(x=>x.type===type);
+ if(!q||save.challengeQuests.claimed[q.id])return;
+ save.challengeQuests.progress[type]=Math.min(Number(q.goal||1),Math.max(0,Number(save.challengeQuests.progress[type]||0)+(Number(n)||0)));
+ persist();renderExtraQuestBoards();
+}
 function questState(q){
  let goal=Number(q.goal||1),progress=Math.max(0,Number(q.progress||0));
+ if(q.type&&q.type.startsWith('challenge')){ensureChallengeQuests();progress=Math.max(0,Number(save.challengeQuests.progress[q.type]||0));}
+ if(q.type==='allOwned')progress=(save.unlocked||[]).length;
+ if(q.type==='totalWaves')progress=Math.max(0,Number(save.totalWaves||0));
+ if(q.type==='legendaryOwned')progress=(save.unlocked||[]).filter(k=>animals[k]?.rarity==='Legendary').length;
  if(q.type&&q.type.startsWith('weekly')){
    ensureWeeklyQuests();
    progress=Math.max(0,Number(save.weeklyQuests?.progress?.[q.type]||0));
@@ -2085,55 +2108,37 @@ function sortQuestItems(items,mode){
 function questDropdownCards(items,mode='not-completed'){
  const sorted=sortQuestItems(items,mode);
  if(!sorted.length)return `<div class="info-box center small">No quests in this category yet.</div>`;
- return sorted.map((q,i)=>{const st=questState(q),claimed=!!save.milestoneClaims?.[q.id];const status=claimed?'✓ Reward claimed':st.completed?'✓ Completed':st.progress>0?`${st.progress}/${st.goal}`:'Not started';const claim=q.id==='commonAll'&&st.completed?`<button class="primary milestoneClaimBtn" data-id="${q.id}" style="width:100%;margin-top:10px" ${claimed?'disabled':''}>${claimed?'✓ 500 EXP given to every Common card':'Claim ⭐ 500 EXP for every Common card'}</button>`:'';return `<details class="info-box questDrop" ${i===0?'open':''}><summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900"><span>${q.icon} ${q.name}</span><span style="display:flex;align-items:center;gap:8px"><span>${q.rewardType==='exp'||q.rewardType==='tierExp'?'⭐':'🟡'} ${q.reward}${q.rewardType==='exp'?' EXP each':q.rewardType==='tierExp'?` EXP to every ${q.rewardTier} card`:''}</span><span class="dropArrow">▼</span></span></summary><div style="border-top:1px solid #315b47;margin-top:10px;padding-top:10px"><div class="small">${q.text}</div><div class="progress" style="margin-top:9px"><i style="width:${Math.round(st.ratio*100)}%"></i></div><div class="small" style="margin-top:7px">${status}</div>${claim}</div></details>`}).join('')
-}
-function bindMilestoneClaimButtons(){
- document.querySelectorAll('.milestoneClaimBtn').forEach(btn=>btn.onclick=()=>{
-   if(btn.dataset.id!=='commonAll'||save.milestoneClaims?.commonAll||!questState(MILESTONE_QUESTS.find(q=>q.id==='commonAll')).completed)return;
-   save.cardXP=save.cardXP||{};save.milestoneClaims=save.milestoneClaims||{};
-   Object.keys(animals).filter(k=>animals[k].rarity==='Common'&&(save.unlocked||[]).includes(k)).forEach(k=>save.cardXP[k]=(save.cardXP[k]||0)+500);
-   save.milestoneClaims.commonAll=true;persist();renderMeta();renderExtraQuestBoards();
- });
-}
-function weekKey(){const d=new Date(),x=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));x.setUTCDate(x.getUTCDate()+4-(x.getUTCDay()||7));const y=new Date(Date.UTC(x.getUTCFullYear(),0,1));return x.getUTCFullYear()+"-W"+String(Math.ceil((((x-y)/86400000)+1)/7)).padStart(2,"0")}
-function ensureWeeklyQuests(){
- const k=weekKey();
- if(!save.weeklyQuests||save.weeklyQuests.week!==k)save.weeklyQuests={week:k,progress:{},claimed:{}};
- // Repair/migrate older weekly save formats so progress cannot fail silently.
- save.weeklyQuests.progress=save.weeklyQuests.progress&&typeof save.weeklyQuests.progress==="object"?save.weeklyQuests.progress:{};
- save.weeklyQuests.claimed=save.weeklyQuests.claimed&&typeof save.weeklyQuests.claimed==="object"?save.weeklyQuests.claimed:{};
- ["weeklyWaves","weeklyCoins","weeklyCommonPlaced","weeklyLegendaryPlaced","weeklyLevels"].forEach(t=>{
-   if(save.weeklyQuests.progress[t]==null && Number.isFinite(Number(save[t])))save.weeklyQuests.progress[t]=Number(save[t]);
- });
-}
-function addWeeklyProgress(type,n=1){
- ensureWeeklyQuests();
- const amount=Number(n)||0;
- save.weeklyQuests.progress[type]=Math.max(0,Number(save.weeklyQuests.progress[type]||0)+amount);
- persist();
- renderExtraQuestBoards();
-}
-function weeklyRewardLabel(q){return q.rewardType==='tierExp'?`✨ ${q.reward} EXP • ${q.rewardTier} cards`:`🟡 ${q.reward} Coins`}
-function weeklyQuestCards(){
- ensureWeeklyQuests();
- return WEEKLY_QUESTS.map((q,i)=>{
-  const progress=Math.max(0,Number(save.weeklyQuests.progress[q.type]||0)), done=progress>=q.goal, claimed=!!save.weeklyQuests.claimed[q.id];
-  const status=claimed?'✓ Reward claimed':done?'✓ Completed — reward ready':`${Math.min(progress,q.goal)}/${q.goal}`;
-  const btn=done&&!claimed?`<button class="primary" style="margin-top:9px;width:100%" onclick="claimWeeklyQuest('${q.id}')">Claim ${weeklyRewardLabel(q)}</button>`:'';
-  return `<details class="info-box questDrop" ${i===0?'open':''}><summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px"><b>${q.icon} ${q.name}</b><b>${weeklyRewardLabel(q)}</b></summary><div class="small" style="margin-top:7px">${q.text}</div><div class="small" style="margin-top:7px">${status}</div>${btn}</details>`;
+ const isMilestone=items===MILESTONE_QUESTS,isChallenge=items===CHALLENGE_QUESTS;
+ if(isChallenge)ensureChallengeQuests();
+ save.milestoneClaims=save.milestoneClaims||{};
+ return sorted.map((q,i)=>{
+   const st=questState(q);
+   const claimed=isMilestone?!!save.milestoneClaims[q.id]:isChallenge?!!save.challengeQuests.claimed[q.id]:false;
+   const status=claimed?'✓ Reward claimed':st.completed?'✓ Completed — reward ready':st.progress>0?`${Math.min(st.progress,st.goal)}/${st.goal}`:'Not started';
+   let reward=q.rewardType==='exp'?`✨ ${q.reward} EXP each`:`🟡 ${q.reward}`;
+   let claim='';
+   if(q.id&&st.completed&&!claimed){
+     if(isMilestone)claim=`<button class="primary milestoneClaimBtn" data-id="${q.id}" style="width:100%;margin-top:10px">Claim ${reward}</button>`;
+     if(isChallenge)claim=`<button class="primary challengeClaimBtn" data-id="${q.id}" style="width:100%;margin-top:10px">Claim ${reward}</button>`;
+   }
+   return `<details class="info-box questDrop" ${i===0?'open':''}><summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px"><b>${q.icon} ${q.name}</b><b>${reward}</b></summary><div class="small" style="margin-top:7px">${q.text}</div><div class="small" style="margin-top:7px">${status}</div>${claim}</details>`;
  }).join('')
 }
-function claimWeeklyQuest(id){
- ensureWeeklyQuests();
- const q=WEEKLY_QUESTS.find(x=>x.id===id);if(!q)return;
- const progress=Math.max(0,Number(save.weeklyQuests.progress[q.type]||0));
- if(progress<q.goal||save.weeklyQuests.claimed[q.id])return;
- if(q.rewardType==='tierExp'){
-  save.cardXP=save.cardXP||{};
-  Object.keys(animals).filter(k=>animals[k].rarity===q.rewardTier&&save.unlocked.includes(k)).forEach(k=>save.cardXP[k]=(save.cardXP[k]||0)+q.reward);
- }else save.metaCoins=(save.metaCoins||0)+q.reward;
- save.weeklyQuests.claimed[q.id]=true;
- persist();renderMeta();renderExtraQuestBoards();renderHome();
+function bindMilestoneClaimButtons(){
+ save.milestoneClaims=save.milestoneClaims||{};
+ document.querySelectorAll('.milestoneClaimBtn').forEach(btn=>btn.onclick=()=>{
+   const q=MILESTONE_QUESTS.find(x=>x.id===btn.dataset.id);if(!q||save.milestoneClaims[q.id]||!questState(q).completed)return;
+   if(q.rewardType==='exp'){
+     save.cardXP=save.cardXP||{};
+     const tier=q.type==='commonOwned'?'Common':q.type==='uncommonOwned'?'Uncommon':null;
+     Object.keys(animals).filter(k=>!tier||animals[k].rarity===tier).forEach(k=>{if((save.unlocked||[]).includes(k))addCardXp(k,q.reward)});
+   }else save.metaCoins=(save.metaCoins||0)+Number(q.reward||0);
+   save.milestoneClaims[q.id]=true;persist();renderHome();renderCards();renderExtraQuestBoards();
+ });
+ document.querySelectorAll('.challengeClaimBtn').forEach(btn=>btn.onclick=()=>{
+   ensureChallengeQuests();const q=CHALLENGE_QUESTS.find(x=>x.id===btn.dataset.id);if(!q||save.challengeQuests.claimed[q.id]||!questState(q).completed)return;
+   save.metaCoins=(save.metaCoins||0)+Number(q.reward||0);save.challengeQuests.claimed[q.id]=true;persist();renderHome();renderCards();renderExtraQuestBoards();
+ });
 }
 function renderExtraQuestBoards(){
  const w=document.getElementById('weeklyQuestList'),m=document.getElementById('milestoneQuestList'),c=document.getElementById('challengeQuestList');
