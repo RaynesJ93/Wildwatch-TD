@@ -1,0 +1,85 @@
+name: Add Crocodile tail attack and death roll
+
+on:
+  push:
+    paths:
+      - '.github/workflows/add-crocodile-tail-deathroll.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch Crocodile attack
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          # Update Crocodile description.
+          old='crocodile:{name:"Crocodile",emoji:"🐊",rarity:"Rare",cost:150,range:135,rate:1/.60,dmg:60,color:"#586",desc:"Massive close-range damage."},'
+          new='crocodile:{name:"Crocodile",emoji:"🐊",rarity:"Rare",cost:150,range:135,rate:1/.60,dmg:60,color:"#586",desc:"Tail-swipe bruiser. At tower level 10, every 5th attack triggers Death Roll: the target is locked in place for 1.5s and takes 3x normal attack damage."},'
+          if old in s:
+              s=s.replace(old,new,1)
+
+          # Add dedicated Crocodile attack before Tiger handling.
+          marker='''  if(t.key==="tiger"){
+'''
+          block='''  if(t.key==="crocodile"){
+    let deathRoll=false;
+    if(t.level>=10){
+      t.crocAttackCount=(t.crocAttackCount||0)+1;
+      deathRoll=t.crocAttackCount%5===0;
+    }
+    battle.shots.push({x:t.x,y:t.y-4,tx:target.x,ty:target.y,life:deathRoll?.62:.34,maxLife:deathRoll?.62:.34,type:deathRoll?"crocDeathRoll":"crocTail"});
+    const hitDamage=deathRoll?dmg*3:dmg;
+    target.hp-=hitDamage;
+    if(deathRoll)target.freezeTimer=Math.max(target.freezeTimer||0,1.5);
+    if(target.hp<=0)killEnemy(target);
+    t.cd=cardRate(t.key);
+    return;
+  }
+
+'''
+          if 'type:deathRoll?"crocDeathRoll":"crocTail"' not in s:
+              if marker not in s: raise SystemExit('Tiger attack marker not found')
+              s=s.replace(marker,block+marker,1)
+
+          # Draw tail swipe and Death Roll effects before Tiger swipe rendering.
+          marker='''    }else if(s.type==="tigerSwipe"){
+'''
+          block='''    }else if(s.type==="crocTail"||s.type==="crocDeathRoll"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||(s.type==="crocDeathRoll"?.62:.34));
+      const x=s.x+(s.tx-s.x)*Math.min(1,q*1.15),y=s.y+(s.ty-s.y)*Math.min(1,q*1.15);
+      const ang=Math.atan2(s.ty-s.y,s.tx-s.x);
+      ctx.save();ctx.translate(x,y);ctx.rotate(ang + Math.sin(q*Math.PI)*(s.type==="crocDeathRoll"?5.5:1.4));
+      ctx.strokeStyle=s.type==="crocDeathRoll"?"#d8ff72":"#7fbf54";
+      ctx.lineWidth=s.type==="crocDeathRoll"?10:8;ctx.lineCap="round";
+      ctx.beginPath();ctx.moveTo(-25,0);ctx.quadraticCurveTo(0,-18,25,0);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(-20,4);ctx.quadraticCurveTo(0,20,22,5);ctx.stroke();
+      if(s.type==="crocDeathRoll"){
+        ctx.globalAlpha=.75;ctx.strokeStyle="#f4ffaf";ctx.lineWidth=4;
+        ctx.beginPath();ctx.arc(0,0,24+q*18,0,Math.PI*2);ctx.stroke();
+      }
+      ctx.restore();
+      return;
+'''
+          if 's.type==="crocTail"||s.type==="crocDeathRoll"' not in s:
+              if marker not in s: raise SystemExit('Tiger draw marker not found')
+              s=s.replace(marker,block+marker,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Add Crocodile tail attack and Death Roll'
+          git push origin main
