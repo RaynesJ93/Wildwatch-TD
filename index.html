@@ -3505,7 +3505,9 @@ function questDropdownCards(items,mode='not-completed'){
      if(isMilestone)claim=`<button class="primary milestoneClaimBtn" data-id="${q.id}" style="width:100%;margin-top:10px">Claim ${reward}</button>`;
      if(isChallenge)claim=`<button class="primary challengeClaimBtn" data-id="${q.id}" style="width:100%;margin-top:10px">Claim ${reward}</button>`;
    }
-   return `<details class="info-box questDrop" ${i===0?'open':''}><summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px"><b>${q.icon} ${q.name}</b><b>${reward}</b></summary><div class="small" style="margin-top:7px">${q.text}</div><div class="small" style="margin-top:7px">${status}</div>${claim}</details>`;
+   // CLAIMED_QUEST_STRIKETHROUGH_V1: visibly cross out Milestone/Challenge quest names only after the reward is claimed.
+   const questNameStyle=claimed?'text-decoration:line-through;text-decoration-thickness:2px;opacity:.62;':'';
+   return `<details class="info-box questDrop" ${i===0?'open':''}><summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="${questNameStyle}">${q.icon} ${q.name}</b><b>${reward}</b></summary><div class="small" style="margin-top:7px">${q.text}</div><div class="small" style="margin-top:7px">${status}</div>${claim}</details>`;
  }).join('')
 }
 function bindMilestoneClaimButtons(){
