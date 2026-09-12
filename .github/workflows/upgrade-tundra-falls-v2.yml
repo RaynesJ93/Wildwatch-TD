@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Upgrade all Tundra Falls battle maps
-        run: python3 .github/scripts/upgrade_tundra_falls_v2.py
+        run: python3 .github/scripts/run_tundra_upgrade_fixed.py
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
