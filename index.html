@@ -363,7 +363,7 @@ const animals = {
   rabbit:{name:"Rabbit",emoji:"🐰",rarity:"Common",cost:52,range:145,rate:1/1.30,dmg:9,color:"#ddd",desc:"Fires spinning carrots. At Level 10, every 6th attack becomes Bunny Barrage: 4 rapid kicks dealing 1.5x damage each, spread across enemies or focused on one target."},
   squirrel:{name:"Squirrel",emoji:"🐿️",rarity:"Common",cost:58,range:175,rate:1/1.25,dmg:17,color:"#a66b3d",desc:"Throws nuts at enemies. At tower level 10, every 5th attack splits into 5 nuts, each dealing 2x base damage."},
   hedgehog:{name:"Hedgehog",emoji:"🦔",rarity:"Common",cost:60,range:135,rate:3,dmg:12,color:"#76543b",desc:"Solid basic attacker."},
-  chicken:{name:"Chicken",emoji:"🐔",rarity:"Common",cost:52,range:150,rate:1/1.20,dmg:9,color:"#eee",desc:"Fast basic attacker."},
+  chicken:{name:"Chicken",emoji:"🐔",rarity:"Common",cost:52,range:150,rate:1/1.20,dmg:9,color:"#eee",desc:"Launches cracking egg bombs. At Level 10, every 5th attack fires an Explosive Egg: 2x damage to the target, 100% splash damage within 75 range and a 20% slow for 2s."},
   bird:{name:"Pigeon",emoji:"🕊️",rarity:"Common",cost:55,range:190,rate:1/1.30,dmg:8,color:"#7f8c99",desc:"Longer-range pigeon attacker."},
   duck:{name:"Duck",emoji:"🦆",rarity:"Common",cost:58,range:160,rate:1/1.10,dmg:11,color:"#6b8e45",desc:"Balanced basic attacker."},
   goose:{name:"Goose",emoji:"🪿",rarity:"Common",cost:62,range:155,rate:1/.95,dmg:20,color:"#ddd",desc:"Strong basic attacker."},
@@ -1363,13 +1363,14 @@ function moveEnemy(e,dt){
   }
   if(e.slowTimer>0)e.slowTimer-=dt;
   if((e.zebraSlowTimer||0)>0)e.zebraSlowTimer=Math.max(0,e.zebraSlowTimer-dt);
+  if((e.chickenSlowTimer||0)>0)e.chickenSlowTimer=Math.max(0,e.chickenSlowTimer-dt);
   if((e.goatConfuseTimer||0)>0)e.goatConfuseTimer=Math.max(0,e.goatConfuseTimer-dt);
   if(e.hp<=0){killEnemy(e);return}
   if((e.freezeTimer||0)>0){
     e.freezeTimer=Math.max(0,e.freezeTimer-dt);
     return;
   }
-  let mult=e.slowTimer>0?.55:(e.zebraSlowTimer||0)>0?.75:(e.goatConfuseTimer||0)>0?.50:1, dist=e.speed*mult*dt;
+  let mult=e.slowTimer>0?.55:(e.chickenSlowTimer||0)>0?.80:(e.zebraSlowTimer||0)>0?.75:(e.goatConfuseTimer||0)>0?.50:1, dist=e.speed*mult*dt;
   while(dist>0 && e.seg<path.length-1){
     const [tx,ty]=path[e.seg+1], dx=tx-e.x,dy=ty-e.y,len=Math.hypot(dx,dy); if(len>0){e.dirX=dx/len;e.dirY=dy/len;e.walkPhase=(e.walkPhase||0)+dt*e.speed*.16;}
     if(dist>=len){e.x=tx;e.y=ty;e.seg++;dist-=len;}
@@ -1632,6 +1633,23 @@ function towerTick(t,dt){
     }
     t.cd=cardRate(t.key);return;
   }
+  // CHICKEN_EXPLOSIVE_EGG_V2
+  if(t.key==="chicken"){
+    let explosive=false;
+    if(t.level>=10){t.chickenAttackCount=(t.chickenAttackCount||0)+1;explosive=t.chickenAttackCount%5===0;}
+    if(explosive){
+      target.hp-=dmg*2;
+      const splash=battle.enemies.filter(e=>e!==target&&!e.dead&&e.hp>0&&Math.hypot(e.x-target.x,e.y-target.y)<=75);
+      [target,...splash].forEach(e=>{if(e!==target)e.hp-=dmg;e.chickenSlowTimer=Math.max(e.chickenSlowTimer||0,2);if(e.hp<=0)killEnemy(e);});
+      battle.shots.push({x:t.x,y:t.y-5,tx:target.x,ty:target.y,life:.34,maxLife:.34,type:"chickenEgg",special:true});
+    }else{
+      target.hp-=dmg;
+      battle.shots.push({x:t.x,y:t.y-5,tx:target.x,ty:target.y,life:.30,maxLife:.30,type:"chickenEgg",special:false});
+      if(target.hp<=0)killEnemy(target);
+    }
+    t.cd=cardRate(t.key);return;
+  }
+
   if(t.key==="rabbit"){
     let barrage=false;
     if(t.level>=10){t.rabbitAttackCount=(t.rabbitAttackCount||0)+1;barrage=t.rabbitAttackCount%6===0;}
@@ -2837,6 +2855,10 @@ function draw(){
       ctx.save();ctx.translate(x,y);ctx.rotate(q*Math.PI*8);ctx.fillStyle="#b78b42";ctx.strokeStyle="#f4d37c";ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(0,0,11,5.5,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();
       ctx.save();ctx.globalAlpha=.7;ctx.fillStyle="#d9b15d";for(let i=0;i<3;i++){const tq=Math.max(0,q-i*.08);const tx=s.x+(s.tx-s.x)*tq,ty=s.y+(s.ty-s.y)*tq;ctx.beginPath();ctx.arc(tx,ty,1.8,0,Math.PI*2);ctx.fill();}ctx.restore();
       if(q>.84){ctx.save();ctx.globalAlpha=Math.max(0,1-(q-.84)/.16);ctx.translate(s.tx,s.ty);ctx.strokeStyle="#f6d77d";ctx.lineWidth=2;for(let i=0;i<6;i++){const a=i*Math.PI/3;ctx.beginPath();ctx.moveTo(Math.cos(a)*4,Math.sin(a)*4);ctx.lineTo(Math.cos(a)*13,Math.sin(a)*13);ctx.stroke();}ctx.restore();}
+    }else if(s.type==="chickenEgg"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.30),arc=Math.sin(q*Math.PI)*(s.special?28:20),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q-arc;
+      ctx.save();ctx.translate(x,y);ctx.rotate(q*Math.PI*5);ctx.fillStyle=s.special?"#ffd84d":"#fff8df";ctx.strokeStyle=s.special?"#e0a800":"#cfc8b5";ctx.lineWidth=s.special?2:1.2;ctx.beginPath();ctx.ellipse(0,0,s.special?8:6,s.special?10:8,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();
+      if(q>.82){const a=(q-.82)/.18;ctx.save();ctx.globalAlpha=Math.max(0,1-a);ctx.translate(s.tx,s.ty);ctx.fillStyle=s.special?"#ffd21f":"#ffd84d";ctx.beginPath();ctx.arc(0,0,s.special?30:13,0,Math.PI*2);ctx.fill();ctx.fillStyle="#fff7dd";for(let i=0;i<(s.special?9:5);i++){const ang=i*Math.PI*2/(s.special?9:5);ctx.save();ctx.rotate(ang);ctx.fillRect(s.special?18:8,-2,s.special?13:7,4);ctx.restore();}ctx.fillStyle="#fff";for(let i=0;i<6;i++){const ang=i*Math.PI/3+.3;ctx.fillRect(Math.cos(ang)*(s.special?24:11)-2,Math.sin(ang)*(s.special?24:11)-2,5,3);}ctx.restore();}
     }else if(s.type==="rabbitCarrot"){
       const q=1-Math.max(0,s.life)/(s.maxLife||.27),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q;
       ctx.save();ctx.translate(x,y);ctx.rotate(q*Math.PI*7);ctx.fillStyle="#ff8a24";ctx.beginPath();ctx.moveTo(-8,-4);ctx.lineTo(8,0);ctx.lineTo(-8,4);ctx.closePath();ctx.fill();ctx.fillStyle="#5bbf55";ctx.fillRect(-11,-4,4,3);ctx.fillRect(-11,1,4,3);ctx.restore();
