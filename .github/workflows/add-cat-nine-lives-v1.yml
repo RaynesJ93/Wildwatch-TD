@@ -1,0 +1,22 @@
+name: Add Cat Nine Lives V1
+on:
+  push:
+    paths:
+      - '.github/workflows/add-cat-nine-lives-v1.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply Cat Paw Slash and Nine Lives
+        run: python .github/scripts/add_cat_nine_lives_v1.py
+      - name: Commit game update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Add Cat Paw Slash and Level 10 Nine Lives"
+          git push
