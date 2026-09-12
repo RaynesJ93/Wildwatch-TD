@@ -484,6 +484,8 @@ if(save.damageUpgrades){
 delete save.damageUpgrades;
 save.normalCompleted={...defaults.normalCompleted,...(save.normalCompleted||{})};
 save.hardCompleted={...defaults.hardCompleted,...(save.hardCompleted||{})};
+// VOLCANIC_EXISTING_SAVE_UNLOCK_V1: players who cleared Tundra 4-10 before Region 5 existed should unlock it automatically.
+if(save.normalCompleted["4-10"]||save.hardCompleted["4-10"])save.volcanicWastelandUnlocked=Math.max(save.volcanicWastelandUnlocked||0,1);
 // Reconstruct obvious Normal completions from existing unlocked-map progress so old saves keep access.
 for(let m=1;m<(save.forestPinesUnlocked||1);m++)save.normalCompleted[`1-${m}`]=true;
 if((save.desertDunesUnlocked||0)>0)save.normalCompleted["1-10"]=true;
