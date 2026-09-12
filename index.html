@@ -351,7 +351,6 @@ const animals = {
   eagle:{name:"Eagle", emoji:"🦅", rarity:"Rare", cost:120, range:225.75, rate:.88, dmg:27, color:"#b68142", desc:"Long range and strong damage."},
   panda:{name:"Panda", emoji:"🐼", rarity:"Legendary", cost:145, range:187.5, rate:.72, dmg:23, slow:.55, color:"#eee", desc:"Bamboo blasts slow enemies."},
   lion:{name:"Lion", emoji:"🦁", rarity:"Rare", rareCard:true, cost:160, range:217.5, rate:.65, dmg:31, aura:1.15, color:"#d99c35", desc:"Powerful attacker that inspires nearby towers."},
-  capybara:{name:"Capybara", emoji:"", rarity:"Uncommon", uncommonOnly:true, cost:70, range:140, rate:.8, dmg:12, color:"#a8794f", desc:"Calm, dependable attacker. Exclusive to the Uncommon Pack."},
   whiteRhino:{name:"White Rhino", emoji:"🦏", rarity:"Legendary", legendaryOnly:true, whiteVariant:true, cost:135, range:140, rate:.8, dmg:35, color:"#f2f2ec", desc:"Legendary white rhino with powerful medium-speed attacks. Exclusive to the Legendary Chest."},
   fox:{name:"Fox", emoji:"🦊", rarity:"Common", cost:60, range:120, rate:.55, dmg:12, color:"#d97832", desc:"Quick and dependable common attacker with fast attack speed."},
   silverback:{name:"Silverback Gorilla", emoji:"🦍", rarity:"Legendary", legendaryOnly:true, cost:185, range:140, rate:1.45, dmg:55, quakeDamage:27, color:"#777b80", desc:"Slow legendary powerhouse. Slams the ground to create an earthquake that can hit up to 5 enemies."},
@@ -437,19 +436,15 @@ const spritePos={
 };
 function animalVisual(k, cls="mini-portrait"){
   const a=animals[k];
-  if(k==="capybara"){
-    const size=cls==="reward-portrait"?68:cls==="animal-portrait"?48:30;
-    return `<span class="animal-emoji ${cls}" style="display:inline-flex!important;align-items:center;justify-content:center;width:${size}px;height:${size}px;background:#a8794f!important;border-radius:46% 46% 42% 42%;position:relative;box-sizing:border-box;border:2px solid #6e4a30;font-size:${Math.round(size*.28)}px;line-height:1;color:#21150e">●&nbsp;●<span style="position:absolute;left:9%;top:3%;width:22%;height:22%;background:#8b6040;border-radius:50%;border:1px solid #5d3c28"></span><span style="position:absolute;right:9%;top:3%;width:22%;height:22%;background:#8b6040;border-radius:50%;border:1px solid #5d3c28"></span><span style="position:absolute;left:34%;bottom:19%;width:32%;height:23%;background:#6d4932;border-radius:55%;border:1px solid #4b3021"></span></span>`;
-  }
   return a ? `<span class="animal-emoji ${cls}" style="background-image:none!important;display:flex!important;align-items:center;justify-content:center;${a.whiteVariant?"background-color:#18251f!important;border-radius:16px!important;box-shadow:0 8px 18px #0008,inset 0 0 0 2px #ffffff33;filter:grayscale(1) brightness(2.25) contrast(.55);":""}font-family:'Apple Color Emoji','Segoe UI Emoji',sans-serif;font-size:${cls==="reward-portrait"?"68px":cls==="animal-portrait"?"48px":"30px"};line-height:1">${a.emoji}</span>` : "";
 }
 
 const defaults = {
   metaCoins:250, level:1, xp:0, packTokens:0, bestWave:0, totalPacksOpened:0,totalCardsCollected:0,totalWaves:0,
   unlocked:["monkey","frog","owl","snake"],
-  shards:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0,capybara:0,whiteRhino:0,fox:0,silverback:0,penguin:0,jaguar:0},
-  cardLevels:{monkey:1,frog:1,owl:1,snake:1,rhino:1,eagle:1,panda:1,lion:1,capybara:1,whiteRhino:1,fox:1,silverback:1,penguin:1,jaguar:1},
-  damageUpgrades:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0,capybara:0,whiteRhino:0,fox:0,silverback:0},
+  shards:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0,whiteRhino:0,fox:0,silverback:0,penguin:0,jaguar:0},
+  cardLevels:{monkey:1,frog:1,owl:1,snake:1,rhino:1,eagle:1,panda:1,lion:1,whiteRhino:1,fox:1,silverback:1,penguin:1,jaguar:1},
+  damageUpgrades:{monkey:0,frog:0,owl:0,snake:0,rhino:0,eagle:0,panda:0,lion:0,whiteRhino:0,fox:0,silverback:0},
   noShardChests:0,
   forestPinesUnlocked:1,
   forestPinesSelected:1,
@@ -470,6 +465,11 @@ try { save={...defaults,...JSON.parse(localStorage.getItem("wildwatchSave")||"{}
 save.shards={...defaults.shards,...save.shards};
 save.cardLevels={...defaults.cardLevels,...save.cardLevels};
 save.cardXP=save.cardXP||{};
+save.unlocked=(save.unlocked||[]).filter(k=>k!=="capybara");
+save.deck=(save.deck||defaults.deck).map(k=>k==="capybara"?null:k).filter(Boolean);
+delete save.shards.capybara;
+delete save.cardLevels.capybara;
+if(save.damageUpgrades)delete save.damageUpgrades.capybara;
 save.totalCardsCollected=Math.max(Number(save.totalCardsCollected||0),(save.unlocked||[]).length);
 Object.keys(animals).forEach(k=>{if(save.cardLevels[k]==null)save.cardLevels[k]=1;if(save.shards[k]==null)save.shards[k]=0;if(save.cardXP[k]==null)save.cardXP[k]=0;});
 // Preserve previous +7.5% damage-upgrade progress by converting each old upgrade into one card level.
