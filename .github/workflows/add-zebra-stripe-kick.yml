@@ -1,0 +1,22 @@
+name: Add Zebra Stripe Kick
+on:
+  push:
+    paths:
+      - '.github/workflows/add-zebra-stripe-kick.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add Zebra Stripe Kick and Level 10 ability
+        run: python3 .github/scripts/add_zebra_stripe_kick.py
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Add Zebra Stripe Kick and Stampede Stripes"
+          git push
