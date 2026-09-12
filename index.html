@@ -569,9 +569,36 @@ function renderSaveSlots(){
   const active=localStorage.getItem(ACTIVE_SLOT_KEY);if(active)setSaveStatus(`Autosaving to ${getSlotRecord(active)?.name||`Save ${active}`}.`);
 }
 function createSlot(slot){
-  const raw=prompt(`Name Save ${slot}:`,`Adventure ${slot}`);if(raw===null)return;const name=(raw.trim()||`Save ${slot}`).slice(0,24);
-  localStorage.setItem(SAVE_SLOT_PREFIX+slot,JSON.stringify({version:2,name,savedAt:new Date().toISOString(),save}));
-  localStorage.setItem(ACTIVE_SLOT_KEY,String(slot));renderSaveSlots();setSaveStatus(`${name} created from your current progress. Autosave is on.`);
+  let modal=document.getElementById("createSaveModal");
+  if(modal)modal.remove();
+  modal=document.createElement("div");
+  modal.id="createSaveModal";
+  modal.className="modal show";
+  modal.innerHTML=`<div class="sheet" style="max-width:430px">
+    <h2 style="margin-bottom:8px">Create Save ${slot}</h2>
+    <div class="small" style="margin-bottom:10px">Give this save a name. Your progress will autosave to this slot while you play.</div>
+    <input id="createSaveName" maxlength="24" value="Adventure ${slot}" autocomplete="off" style="width:100%;padding:13px 12px;border-radius:12px;border:1px solid #46705e;background:#0b1d16;color:#f4fff8;font:inherit;font-size:16px;outline:none" />
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="secondary" id="cancelCreateSave" style="flex:1">Cancel</button>
+      <button class="primary" id="confirmCreateSave" style="flex:1">Create Save</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  const input=modal.querySelector("#createSaveName");
+  const close=()=>modal.remove();
+  const confirmCreate=()=>{
+    const name=((input.value||"").trim()||`Save ${slot}`).slice(0,24);
+    localStorage.setItem(SAVE_SLOT_PREFIX+slot,JSON.stringify({version:2,name,savedAt:new Date().toISOString(),save}));
+    localStorage.setItem(ACTIVE_SLOT_KEY,String(slot));
+    close();
+    renderSaveSlots();
+    setSaveStatus(`${name} created from your current progress. Autosave is on.`);
+    showScreen("homeScreen");
+  };
+  modal.querySelector("#cancelCreateSave").addEventListener("click",close);
+  modal.querySelector("#confirmCreateSave").addEventListener("click",confirmCreate);
+  input.addEventListener("keydown",e=>{if(e.key==="Enter")confirmCreate();});
+  setTimeout(()=>{input.focus();input.select();},50);
 }
 function loadFromSlot(slot){
   const rec=getSlotRecord(slot);if(!rec){createSlot(slot);return;}
