@@ -13,13 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Add bosses to Wave 15 of each series final map
-        run: python3 .github/scripts/add_final_map_bosses.py
+      - name: Add series difficulty multipliers
+        run: python3 .github/scripts/add_series_difficulty.py
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Add Wave 15 final map bosses"
+          git commit -m "Add series difficulty multipliers"
           git push
