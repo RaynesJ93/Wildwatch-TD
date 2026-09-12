@@ -1,0 +1,22 @@
+name: Upgrade Tundra Falls V2
+on:
+  push:
+    paths:
+      - '.github/workflows/upgrade-tundra-falls-v2.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upgrade all Tundra Falls battle maps
+        run: python3 .github/scripts/upgrade_tundra_falls_v2.py
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Upgrade Tundra Falls maps and ice theme"
+          git push
