@@ -378,10 +378,10 @@ const animals = {
   worm:{name:"Worm",emoji:"🪱",rarity:"Common",cost:42,range:110,rate:1/1.30,dmg:7,color:"#b87",desc:"Cheap fast attacker."},
   butterfly:{name:"Butterfly",emoji:"🦋",rarity:"Common",cost:48,range:180,rate:1/1.40,dmg:12,color:"#a6e",desc:"Fast long-range attacker."},
   bee:{name:"Bee",emoji:"🐝",rarity:"Common",cost:55,range:165,rate:2.22,dmg:12,color:"#fc3",desc:"Chain-lightning attacker that strikes multiple enemies."},
-  cat:{name:"Cat",emoji:"🐱",rarity:"Uncommon",cost:75,range:170,rate:1/1.30,dmg:17,color:"#d99",desc:"Fast balanced attacker."},
+  cat:{name:"Cat",emoji:"🐱",rarity:"Uncommon",cost:75,range:170,rate:1/1.30,dmg:17,color:"#d99",desc:"Fast Paw Slash attacker. At tower level 10, every 9th attack triggers Nine Lives: 9 rapid claw strikes dealing 50% current tower damage each across enemies in range."},
   dog:{name:"Dog",emoji:"🐶",rarity:"Uncommon",cost:80,range:165,rate:1/1.20,dmg:19,color:"#b87",desc:"Balanced attacker."},
   raccoon:{name:"Raccoon",emoji:"🦝",rarity:"Uncommon",cost:82,range:180,rate:1/1.15,dmg:20,color:"#888",desc:"Throws dustbins. At Level 10+, trash spills onto the track for 4s and slows enemies."},
-  skunk:{name:"Skunk",emoji:"🦨",rarity:"Uncommon",cost:82,range:155,rate:1,dmg:21,color:"#eee",desc:"Solid mid-range attacker."},
+  skunk:{name:"Skunk",emoji:"🦨",rarity:"Uncommon",cost:82,range:155,rate:1,dmg:21,color:"#eee",desc:"Sprays a drifting stink cloud. At Level 10, every 5th attack becomes Stink Bomb: a toxic cloud lasts 4s, deals 40% base damage each second and slows enemies by 25%."},
   badger:{name:"Badger",emoji:"🦡",rarity:"Uncommon",cost:88,range:140,rate:1/.85,dmg:26,color:"#777",desc:"Hard-hitting close attacker."},
   otter:{name:"Otter",emoji:"🦦",rarity:"Uncommon",cost:82,range:190,rate:1/1.25,dmg:18,color:"#986",desc:"Fast ranged attacker."},
   sloth:{name:"Sloth",emoji:"🦥",rarity:"Uncommon",cost:92,range:150,rate:1/.60,dmg:34,color:"#876",desc:"Slow heavy attacker."},
@@ -1437,6 +1437,37 @@ function towerTick(t,dt){
     return;
   }
 
+  // CAT_NINE_LIVES_V2
+  if(t.key==="cat"){
+    let nineLives=false;
+    if(t.level>=10){t.catAttackCount=(t.catAttackCount||0)+1;nineLives=t.catAttackCount%9===0;}
+    if(nineLives){
+      battle.shots.push({x:t.x,y:t.y-18,tx:t.x,ty:t.y-18,life:.60,maxLife:.60,type:"catNineLives"});
+      for(let i=0;i<9;i++){
+        const pool=battle.enemies.filter(e=>!e.dead&&e.hp>0&&Math.hypot(e.x-t.x,e.y-t.y)<=range);
+        if(!pool.length)break;
+        const e=pool[i%pool.length];
+        e.hp-=dmg*.5;
+        battle.shots.push({x:t.x,y:t.y-6,tx:e.x,ty:e.y,life:.18+i*.035,maxLife:.18+i*.035,type:"catClaw",special:true,clawIndex:i});
+        if(e.hp<=0)killEnemy(e);
+      }
+    }else{
+      target.hp-=dmg;
+      battle.shots.push({x:t.x,y:t.y-6,tx:target.x,ty:target.y,life:.22,maxLife:.22,type:"catClaw",special:false});
+      if(target.hp<=0)killEnemy(target);
+    }
+    t.cd=cardRate(t.key);return;
+  }
+
+  // SKUNK_STINK_BOMB_V2
+  if(t.key==="skunk"){
+    let stinkBomb=false;
+    if(t.level>=10){t.skunkAttackCount=(t.skunkAttackCount||0)+1;stinkBomb=t.skunkAttackCount%5===0;}
+    battle.shots.push({x:t.x,y:t.y-7,tx:target.x,ty:target.y,life:stinkBomb?.56:.38,maxLife:stinkBomb?.56:.38,type:"skunkSpray",special:stinkBomb});
+    target.hp-=dmg;if(target.hp<=0)killEnemy(target);
+    t.cd=cardRate(t.key);return;
+  }
+
   if(t.key==="raccoon"){
     let raccoonSpecial=false;
     if(t.level>=10){
@@ -1965,6 +1996,19 @@ function update(dt){
     }
   });
   battle.trashZones=battle.trashZones.filter(z=>z.life>0);
+  // SKUNK_CLOUD_UPDATE_V2
+  battle.skunkCloudZones=battle.skunkCloudZones||[];
+  battle.skunkCloudZones.forEach(z=>{
+    z.life-=dt;z.tick=(z.tick??1)-dt;
+    if(z.life>0){
+      battle.enemies.forEach(e=>{if(!e.dead&&Math.hypot(e.x-z.x,e.y-z.y)<=z.radius)e.zebraSlowTimer=Math.max(e.zebraSlowTimer||0,.14);});
+      while(z.tick<=0){
+        battle.enemies.forEach(e=>{if(!e.dead&&Math.hypot(e.x-z.x,e.y-z.y)<=z.radius){e.hp-=z.damage;if(e.hp<=0)killEnemy(e);}});
+        z.tick+=1;
+      }
+    }
+  });
+  battle.skunkCloudZones=battle.skunkCloudZones.filter(z=>z.life>0);
   battle.roars=battle.roars||[];
   battle.roars.forEach(r=>r.life-=dt);
   battle.roars=battle.roars.filter(r=>r.life>0);
@@ -2009,6 +2053,12 @@ function update(dt){
       s.spilled=true;
       battle.trashZones=battle.trashZones||[];
       battle.trashZones.push({x:s.tx,y:s.ty,life:4,maxLife:4,radius:90});
+    }
+    // SKUNK_CLOUD_LANDING_V2
+    if(s.type==="skunkSpray" && s.special && !s.cloudMade && s.life-dt<=0){
+      s.cloudMade=true;
+      battle.skunkCloudZones=battle.skunkCloudZones||[];
+      battle.skunkCloudZones.push({x:s.tx,y:s.ty,life:4,maxLife:4,radius:92,damage:animals.skunk.dmg*.40,tick:1});
     }
     if(s.type==="hedgehogNeedles" && !s.landed && s.life-dt<=0){
       s.landed=true;
@@ -2577,6 +2627,15 @@ function draw(){
     ctx.restore();
   });
 
+  // SKUNK_CLOUD_DRAW_V2
+  (battle.skunkCloudZones||[]).forEach(z=>{
+    const a=Math.max(.15,Math.min(.62,z.life/z.maxLife*.62)),pulse=1+Math.sin(performance.now()/170)*.05;
+    ctx.save();ctx.globalAlpha=a;ctx.translate(z.x,z.y);ctx.scale(pulse,pulse);
+    ctx.fillStyle="#8fcb3d";ctx.strokeStyle="#d9ff7b";ctx.lineWidth=3;ctx.shadowColor="#9ee85a";ctx.shadowBlur=14;
+    ctx.beginPath();ctx.ellipse(0,0,z.radius,z.radius*.58,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.fillStyle="#b8e85b";[[-38,-10,22],[0,5,30],[35,-6,19],[-12,23,16],[28,22,13]].forEach(([x,y,r])=>{ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();});
+    ctx.restore();
+  });
   battle.needles?.forEach(n=>{
     ctx.save();ctx.translate(n.x,n.y);ctx.strokeStyle="#e8dcc6";ctx.lineWidth=2.2;ctx.lineCap="round";
     for(let i=0;i<5;i++){
@@ -2707,6 +2766,16 @@ function draw(){
       ctx.fillStyle="#fffdf2";ctx.strokeStyle="#c9b98f";ctx.lineWidth=2;ctx.shadowColor="rgba(255,245,190,.8)";ctx.shadowBlur=7;
       ctx.beginPath();ctx.ellipse(0,0,9,12,0,0,Math.PI*2);ctx.fill();ctx.stroke();
       ctx.restore();
+    // CAT_SKUNK_PROJECTILE_DRAW_V2
+    }else if(s.type==="catClaw"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.22),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q,ang=Math.atan2(s.ty-s.y,s.tx-s.x);
+      ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.strokeStyle=s.special?"#ffe889":"#fff";ctx.shadowColor=s.special?"#ffd64a":"#fff";ctx.shadowBlur=s.special?10:4;ctx.lineWidth=s.special?3.2:2.4;ctx.lineCap="round";
+      for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(-13,i*5-4);ctx.quadraticCurveTo(0,i*5+5,13,i*5-2);ctx.stroke();}ctx.restore();
+    }else if(s.type==="catNineLives"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.60);ctx.save();ctx.translate(s.x,s.y);ctx.globalAlpha=Math.max(0,1-q);ctx.shadowColor="#ffd64a";ctx.shadowBlur=14;ctx.fillStyle="#ffe98a";ctx.font="bold 16px system-ui";ctx.textAlign="center";ctx.fillText("9 LIVES!",0,-25-q*12);ctx.font="18px serif";for(let i=0;i<5;i++){const a=i*Math.PI*2/5+q;ctx.fillText("🐾",Math.cos(a)*(22+q*12),Math.sin(a)*(15+q*8));}ctx.restore();
+    }else if(s.type==="skunkSpray"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.38),ex=s.x+(s.tx-s.x)*q,ey=s.y+(s.ty-s.y)*q,dx=ex-s.x,dy=ey-s.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len,spread=s.special?24:15;
+      ctx.save();ctx.globalAlpha=s.special?.9:.72;ctx.fillStyle=s.special?"#a8e94d":"#8fcd42";ctx.shadowColor="#a8f45a";ctx.shadowBlur=s.special?18:10;ctx.beginPath();ctx.moveTo(s.x+nx*4,s.y+ny*4);ctx.lineTo(ex+nx*spread,ey+ny*spread);ctx.quadraticCurveTo(ex+dx*.08,ey+dy*.08,ex-nx*spread,ey-ny*spread);ctx.lineTo(s.x-nx*4,s.y-ny*4);ctx.closePath();ctx.fill();ctx.fillStyle="#ddff7f";for(let i=0;i<(s.special?9:6);i++){const qq=Math.max(0,q-i*.055),px=s.x+(s.tx-s.x)*qq,py=s.y+(s.ty-s.y)*qq,off=Math.sin(i*2.4+q*12)*(s.special?14:8);ctx.beginPath();ctx.arc(px+nx*off,py+ny*off,2.5+(i%3),0,Math.PI*2);ctx.fill();}ctx.restore();
     }else if(s.type==="raccoonBin"){
       const q=1-Math.max(0,s.life)/(s.maxLife||.48);
       const x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q-Math.sin(Math.PI*q)*28;
