@@ -1,4 +1,4 @@
-name: Add Tundra Falls
+name: Add Wave 15 boss rosters
 
 on:
   push:
@@ -13,25 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Repair Tundra patch anchor
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('.github/scripts/add_tundra_falls.py')
-          s=p.read_text()
-          old="""anchor=']\\nfunction seriesMaps(series){'\npos=s.find(anchor, s.find('const hauntedWoodsMaps=['))\nif pos<0: raise SystemExit('haunted maps end not found')"""
-          new="""anchor='function seriesMaps(series){'\npos=s.find(anchor, s.find('const hauntedWoodsMaps=['))\nif pos<0: raise SystemExit('haunted maps end not found')"""
-          s=s.replace(old,new)
-          s=s.replace("s=s[:pos+2]+insert+s[pos+2:]","s=s[:pos]+insert+s[pos:]")
-          p.write_text(s)
-          PY
-      - name: Add Tundra Falls fourth map series
-        run: python3 .github/scripts/add_tundra_falls.py
+      - name: Add map-specific bosses to every Wave 15
+        run: python3 .github/scripts/add_wave15_boss_rosters.py
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Add Tundra Falls fourth map series"
+          git commit -m "Add Wave 15 boss rosters to every map"
           git push
