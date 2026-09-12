@@ -2032,6 +2032,50 @@ function update(dt){
   battle.enemies=battle.enemies.filter(e=>!e.dead);battle.shots=battle.shots.filter(s=>s.life>0);
   if(battle.waveActive&&!battle.spawning&&battle.enemies.length===0)finishWave();
 }
+
+// TUNDRA_FALLS_V2 scenery: ice fishing holes, frozen props, snowbanks and crystals instead of trees.
+function drawTundraScenery(){
+  if(currentSeries!==4)return;
+  const cfg=[
+    {holes:[[92,355],[600,410],[170,690],[520,910]],igloo:[780,690],sled:[115,900],snowman:[740,580]},
+    {holes:[[805,270],[335,430],[755,650],[130,845]],igloo:[95,650],sled:[540,900],snowman:[300,585]},
+    {holes:[[105,520],[455,260],[660,700],[190,895]],igloo:[760,790],sled:[105,770],snowman:[590,525]},
+    {holes:[[735,375],[110,350],[520,610],[760,875]],igloo:[95,805],sled:[400,830],snowman:[710,580]},
+    {holes:[[95,390],[450,350],[785,560],[410,890]],igloo:[760,720],sled:[90,770],snowman:[520,535]},
+    {holes:[[790,290],[95,430],[690,525],[275,810]],igloo:[115,690],sled:[630,870],snowman:[370,650]},
+    {holes:[[110,380],[545,410],[765,650],[310,930]],igloo:[775,780],sled:[95,790],snowman:[500,610]},
+    {holes:[[790,330],[110,540],[620,720],[185,900]],igloo:[795,900],sled:[370,365],snowman:[470,540]},
+    {holes:[[90,430],[610,310],[165,670],[520,860]],igloo:[790,710],sled:[315,470],snowman:[690,640]},
+    {holes:[[790,340],[95,550],[665,565],[275,915]],igloo:[110,810],sled:[465,770],snowman:[690,700]}
+  ][currentMap-1];
+  const segDist=(px,py,a,b)=>{const vx=b[0]-a[0],vy=b[1]-a[1],wx=px-a[0],wy=py-a[1],c1=vx*wx+vy*wy,c2=vx*vx+vy*vy,t=c2?Math.max(0,Math.min(1,c1/c2)):0;return Math.hypot(px-(a[0]+vx*t),py-(a[1]+vy*t));};
+  const clear=(x,y,r=72)=>{for(let i=1;i<path.length;i++)if(segDist(x,y,path[i-1],path[i])<r)return false;return true;};
+  ctx.save();
+  // Fine frozen-lake cracks and wind streaks over the snow field.
+  ctx.globalAlpha=.18;ctx.strokeStyle='#5ab4dc';ctx.lineWidth=2;
+  for(let i=0;i<20;i++){const x=35+((i*137+currentMap*71)%780),y=70+((i*193+currentMap*43)%900);if(!clear(x,y,60))continue;ctx.beginPath();ctx.moveTo(x-18,y);ctx.lineTo(x,y-8);ctx.lineTo(x+13,y+3);ctx.lineTo(x+27,y-5);ctx.stroke();}
+  ctx.globalAlpha=1;
+  // Ice fishing holes with dark water, frosted rims, rods and occasional fish/crates.
+  cfg.holes.forEach((h,idx)=>{const [x,y]=h;if(!clear(x,y,78))return;
+    ctx.fillStyle='#dff8ff';ctx.strokeStyle='#85cbe8';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,31,20,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#0c5b83';ctx.strokeStyle='#073d5c';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(x,y+1,21,13,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.strokeStyle='#8a5b2d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x+22,y-29);ctx.lineTo(x+7,y-4);ctx.stroke();ctx.strokeStyle='#d8f6ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x+7,y-4);ctx.lineTo(x+3,y+8);ctx.stroke();
+    if(idx%2===0){ctx.fillStyle='#a77036';ctx.strokeStyle='#60401f';ctx.lineWidth=2;ctx.fillRect(x-43,y+13,18,15);ctx.strokeRect(x-43,y+13,18,15);}
+    if(idx===cfg.holes.length-1){ctx.font='17px serif';ctx.textAlign='center';ctx.fillText('🐟',x-4,y+6);}
+  });
+  // Igloo.
+  if(clear(cfg.igloo[0],cfg.igloo[1],86)){const [x,y]=cfg.igloo;ctx.fillStyle='#eafaff';ctx.strokeStyle='#91cfe5';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,38,Math.PI,0);ctx.lineTo(x+38,y+20);ctx.lineTo(x-38,y+20);ctx.closePath();ctx.fill();ctx.stroke();ctx.strokeStyle='#b5deed';ctx.lineWidth=2;for(let yy=y-25;yy<=y+10;yy+=12){ctx.beginPath();ctx.moveTo(x-32,yy);ctx.lineTo(x+32,yy);ctx.stroke();}ctx.fillStyle='#2d6d8a';ctx.beginPath();ctx.roundRect(x-12,y-4,24,25,10);ctx.fill();}
+  // Sled.
+  if(clear(cfg.sled[0],cfg.sled[1],72)){const [x,y]=cfg.sled;ctx.strokeStyle='#6b4728';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(x-24,y);ctx.lineTo(x+20,y);ctx.moveTo(x-17,y-11);ctx.lineTo(x+15,y-11);ctx.stroke();ctx.strokeStyle='#b7dfea';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x-28,y+8);ctx.quadraticCurveTo(x,y+17,x+30,y+5);ctx.stroke();}
+  // Snowman.
+  if(clear(cfg.snowman[0],cfg.snowman[1],70)){const [x,y]=cfg.snowman;ctx.fillStyle='#fff';ctx.strokeStyle='#c8e7f1';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y+12,20,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.beginPath();ctx.arc(x,y-13,14,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#1e3440';ctx.beginPath();ctx.arc(x-5,y-16,2,0,Math.PI*2);ctx.arc(x+5,y-16,2,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ef8d2c';ctx.beginPath();ctx.moveTo(x+2,y-10);ctx.lineTo(x+17,y-7);ctx.lineTo(x+2,y-5);ctx.closePath();ctx.fill();ctx.fillStyle='#28333a';ctx.fillRect(x-14,y-32,28,7);ctx.fillRect(x-9,y-45,18,15);}
+  // Blue ice crystal clusters in safe open snow.
+  for(let i=0;i<13;i++){const x=55+((i*149+currentMap*67)%750),y=85+((i*211+currentMap*89)%875);if(!clear(x,y,68))continue;ctx.fillStyle=i%2?'#62c8ed':'#8ce1f7';ctx.strokeStyle='#d4f8ff';ctx.lineWidth=1.5;for(let j=0;j<3;j++){const ox=(j-1)*10,h=18+j*8;ctx.beginPath();ctx.moveTo(x+ox,y-h);ctx.lineTo(x+ox+7,y);ctx.lineTo(x+ox-7,y);ctx.closePath();ctx.fill();ctx.stroke();}}
+  // Footprints crossing some clear snow pockets.
+  ctx.fillStyle='rgba(76,143,172,.28)';for(let i=0;i<16;i++){const x=40+((i*53+currentMap*37)%760),y=120+((i*71+currentMap*41)%780);if(!clear(x,y,55))continue;ctx.beginPath();ctx.ellipse(x,y,4,7,(i%2?-.25:.25),0,Math.PI*2);ctx.fill();}
+  ctx.restore();
+}
+
 function draw(){
   ctx.clearRect(0,0,W,H);
   ctx.imageSmoothingEnabled=true;
@@ -2236,13 +2280,15 @@ function draw(){
     ctx.restore();
   }
 
+  if(currentSeries===4)drawTundraScenery();
+
   // Road outline and road surface use the exact enemy path.
   ctx.save();
   ctx.lineCap="round";ctx.lineJoin="round";
   ctx.beginPath();ctx.moveTo(path[0][0],path[0][1]);for(let i=1;i<path.length;i++)ctx.lineTo(path[i][0],path[i][1]);
-  ctx.strokeStyle=currentSeries===1?"#8b612d":currentSeries===2?"#9b6b38":"#160d20";ctx.lineWidth=92;ctx.stroke();
+  ctx.strokeStyle=currentSeries===1?"#8b612d":currentSeries===2?"#9b6b38":currentSeries===3?"#160d20":"#4b9fc6";ctx.lineWidth=92;ctx.stroke();
   ctx.beginPath();ctx.moveTo(path[0][0],path[0][1]);for(let i=1;i<path.length;i++)ctx.lineTo(path[i][0],path[i][1]);
-  ctx.strokeStyle=currentSeries===1?"#a7834f":currentSeries===2?"#f0d18a":"#57405f";ctx.lineWidth=72;ctx.stroke();
+  ctx.strokeStyle=currentSeries===1?"#a7834f":currentSeries===2?"#f0d18a":currentSeries===3?"#57405f":"#bdefff";ctx.lineWidth=72;ctx.stroke();
   if(currentSeries===1){
     // Irregular darker centre and wheel-worn highlights make the forest track feel less flat.
     ctx.globalAlpha=.28;ctx.strokeStyle="#6d5233";ctx.lineWidth=48;ctx.stroke();
@@ -2253,6 +2299,11 @@ function draw(){
   }else if(currentSeries===3){
     ctx.globalAlpha=.35;ctx.strokeStyle="#2a1b31";ctx.lineWidth=46;ctx.stroke();
     ctx.globalAlpha=.18;ctx.strokeStyle="#a68caf";ctx.lineWidth=3;ctx.setLineDash([10,24]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+  }else if(currentSeries===4){
+    // Glassy packed-ice centre, bright frost edge and irregular frozen cracks.
+    ctx.globalAlpha=.34;ctx.strokeStyle="#75c9e8";ctx.lineWidth=50;ctx.stroke();
+    ctx.globalAlpha=.55;ctx.strokeStyle="#effcff";ctx.lineWidth=4;ctx.setLineDash([22,15]);ctx.stroke();ctx.setLineDash([]);
+    ctx.globalAlpha=.34;ctx.strokeStyle="#4ea8cf";ctx.lineWidth=2;ctx.setLineDash([5,18,2,26]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
   }
   ctx.restore();
 
@@ -2286,7 +2337,7 @@ function draw(){
 
     // Finish the route beneath the themed entrance.
     ctx.save();
-    ctx.strokeStyle=currentSeries===1?"#d8b35b":currentSeries===2?"#f0d18a":"#57405f";
+    ctx.strokeStyle=currentSeries===1?"#d8b35b":currentSeries===2?"#f0d18a":currentSeries===3?"#57405f":"#bdefff";
     ctx.lineWidth=72;ctx.lineCap="round";
     ctx.beginPath();ctx.moveTo(prev[0],prev[1]);ctx.lineTo(bx,by);ctx.stroke();
     ctx.restore();
@@ -2340,7 +2391,7 @@ function draw(){
       ctx.fillStyle="#f5d77c";ctx.shadowColor="#ffd96a";ctx.shadowBlur=9;ctx.fillRect(-31,-12,10,12);ctx.fillRect(21,-12,10,12);ctx.shadowColor="transparent";
       ctx.fillStyle="#795428";ctx.beginPath();ctx.ellipse(0,37,58,9,0,0,Math.PI*2);ctx.fill();
       ctx.font="17px serif";ctx.textAlign="center";ctx.fillText("☀️",0,-12);
-    }else{
+    }else if(currentSeries===3){
       // Haunted Woods: ruined gothic crypt with cracked stone, iron gate and ghostly light.
       ctx.fillStyle="#29232f";ctx.strokeStyle="#0c0910";ctx.lineWidth=5;
       ctx.beginPath();ctx.roundRect(-50,-27,100,61,5);ctx.fill();ctx.stroke();
@@ -2367,6 +2418,27 @@ function draw(){
       // Ground stones and skull detail.
       ctx.fillStyle="#4a4350";for(let i=0;i<5;i++){ctx.beginPath();ctx.ellipse(-36+i*18,35+(i%2)*3,13,6,0,0,Math.PI*2);ctx.fill();}
       ctx.font="17px serif";ctx.textAlign="center";ctx.fillText("💀",0,8);
+    }else{
+      // Tundra Falls: frozen citadel grown from ice, snow and glowing blue crystals.
+      ctx.fillStyle="#9bdcf2";ctx.strokeStyle="#286c91";ctx.lineWidth=5;
+      ctx.beginPath();ctx.roundRect(-49,-29,98,63,8);ctx.fill();ctx.stroke();
+      ctx.shadowColor="transparent";
+      // Ice side towers with sharp frozen caps.
+      ctx.fillStyle="#77c7e8";ctx.strokeStyle="#245b78";ctx.lineWidth=4;
+      ctx.fillRect(-57,-44,21,75);ctx.strokeRect(-57,-44,21,75);ctx.fillRect(36,-44,21,75);ctx.strokeRect(36,-44,21,75);
+      ctx.beginPath();ctx.moveTo(-61,-44);ctx.lineTo(-47,-70);ctx.lineTo(-32,-44);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.moveTo(32,-44);ctx.lineTo(47,-70);ctx.lineTo(61,-44);ctx.closePath();ctx.fill();ctx.stroke();
+      // Layered snow roof.
+      ctx.fillStyle="#eafaff";ctx.strokeStyle="#70b8d6";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-45,-28);ctx.lineTo(0,-62);ctx.lineTo(45,-28);ctx.lineTo(29,-22);ctx.lineTo(0,-46);ctx.lineTo(-30,-22);ctx.closePath();ctx.fill();ctx.stroke();
+      // Dark frozen gateway with cyan glow.
+      ctx.fillStyle="#143a53";ctx.beginPath();ctx.moveTo(-16,34);ctx.lineTo(-16,7);ctx.arc(0,7,16,Math.PI,0);ctx.lineTo(16,34);ctx.closePath();ctx.fill();
+      ctx.fillStyle="#76e7ff";ctx.shadowColor="#55dcff";ctx.shadowBlur=15;ctx.beginPath();ctx.arc(-28,-8,6,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(28,-8,6,0,Math.PI*2);ctx.fill();
+      // Central magic ice crystal.
+      ctx.beginPath();ctx.moveTo(0,-31);ctx.lineTo(9,-10);ctx.lineTo(0,2);ctx.lineTo(-9,-10);ctx.closePath();ctx.fill();ctx.shadowColor="transparent";
+      // Icicles and snow drift at the foot of the base.
+      ctx.fillStyle="#dff8ff";for(let i=0;i<7;i++){const x=-42+i*14,h=8+(i%3)*5;ctx.beginPath();ctx.moveTo(x,-27);ctx.lineTo(x+6,-27);ctx.lineTo(x+3,-27+h);ctx.closePath();ctx.fill();}
+      ctx.beginPath();ctx.ellipse(0,36,57,10,0,0,Math.PI*2);ctx.fill();
+      ctx.font="17px serif";ctx.textAlign="center";ctx.fillText("❄️",0,13);
     }
 
     // Shared sign plate, kept compact so the structure remains the focus.
