@@ -386,7 +386,7 @@ const animals = {
   otter:{name:"Otter",emoji:"🦦",rarity:"Uncommon",cost:82,range:190,rate:1/1.25,dmg:18,color:"#986",desc:"Fast ranged attacker."},
   sloth:{name:"Sloth",emoji:"🦥",rarity:"Uncommon",cost:92,range:150,rate:1/.60,dmg:34,color:"#876",desc:"Slow heavy attacker."},
   koala:{name:"Koala",emoji:"🐨",rarity:"Uncommon",cost:85,range:175,rate:1/.95,dmg:22,color:"#aaa",desc:"Balanced attacker."},
-  goat:{name:"Goat",emoji:"🐐",rarity:"Uncommon",cost:88,range:160,rate:1/.90,dmg:25,color:"#ddd",desc:"Strong attacker."},
+  goat:{name:"Goat",emoji:"🐐",rarity:"Uncommon",cost:88,range:160,rate:1/.90,dmg:25,color:"#ddd",desc:"Vomit Spray attacks enemies. Every 5th attack poisons. At Level 10, every 5th attack becomes Ram Rage: 3x damage and confuses the target."},
   sheep:{name:"Sheep",emoji:"🐑",rarity:"Uncommon",cost:82,range:155,rate:1,dmg:21,color:"#eee",desc:"Balanced attacker."},
   ram:{name:"Ram",emoji:"🐏",rarity:"Uncommon",cost:92,range:145,rate:1/.80,dmg:29,color:"#aaa",desc:"Heavy close attacker."},
   pig:{name:"Pig",emoji:"🐖",rarity:"Uncommon",cost:90,range:150,rate:1/.85,dmg:27,color:"#eaa",desc:"Heavy attacker."},
@@ -1363,12 +1363,13 @@ function moveEnemy(e,dt){
   }
   if(e.slowTimer>0)e.slowTimer-=dt;
   if((e.zebraSlowTimer||0)>0)e.zebraSlowTimer=Math.max(0,e.zebraSlowTimer-dt);
+  if((e.goatConfuseTimer||0)>0)e.goatConfuseTimer=Math.max(0,e.goatConfuseTimer-dt);
   if(e.hp<=0){killEnemy(e);return}
   if((e.freezeTimer||0)>0){
     e.freezeTimer=Math.max(0,e.freezeTimer-dt);
     return;
   }
-  let mult=e.slowTimer>0?.55:(e.zebraSlowTimer||0)>0?.75:1, dist=e.speed*mult*dt;
+  let mult=e.slowTimer>0?.55:(e.zebraSlowTimer||0)>0?.75:(e.goatConfuseTimer||0)>0?.50:1, dist=e.speed*mult*dt;
   while(dist>0 && e.seg<path.length-1){
     const [tx,ty]=path[e.seg+1], dx=tx-e.x,dy=ty-e.y,len=Math.hypot(dx,dy); if(len>0){e.dirX=dx/len;e.dirY=dy/len;e.walkPhase=(e.walkPhase||0)+dt*e.speed*.16;}
     if(dist>=len){e.x=tx;e.y=ty;e.seg++;dist-=len;}
@@ -1616,6 +1617,28 @@ function towerTick(t,dt){
       target.hp-=dmg;
       battle.shots.push({x:t.x,y:t.y-4,tx:target.x,ty:target.y,life:.54,maxLife:.54,type:"rabbitCarrot"});
       battle.shots.push({x:t.x,y:t.y,tx:t.x,ty:t.y,life:.16,maxLife:.16,type:"animalAttackFlash",flash:"rabbit"});
+      if(target.hp<=0)killEnemy(target);
+    }
+    t.cd=cardRate(t.key);return;
+  }
+
+  if(t.key==="goat"){
+    t.goatAttackCount=(t.goatAttackCount||0)+1;
+    const fifth=t.goatAttackCount%5===0;
+    const ram=t.level>=10&&fifth;
+    if(ram){
+      battle.shots.push({x:t.x,y:t.y-5,tx:target.x,ty:target.y,life:.52,maxLife:.52,type:"goatRam"});
+      target.hp-=dmg*3;
+      target.goatConfuseTimer=Math.max(target.goatConfuseTimer||0,2.5);
+      if(target.hp<=0)killEnemy(target);
+    }else{
+      battle.shots.push({x:t.x,y:t.y-5,tx:target.x,ty:target.y,life:.42,maxLife:.42,type:"goatVomit",special:fifth});
+      target.hp-=dmg;
+      if(fifth){
+        target.poison=Math.max(target.poison||0,6);
+        target.poisonTick=Math.min(target.poisonTick||2,2);
+        target.poisonDmg=Math.max(target.poisonDmg||0,dmg*.25);
+      }
       if(target.hp<=0)killEnemy(target);
     }
     t.cd=cardRate(t.key);return;
@@ -2473,6 +2496,9 @@ function draw(){
       ctx.beginPath();ctx.arc(e.x,e.y-2,poisonSize*.50,0,Math.PI*2);ctx.stroke();
       ctx.restore();
     }
+    if((e.goatConfuseTimer||0)>0){
+      ctx.save();ctx.globalAlpha=.95;ctx.font="16px system-ui";ctx.textAlign="center";ctx.fillText("❓",e.x-10,e.y-e.size-15);ctx.fillText("❔",e.x+10,e.y-e.size-20);ctx.restore();
+    }
     const bw=44,bh=7;
     ctx.fillStyle="#2c0d0ddd";ctx.fillRect(e.x-bw/2,e.y-38,bw,bh);
     ctx.fillStyle="#57dc69";ctx.fillRect(e.x-bw/2,e.y-38,bw*Math.max(0,e.hp/e.maxHp),bh);
@@ -2679,6 +2705,19 @@ function draw(){
       const q=1-Math.max(0,s.life)/(s.maxLife||.2),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q;
       ctx.save();ctx.globalAlpha=.85;ctx.translate(x,y);ctx.font="18px 'Apple Color Emoji','Segoe UI Emoji'";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("🐾",0,0);ctx.restore();
       if(q>.7){ctx.save();ctx.globalAlpha=Math.max(0,1-(q-.7)/.3);ctx.translate(s.tx,s.ty);ctx.strokeStyle="#fff4d6";ctx.lineWidth=3;for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-10+i*4,-8);ctx.lineTo(9+i*3,8);ctx.stroke();}ctx.fillStyle="#c9a06a";for(let i=0;i<4;i++){ctx.beginPath();ctx.arc((i-1.5)*5,10,2.5,0,Math.PI*2);ctx.fill();}ctx.restore();}
+    }else if(s.type==="goatVomit"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.42),x=s.x+(s.tx-s.x)*q,y=(s.y-7)+(s.ty-(s.y-7))*q;
+      const ang=Math.atan2(s.ty-(s.y-7),s.tx-s.x);
+      ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.globalAlpha=.92;
+      ctx.strokeStyle=s.special?"#9df34d":"#78c83e";ctx.lineWidth=s.special?9:7;ctx.lineCap="round";ctx.shadowColor="#8eff43";ctx.shadowBlur=8;
+      ctx.beginPath();ctx.moveTo(-18,0);ctx.quadraticCurveTo(-6,-5,8,1);ctx.lineTo(18,0);ctx.stroke();ctx.restore();
+      ctx.save();ctx.fillStyle=s.special?"#b7ff62":"#87d94c";ctx.globalAlpha=.8;
+      for(let i=0;i<5;i++){const tq=Math.max(0,q-i*.04),dx=s.x+(s.tx-s.x)*tq,dy=(s.y-7)+(s.ty-(s.y-7))*tq;ctx.beginPath();ctx.arc(dx,dy+(i%2?4:-3),2.5+(i%2),0,Math.PI*2);ctx.fill();}ctx.restore();
+      if(q>.78){const a=Math.max(0,1-(q-.78)/.22);ctx.save();ctx.translate(s.tx,s.ty);ctx.globalAlpha=a;ctx.fillStyle=s.special?"#a8f14e":"#73bd3b";for(let i=0;i<7;i++){const an=i*.9;ctx.beginPath();ctx.ellipse(Math.cos(an)*12,Math.sin(an)*8,5,2.5,an,0,Math.PI*2);ctx.fill();}ctx.restore();}
+    }else if(s.type==="goatRam"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.52),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q;
+      ctx.save();ctx.translate(x,y);ctx.globalAlpha=.98;ctx.font="28px 'Apple Color Emoji','Segoe UI Emoji'";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("🐐",0,0);ctx.restore();
+      if(q>.72){const a=Math.max(0,1-(q-.72)/.28);ctx.save();ctx.translate(s.tx,s.ty);ctx.globalAlpha=a;ctx.strokeStyle="#f5e7c4";ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,12+(q-.72)*45,0,Math.PI*2);ctx.stroke();ctx.font="18px system-ui";ctx.fillText("❓",-13,-18);ctx.fillText("❓",12,-22);ctx.restore();}
     }else if(s.type==="mouseCheeseWedge"||s.type==="mouseCheeseWheel"||s.type==="mouseCheeseBounce"){
       const q=1-Math.max(0,s.life)/(s.maxLife||.30);
       const x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q;
