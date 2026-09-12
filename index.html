@@ -1203,7 +1203,6 @@ function spawnEnemy(){
   const boss=finalMapBossForWave();
   const e=boss||enemyForWave();
   e.coinRewardKind=boss?'boss':'normal';
-  e.reward=0;
   if(boss)battle.finalBossSpawned=true;
   // SERIES_DIFFICULTY_V1: later map series have a clear enemy HP step-up.
   // Forest Pines = 1.00x, Desert Dunes = 1.20x, Haunted Woods = 1.45x, Tundra Falls = 1.60x.
@@ -1376,7 +1375,7 @@ function moveEnemy(e,dt){
   }
   if(e.seg>=path.length-1&&!e.dead){e.dead=true;battle.lives--; if(battle.lives<=0)gameOver();updateHud()}
 }
-function killEnemy(e){if(e.dead)return;e.dead=true;const coinReward=battleCoinReward(e.coinRewardKind);battle.coins+=coinReward;battle.mapKills=(battle.mapKills||0)+1;addQuestProgress("kills",1);if(coinReward)addWeeklyProgress("weeklyCoins",coinReward);updateHud()}
+function killEnemy(e){if(e.dead)return;e.dead=true;const killCash=Math.max(0,Math.round(Number(e.reward)||0));const coinReward=battleCoinReward(e.coinRewardKind);battle.coins+=killCash+coinReward;battle.mapKills=(battle.mapKills||0)+1;addQuestProgress("kills",1);if(coinReward)addWeeklyProgress("weeklyCoins",coinReward);updateHud()}
 function towerTick(t,dt){
   t.cd-=dt;if(t.cd>0)return;
   const a=animals[t.key], range=cardBaseRange(t.key)*(1+(t.level-1)*.06);
