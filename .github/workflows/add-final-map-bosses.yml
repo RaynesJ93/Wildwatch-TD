@@ -13,6 +13,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Repair Tundra patch anchor
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/scripts/add_tundra_falls.py')
+          s=p.read_text()
+          old="""anchor=']\\nfunction seriesMaps(series){'\npos=s.find(anchor, s.find('const hauntedWoodsMaps=['))\nif pos<0: raise SystemExit('haunted maps end not found')"""
+          new="""anchor='function seriesMaps(series){'\npos=s.find(anchor, s.find('const hauntedWoodsMaps=['))\nif pos<0: raise SystemExit('haunted maps end not found')"""
+          s=s.replace(old,new)
+          s=s.replace("s=s[:pos+2]+insert+s[pos+2:]","s=s[:pos]+insert+s[pos:]")
+          p.write_text(s)
+          PY
       - name: Add Tundra Falls fourth map series
         run: python3 .github/scripts/add_tundra_falls.py
       - name: Commit changes
