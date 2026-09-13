@@ -1,0 +1,28 @@
+name: Animal Themed Tower Bases V2
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/animal_themed_tower_bases_v2.py'
+      - '.github/workflows/animal-themed-tower-bases-v2.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python .github/scripts/animal_themed_tower_bases_v2.py
+      - name: Commit game update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'Make animal themed tower bases clearly visible'
+          git push
