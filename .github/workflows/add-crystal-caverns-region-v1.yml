@@ -1,0 +1,34 @@
+name: Add Crystal Caverns Region V1
+
+on:
+  push:
+    paths:
+      - '.github/scripts/add_crystal_caverns_region_v1.py'
+      - '.github/workflows/add-crystal-caverns-region-v1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Apply Crystal Caverns patch
+        run: python .github/scripts/add_crystal_caverns_region_v1.py
+      - name: Commit game update
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Add Crystal Caverns region"
+          git push origin main
