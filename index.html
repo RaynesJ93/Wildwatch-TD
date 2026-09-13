@@ -141,11 +141,14 @@
 #battleScreen.map-select-mode #mapSanctuary{display:block}
 .sanctuary-shell{background:linear-gradient(180deg,#112a20 0%,#0b1b15 100%);border:1px solid #8b7440;border-radius:24px;padding:14px;box-shadow:0 18px 48px #0008,inset 0 0 45px #ffffff05}
 .sanctuary-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.sanctuary-head h2{margin:0;font-size:27px;color:#ffe17c;font-family:Georgia,serif}.sanctuary-head .small{font-size:11px}
-.region-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0 12px}.region-tab{border:1px solid #6f805f;background:#10251c;border-radius:14px;padding:9px 5px;min-height:62px;font-weight:900;font-size:11px;letter-spacing:.3px;color:#c5d1c8}.region-tab b{display:block;font-size:13px;margin-top:4px}.region-tab.active{border-color:#ffd65a;background:linear-gradient(180deg,#2b553d,#173525);color:#ffe58a;box-shadow:0 0 0 2px #ffd65a22,inset 0 0 18px #ffd65a0d}.region-tab.locked{opacity:.35;filter:grayscale(1)}
+.region-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 12px}.region-tab{border:1px solid #6f805f;background:#10251c;border-radius:14px;padding:9px 5px;min-height:62px;font-weight:900;font-size:11px;letter-spacing:.3px;color:#c5d1c8}.region-tab b{display:block;font-size:13px;margin-top:4px}.region-tab.active{border-color:#ffd65a;background:linear-gradient(180deg,#2b553d,#173525);color:#ffe58a;box-shadow:0 0 0 2px #ffd65a22,inset 0 0 18px #ffd65a0d}.region-tab.locked{opacity:.35;filter:grayscale(1)}
 .region-hero{position:relative;overflow:hidden;border:1px solid #806d40;border-radius:20px;padding:20px 16px 16px;min-height:200px;background:radial-gradient(circle at 80% 10%,#58735a55,transparent 38%),linear-gradient(145deg,#214a34,#0f241a 68%)}
 .region-hero.desert{background:radial-gradient(circle at 78% 18%,#e7bc6050,transparent 38%),linear-gradient(145deg,#6a4c24,#231b12 72%)}
 .region-hero.haunted{background:radial-gradient(circle at 79% 16%,#9c84ff55,transparent 26%),radial-gradient(circle at 75% 14%,#d8d0ff40 0 8%,transparent 9%),linear-gradient(145deg,#251d39,#0d1715 70%)}
 .region-hero.tundra{background:radial-gradient(circle at 80% 12%,#ffffffaa,transparent 18%),radial-gradient(circle at 72% 20%,#a9e8ff88,transparent 34%),linear-gradient(145deg,#2b6f8d,#102f46 72%)}
+.region-hero.crystal{background:radial-gradient(circle at 80% 14%,#e5c8ffcc,transparent 19%),radial-gradient(circle at 68% 26%,#69f1ff88,transparent 35%),linear-gradient(145deg,#33205f,#102d46 72%)}
+.region-hero.crystal h1{color:#dffcff;text-shadow:0 0 16px #6fefff99}
+.stage-thumb.crystal{background:radial-gradient(circle at 52% 18%,#e9d4ffcc,transparent 24%),linear-gradient(#34698b,#221640)}
 .region-hero:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent 55%,#0004)}
 .region-hero h1{position:relative;z-index:1;margin:0 0 7px;font-family:Georgia,serif;color:#ffe68b;font-size:31px;letter-spacing:.4px}.region-hero.haunted h1{color:#d9c5ff;text-shadow:0 0 16px #8d67ff99}.region-hero p{position:relative;z-index:1;margin:0;max-width:72%;line-height:1.35;color:#d6e2da;font-size:14px}.region-badge{position:absolute;z-index:2;right:14px;bottom:15px;border:1px solid #a98b46;border-radius:16px;padding:9px 13px;text-align:center;background:#0a1813cc;color:#ffe27c}.region-badge small{display:block;letter-spacing:2px;color:#b9c6bd}.region-badge b{font-family:Georgia,serif;font-size:21px}
 .sanctuary-mode{margin:12px 0;background:#0a1712;border:1px solid #5c6d60;border-radius:18px;padding:10px}.sanctuary-mode-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mode-choice{border:1px solid #69786d;border-radius:14px;padding:12px 8px;background:#111d18;font-weight:900;font-size:15px;letter-spacing:.5px}.mode-choice.active{background:linear-gradient(#356747,#1f4b33);border-color:#ffd65a;color:#ffe27a;box-shadow:0 0 0 2px #ffd65a22}.mode-hint{text-align:center;margin-top:8px;color:#a9b8af;font-size:12px;min-height:16px}
@@ -221,7 +224,7 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
 
     <div id="mapSanctuary">
       <div class="sanctuary-shell">
-        <div class="sanctuary-head"><div><h2>← Sanctuary</h2><div class="small">Choose a region and stage</div></div><div class="pill">🗺️ 30 Stages</div></div>
+        <div class="sanctuary-head"><div><h2>← Sanctuary</h2><div class="small">Choose a region and stage</div></div><div class="pill">🗺️ 60 Stages</div></div>
         <div class="region-tabs" id="regionTabs"></div>
         <div class="region-hero" id="regionHero">
           <h1 id="sanctuaryRegionName">Forest Pines</h1>
@@ -519,6 +522,8 @@ const defaults = {
   tundraFallsSelected:1,
   volcanicWastelandUnlocked:0,
   volcanicWastelandSelected:1,
+  crystalCavernsUnlocked:0,
+  crystalCavernsSelected:1,
   selectedSeries:1,
   selectedSeriesMap:1,
   battleDifficulty:"normal",
@@ -550,6 +555,8 @@ save.normalCompleted={...defaults.normalCompleted,...(save.normalCompleted||{})}
 save.hardCompleted={...defaults.hardCompleted,...(save.hardCompleted||{})};
 // VOLCANIC_EXISTING_SAVE_UNLOCK_V1: players who cleared Tundra 4-10 before Region 5 existed should unlock it automatically.
 if(save.normalCompleted["4-10"]||save.hardCompleted["4-10"])save.volcanicWastelandUnlocked=Math.max(save.volcanicWastelandUnlocked||0,1);
+// CRYSTAL_CAVERNS_REGION_V2: preserve progression for players who already cleared Volcanic 5-10.
+if(save.normalCompleted["5-10"]||save.hardCompleted["5-10"])save.crystalCavernsUnlocked=Math.max(save.crystalCavernsUnlocked||0,1);
 // Reconstruct obvious Normal completions from existing unlocked-map progress so old saves keep access.
 for(let m=1;m<(save.forestPinesUnlocked||1);m++)save.normalCompleted[`1-${m}`]=true;
 if((save.desertDunesUnlocked||0)>0)save.normalCompleted["1-10"]=true;
@@ -792,15 +799,16 @@ const SANCTUARY_META={
   2:{name:'Desert Dunes',icon:'🏜️',desc:'Scorching dunes, ruined oases and dangerous sandstone paths where enemies press harder.',className:'desert',stages:['Sunscorched Trail','Dune Crossing','Oasis Ruins','Scorpion Pass','Sandstone Arch','Mirage Basin','Caravan Road','Dust Temple','Vulture Ridge',"Pharaoh's Gate"]},
   3:{name:'Haunted Woods',icon:'👻',desc:'A dark and mysterious woodland filled with twisted trees, forgotten graves, drifting fog and restless spirits.',className:'haunted',stages:['Shadow Path','Cursed Glade','Gravestone Grove','The Hollow','Whispering Brook','Ruined Chapel','Spectral Crossing',"Witch's Circle",'Fallen Giant','The Final Stand']},
   4:{name:'Tundra Falls',icon:'❄️',desc:'A frozen wilderness of snowdrifts, ice caverns, frozen rivers and towering glacial falls. Enemies here have 1.60x HP.',className:'tundra',stages:['Frostbite Trail','Snowdrift Pass','Frozen River','Icefang Ridge','Glacier Hollow','Whiteout Crossing','Crystal Cavern','Avalanche Run','Frozen Falls','Heart of Winter']},
-  5:{name:'Volcanic Wasteland',icon:'🌋',desc:'A scorched wasteland of molten rivers, black basalt, burning vents and erupting volcanoes. The toughest region yet.',className:'volcanic',stages:['Ashen Pass','Lava Crossing','Ember Ridge','The Crater','Magma Bridges','Obsidian Run','Firestorm Basin','The Forge','Inferno Trail',"Volcano's Edge"]}
+  5:{name:'Volcanic Wasteland',icon:'🌋',desc:'A scorched wasteland of molten rivers, black basalt, burning vents and erupting volcanoes.',className:'volcanic',stages:['Ashen Pass','Lava Crossing','Ember Ridge','The Crater','Magma Bridges','Obsidian Run','Firestorm Basin','The Forge','Inferno Trail',"Volcano's Edge"]},
+  6:{name:'Crystal Caverns',icon:'💎',desc:'A deep subterranean crystal biome of glowing geodes, prism-lit caves, underground lakes and dangerous crystalline creatures. Harder than Volcanic Wasteland.',className:'crystal',stages:['Cavern Entrance','Shimmering Chasm','Glowshroom Grotto','Prismatic Passage','Underground Lake','Geode Gallery','Echoing Depths','Crystal Forest','The Shattered Core','Heart of the Caverns']}
 };
 let mapMenuSeries=1,mapMenuDifficulty='normal';
 function sanctuaryUnlocked(series){
   if(typeof seriesUnlocked==='function')return seriesUnlocked(series);
-  return series===1?(save.forestPinesUnlocked||1):series===2?(save.desertDunesUnlocked||0):series===3?(save.hauntedWoodsUnlocked||0):series===4?(save.tundraFallsUnlocked||0):(save.volcanicWastelandUnlocked||0);
+  return series===1?(save.forestPinesUnlocked||1):series===2?(save.desertDunesUnlocked||0):series===3?(save.hauntedWoodsUnlocked||0):series===4?(save.tundraFallsUnlocked||0):series===5?(save.volcanicWastelandUnlocked||0):(save.crystalCavernsUnlocked||0);
 }
 function sanctuaryStageIcon(series,n){
-  const sets={1:['🌿','🌲','🌉','🏡','💧','🗼','🌳','🌸','🪵','🏰'],2:['☀️','🏜️','🌴','🦂','🪨','🌫️','🐪','🏛️','🦅','👑'],3:['🌙','🕯️','🪦','🕳️','🌫️','⛪','🌉','🔮','💀','🏰'],4:['❄️','🌨️','🧊','🏔️','🌬️','🐺','💎','☃️','🌊','👑'],5:['🌋','🔥','🪨','🕳️','🌉','💎','🌪️','⚒️','🔥','🌋']};
+  const sets={1:['🌿','🌲','🌉','🏡','💧','🗼','🌳','🌸','🪵','🏰'],2:['☀️','🏜️','🌴','🦂','🪨','🌫️','🐪','🏛️','🦅','👑'],3:['🌙','🕯️','🪦','🕳️','🌫️','⛪','🌉','🔮','💀','🏰'],4:['❄️','🌨️','🧊','🏔️','🌬️','🐺','💎','☃️','🌊','👑'],5:['🌋','🔥','🪨','🕳️','🌉','💎','🌪️','⚒️','🔥','🌋'],6:['💎','🔷','🍄','🔮','💧','🪨','🔊','✨','💥','💠']};
   return sets[series][n-1]||'🗺️';
 }
 function renderMapSanctuary(){
@@ -808,7 +816,7 @@ function renderMapSanctuary(){
   if(!sanctuaryUnlocked(mapMenuSeries))mapMenuSeries=1;
   const meta=SANCTUARY_META[mapMenuSeries],unlocked=Math.max(mapMenuSeries===1?1:0,sanctuaryUnlocked(mapMenuSeries));
   const tabs=document.getElementById('regionTabs');
-  tabs.innerHTML=[1,2,3,4,5].map(series=>{const m=SANCTUARY_META[series],locked=series>1&&sanctuaryUnlocked(series)<1;return `<button class="region-tab ${series===mapMenuSeries?'active':''} ${locked?'locked':''}" data-region="${series}" ${locked?'disabled':''}>REGION ${series}<b>${locked?'🔒 LOCKED':m.icon+' '+m.name.toUpperCase()}</b></button>`}).join('');
+  tabs.innerHTML=[1,2,3,4,5,6].map(series=>{const m=SANCTUARY_META[series],locked=series>1&&sanctuaryUnlocked(series)<1;return `<button class="region-tab ${series===mapMenuSeries?'active':''} ${locked?'locked':''}" data-region="${series}" ${locked?'disabled':''}>REGION ${series}<b>${locked?'🔒 LOCKED':m.icon+' '+m.name.toUpperCase()}</b></button>`}).join('');
   tabs.querySelectorAll('.region-tab:not(.locked)').forEach(btn=>btn.onclick=()=>{mapMenuSeries=+btn.dataset.region;renderMapSanctuary()});
   const hero=document.getElementById('regionHero');hero.className=`region-hero ${meta.className}`;
   document.getElementById('sanctuaryRegionName').textContent=meta.name;
@@ -1077,20 +1085,25 @@ const volcanicWastelandMaps=[
  {path:[[885,150],[520,150],[520,350],[760,350],[760,570],[260,570],[260,360],[80,360],[80,790],[520,790],[520,1025]],pads:[[660,250],[400,250],[625,460],[830,465],[620,680],[390,680],[165,485],[150,685],[350,905],[650,900],[750,750],[60,945]]},
  {path:[[-45,130],[720,130],[720,340],[160,340],[160,560],[650,560],[650,780],[250,780],[250,1025]],pads:[[180,235],[430,235],[790,230],[550,445],[280,445],[75,455],[390,665],[750,670],[510,890],[145,880],[790,900],[80,700]]}
 ];
-function seriesMaps(series){return series===1?forestPinesMaps:series===2?desertDunesMaps:series===3?hauntedWoodsMaps:series===4?tundraFallsMaps:volcanicWastelandMaps}
-function seriesUnlockedCount(series){return series===1?(save.forestPinesUnlocked||1):series===2?(save.desertDunesUnlocked||0):series===3?(save.hauntedWoodsUnlocked||0):series===4?(save.tundraFallsUnlocked||0):(save.volcanicWastelandUnlocked||0)}
-function seriesDisplayName(series){return series===1?'Forest Pines':series===2?'Desert Dunes':series===3?'Haunted Woods':series===4?'Tundra Falls':'Volcanic Wasteland'}
-function seriesDisplayIcon(series){return series===1?'🌲':series===2?'🏜️':series===3?'👻':series===4?'❄️':'🌋'}
+// CRYSTAL_CAVERNS_MAPS_V1: ten late-game cave routes, alternating orientation for visual variety.
+const crystalCavernsMaps=volcanicWastelandMaps.map((m,i)=>({
+  path:m.path.map(([x,y])=>[i%2?860-x:x,y]),
+  pads:m.pads.map(([x,y])=>[i%2?860-x:x,y])
+}));
+function seriesMaps(series){return series===1?forestPinesMaps:series===2?desertDunesMaps:series===3?hauntedWoodsMaps:series===4?tundraFallsMaps:series===5?volcanicWastelandMaps:crystalCavernsMaps}
+function seriesUnlockedCount(series){return series===1?(save.forestPinesUnlocked||1):series===2?(save.desertDunesUnlocked||0):series===3?(save.hauntedWoodsUnlocked||0):series===4?(save.tundraFallsUnlocked||0):series===5?(save.volcanicWastelandUnlocked||0):(save.crystalCavernsUnlocked||0)}
+function seriesDisplayName(series){return series===1?'Forest Pines':series===2?'Desert Dunes':series===3?'Haunted Woods':series===4?'Tundra Falls':series===5?'Volcanic Wasteland':'Crystal Caverns'}
+function seriesDisplayIcon(series){return series===1?'🌲':series===2?'🏜️':series===3?'👻':series===4?'❄️':series===5?'🌋':'💎'}
 
-let currentSeries=Math.max(1,Math.min(5,save.selectedSeries||1));
-let currentMap=Math.max(1,Math.min(10,currentSeries===1?(save.forestPinesSelected||1):currentSeries===2?(save.selectedSeriesMap||1):currentSeries===3?(save.hauntedWoodsSelected||1):currentSeries===4?(save.tundraFallsSelected||1):(save.volcanicWastelandSelected||1)));
+let currentSeries=Math.max(1,Math.min(6,save.selectedSeries||1));
+let currentMap=Math.max(1,Math.min(10,currentSeries===1?(save.forestPinesSelected||1):currentSeries===2?(save.selectedSeriesMap||1):currentSeries===3?(save.hauntedWoodsSelected||1):currentSeries===4?(save.tundraFallsSelected||1):currentSeries===5?(save.volcanicWastelandSelected||1):(save.crystalCavernsSelected||1)));
 let path=seriesMaps(currentSeries)[currentMap-1].path;
 let pads=seriesMaps(currentSeries)[currentMap-1].pads;
 let battle={}, selectedCard=null, selectedTower=null, raf=0, last=performance.now(), speed=1, autoWave=false, autoWaveTimer=0;
 
 function currentSeriesUnlocked(){return seriesUnlockedCount(currentSeries)}
 function applyMap(series,n){
-  const targetSeries=Math.max(1,Math.min(5,series));
+  const targetSeries=Math.max(1,Math.min(6,series));
   const unlocked=seriesUnlockedCount(targetSeries);
   if(targetSeries>1 && unlocked<1)return false;
   currentSeries=targetSeries;
@@ -1107,11 +1120,12 @@ function applyMap(series,n){
   if(currentSeries===3)save.hauntedWoodsSelected=currentMap;
   if(currentSeries===4)save.tundraFallsSelected=currentMap;
   if(currentSeries===5)save.volcanicWastelandSelected=currentMap;
+  if(currentSeries===6)save.crystalCavernsSelected=currentMap;
   seriesTitle.textContent=`${seriesDisplayIcon(currentSeries)} ${seriesDisplayName(currentSeries)}`;
   mapLabel.textContent=`${currentSeries}-${currentMap}${hardMode?" • 🔥 HARD":""}`;
   prevMap.disabled=currentSeries===1&&currentMap===1;
   const seriesUnlocked=currentSeriesUnlocked();
-  nextMap.disabled=(currentMap>=seriesUnlocked && !(currentMap===10&&currentSeries<5&&seriesUnlockedCount(currentSeries+1)>0));
+  nextMap.disabled=(currentMap>=seriesUnlocked && !(currentMap===10&&currentSeries<6&&seriesUnlockedCount(currentSeries+1)>0));
   return true;
 }
 prevMap.onclick=()=>{
@@ -1195,6 +1209,14 @@ function enemyForWave(){
     if(w>=4 && r<.44)return {type:"lavaLizard",emoji:"🦎",hp:(105+w*13)*.8,speed:72,reward:11,size:20};
     if(r<.40)return {type:"fireBat",emoji:"🦇",hp:(52+w*9)*.8,speed:94,reward:8,size:17};
     return {type:"ashScorpion",emoji:"🦂",hp:(76+w*11)*.8,speed:63,reward:10,size:19};
+  }
+  // CRYSTAL_CAVERNS_ENEMIES_V1
+  if(currentSeries===6){
+    if(w>=7 && r<.12)return {type:"crystalElemental",emoji:"💠",hp:(285+w*29)*.8,speed:34,reward:26,size:32,boss:true};
+    if(w>=6 && r<.28)return {type:"gemGolem",emoji:"🗿",hp:(178+w*20)*.8,speed:42,reward:17,size:25};
+    if(w>=4 && r<.44)return {type:"crystalSpider",emoji:"🕷️",hp:(122+w*15)*.8,speed:76,reward:13,size:20};
+    if(r<.40)return {type:"crystalBat",emoji:"🦇",hp:(62+w*10)*.8,speed:98,reward:9,size:17};
+    return {type:"crystalSlime",emoji:"🫧",hp:(88+w*13)*.8,speed:60,reward:11,size:20};
   }
   // TUNDRA_ENEMIES_V1: frozen wildlife and ice spirits.
   if(currentSeries===4){
@@ -1284,6 +1306,18 @@ function bossForSeriesMap(){
       {type:"forgeTitanBoss",emoji:"🗿",name:"Forge Titan",hp:6000,speed:27,reward:225,size:48,boss:true,bossAbility:"forgeSlam"},
       {type:"infernoDragonBoss",emoji:"🐉",name:"Inferno Dragon",hp:6500,speed:38,reward:240,size:49,boss:true,bossAbility:"firestorm"},
       {type:"volcanoTitanBoss",emoji:"🌋",name:"Volcano Titan",hp:7200,speed:24,reward:260,size:52,boss:true,bossAbility:"eruption"}
+    ],
+    6:[
+      {type:"crystalBatBoss",emoji:"🦇",name:"Prismwing",hp:3900,speed:54,reward:150,size:37,boss:true,bossAbility:"prismDive"},
+      {type:"crystalSpiderBoss",emoji:"🕷️",name:"Gem Widow",hp:4300,speed:45,reward:165,size:39,boss:true,bossAbility:"crystalWeb"},
+      {type:"crystalSlimeBoss",emoji:"🫧",name:"Living Geode",hp:4700,speed:37,reward:180,size:42,boss:true,bossAbility:"split"},
+      {type:"caveTrollBoss",emoji:"👹",name:"Cavern Troll",hp:5200,speed:34,reward:195,size:45,boss:true,bossAbility:"slam"},
+      {type:"gemGolemBoss",emoji:"🗿",name:"Gemstone Golem",hp:5700,speed:28,reward:210,size:47,boss:true,bossAbility:"crystalArmor"},
+      {type:"burrowWormBoss",emoji:"🪱",name:"Crystal Burrower",hp:6150,speed:40,reward:225,size:45,boss:true,bossAbility:"burrow"},
+      {type:"prismElementalBoss",emoji:"💠",name:"Prism Elemental",hp:6650,speed:36,reward:240,size:48,boss:true,bossAbility:"refraction"},
+      {type:"crystalGuardianBoss",emoji:"💎",name:"Crystal Guardian",hp:7200,speed:29,reward:255,size:50,boss:true,bossAbility:"shardStorm"},
+      {type:"shatteredCoreBoss",emoji:"💥",name:"The Shattered Core",hp:7900,speed:26,reward:275,size:53,boss:true,bossAbility:"fracture"},
+      {type:"cavernHeartBoss",emoji:"💠",name:"Heart of the Caverns",hp:8800,speed:23,reward:300,size:56,boss:true,bossAbility:"crystalEruption"}
     ]
   };
   const roster=rosters[currentSeries]||rosters[1];
@@ -1298,7 +1332,7 @@ function finalMapBossForWave(){
 // Normal enemies give no coins. Wave clear = 12, elite = 20, Wave 15 boss = 45 in Forest Pines.
 // Desert Dunes = 1.10x, Haunted Woods = 1.25x, Tundra Falls = 1.40x.
 function regionCoinMultiplier(){
-  return currentSeries===1?1:currentSeries===2?1.10:currentSeries===3?1.25:currentSeries===4?1.40:1.55;
+  return currentSeries===1?1:currentSeries===2?1.10:currentSeries===3?1.25:currentSeries===4?1.40:currentSeries===5?1.55:1.70;
 }
 function battleCoinReward(kind){
   // REPAIR_ELITES_SUMMARY_V1: requested Normal/Hard reward tables.
@@ -1314,7 +1348,7 @@ function spawnEnemy(){
   if(boss)battle.finalBossSpawned=true;
   // SERIES_DIFFICULTY_V1: later map series have a clear enemy HP step-up.
   // Forest Pines = 1.00x, Desert Dunes = 1.20x, Haunted Woods = 1.45x, Tundra Falls = 1.60x.
-  const seriesDifficulty=currentSeries===1?1:currentSeries===2?1.20:currentSeries===3?1.45:1.60;
+  const seriesDifficulty=currentSeries===1?1:currentSeries===2?1.20:currentSeries===3?1.45:currentSeries===4?1.60:currentSeries===5?1.75:1.90;
   e.hp=Math.round(e.hp*seriesDifficulty);
   if(hardMode){e.hp=Math.round(e.hp*1.75);e.speed*=1.15;}
   // REPAIR_ELITES_SUMMARY_V1: 2 elites on Wave 5 and 6 elites on Wave 10.
@@ -1338,7 +1372,7 @@ startWave.onclick=()=>{
     battle.mapComplete=false;
     clearBattleState();
     if(currentMap<10){applyMap(currentSeries,currentMap+1);resetBattle();draw();}
-    else if(currentSeries===1 && (save.desertDunesUnlocked||0)>=1){applyMap(2,1);resetBattle();}
+    else if(currentSeries<6 && seriesUnlockedCount(currentSeries+1)>0){applyMap(currentSeries+1,1);resetBattle();draw();}
     else{message.textContent="🏆 All available levels complete!";startWave.textContent="Completed";}
     return;
   }
@@ -2355,15 +2389,18 @@ function finishWave(){
     }else if(currentSeries===4){
       if(currentMap<10)save.tundraFallsUnlocked=Math.max(save.tundraFallsUnlocked||1,currentMap+1);
       else save.volcanicWastelandUnlocked=Math.max(save.volcanicWastelandUnlocked||0,1);
-    }else if(currentSeries===5&&currentMap<10){
-      save.volcanicWastelandUnlocked=Math.max(save.volcanicWastelandUnlocked||1,currentMap+1);
+    }else if(currentSeries===5){
+      if(currentMap<10)save.volcanicWastelandUnlocked=Math.max(save.volcanicWastelandUnlocked||1,currentMap+1);
+      else save.crystalCavernsUnlocked=Math.max(save.crystalCavernsUnlocked||0,1);
+    }else if(currentSeries===6&&currentMap<10){
+      save.crystalCavernsUnlocked=Math.max(save.crystalCavernsUnlocked||1,currentMap+1);
     }
     levelCheck();persist();clearBattleState();
     battle.ended=true;
     battle.mapComplete=true;
     startWave.textContent="Start Next Level";
     const seriesName=seriesDisplayName(currentSeries);
-    const nextText=currentMap<10?`${currentSeries}-${currentMap+1} unlocked!`:currentSeries===1?"Desert Dunes 2-1 unlocked!":currentSeries===2?"Haunted Woods 3-1 unlocked!":currentSeries===3?"Tundra Falls 4-1 unlocked!":currentSeries===4?"Volcanic Wasteland 5-1 unlocked!":"Volcanic Wasteland series complete!";
+    const nextText=currentMap<10?`${currentSeries}-${currentMap+1} unlocked!`:currentSeries===1?"Desert Dunes 2-1 unlocked!":currentSeries===2?"Haunted Woods 3-1 unlocked!":currentSeries===3?"Tundra Falls 4-1 unlocked!":currentSeries===4?"Volcanic Wasteland 5-1 unlocked!":currentSeries===5?"Crystal Caverns 6-1 unlocked!":"Crystal Caverns series complete!";
     message.textContent=`🏆 ${seriesName} ${currentSeries}-${currentMap} complete! ${nextText} • 🟡 200 bonus Coins!${cardXp?` • Used cards +${cardXp} XP each`:""}`;
     updateHud();
     return;
@@ -2591,10 +2628,11 @@ function draw(){
   const hauntedPurples=["#24152f","#291735","#21132c","#30183b","#261431","#2d1738","#22142e","#321a3d","#281533","#25122f"];
   const tundraIce=["#bfe8f4","#abdbe9","#cbeef6","#9fd2e5","#d6f3f8","#a7d9ea","#c5edf5","#95cde1","#d9f6fb","#b2e2ef"];
   const volcanicRock=["#2a211f","#30231f","#251d1c","#35251f","#291e1b","#33221c","#241b1a","#38251e","#2d201c","#211817"];
-  ctx.fillStyle=currentSeries===1?forestGreens[currentMap-1]:currentSeries===2?desertSands[currentMap-1]:currentSeries===3?hauntedPurples[currentMap-1]:currentSeries===4?tundraIce[currentMap-1]:volcanicRock[currentMap-1];ctx.fillRect(0,0,W,H);
+  const crystalStone=["#172238","#192740","#20234b","#152d45","#251d50","#18354a","#212b55","#172c42","#2a2058","#193149"];
+  ctx.fillStyle=currentSeries===1?forestGreens[currentMap-1]:currentSeries===2?desertSands[currentMap-1]:currentSeries===3?hauntedPurples[currentMap-1]:currentSeries===4?tundraIce[currentMap-1]:currentSeries===5?volcanicRock[currentMap-1]:crystalStone[currentMap-1];ctx.fillRect(0,0,W,H);
 
   // Subtle forest edge.
-  ctx.fillStyle=currentSeries===1?"#24552b":currentSeries===2?"#a77c36":currentSeries===3?"#140b1d":currentSeries===4?"#e7fbff":"#120e0d";
+  ctx.fillStyle=currentSeries===1?"#24552b":currentSeries===2?"#a77c36":currentSeries===3?"#140b1d":currentSeries===4?"#e7fbff":currentSeries===5?"#120e0d":"#101a35";
   for(let x=0;x<W;x+=70){ctx.beginPath();ctx.arc(x,22,48,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x,H-12,52,0,Math.PI*2);ctx.fill();}
   if(currentSeries===4){
     ctx.save();
@@ -2619,7 +2657,7 @@ function draw(){
   const decorRand=(i)=>{let n=Math.sin((currentMap*97+i*31)*12.9898)*43758.5453;return n-Math.floor(n)};
   const pointSegDist=(px,py,a,b)=>{const vx=b[0]-a[0],vy=b[1]-a[1],wx=px-a[0],wy=py-a[1],vv=vx*vx+vy*vy||1,t=Math.max(0,Math.min(1,(wx*vx+wy*vy)/vv)),dx=px-(a[0]+t*vx),dy=py-(a[1]+t*vy);return Math.hypot(dx,dy)};
   const decorSafe=(x,y)=>!pads.some(p=>Math.hypot(x-p[0],y-p[1])<62)&&!path.slice(0,-1).some((p,i)=>pointSegDist(x,y,p,path[i+1])<66);
-  const decorCount=currentSeries===5?0:(currentSeries===1?78:42);
+  const decorCount=currentSeries>=5?0:(currentSeries===1?78:42);
   for(let i=0;i<decorCount;i++){
     const x=35+decorRand(i*3)*770,y=45+decorRand(i*3+1)*925;
     if(!decorSafe(x,y))continue;
@@ -2863,13 +2901,21 @@ function draw(){
     ctx.globalAlpha=1;ctx.restore();
   }
 
+  if(currentSeries===6){
+    // CRYSTAL_CAVERNS_VISUALS_V1: animated in-game crystal formations and floating cave sparkles.
+    ctx.save();const ct=performance.now()/1000;
+    for(let i=0;i<22;i++){const x=35+decorRand(2200+i*4)*790,y=50+decorRand(2201+i*4)*910;if(!decorSafe(x,y))continue;const h=24+decorRand(2202+i)*42,w=8+decorRand(2203+i)*9;ctx.save();ctx.translate(x,y);ctx.fillStyle=i%3===0?"#b67cff":i%3===1?"#63e6ff":"#83ffcf";ctx.strokeStyle="#e9fbff";ctx.lineWidth=1.5;ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=12;ctx.beginPath();ctx.moveTo(0,-h);ctx.lineTo(w,-h*.35);ctx.lineTo(w*.6,h*.28);ctx.lineTo(0,h*.5);ctx.lineTo(-w*.6,h*.28);ctx.lineTo(-w,-h*.35);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();}
+    ctx.globalAlpha=.7;for(let i=0;i<38;i++){const x=(i*113+currentMap*47)%W,y=(i*157+currentMap*39-(ct*8*(1+i%2)))%H,yy=y<0?y+H:y;if(!decorSafe(x,yy))continue;ctx.fillStyle=i%2?"#d8b8ff":"#9cf7ff";ctx.beginPath();ctx.arc(x,yy,1.5+(i%3)*.5,0,Math.PI*2);ctx.fill();}
+    ctx.restore();
+  }
+
   // Road outline and road surface use the exact enemy path.
   ctx.save();
   ctx.lineCap="round";ctx.lineJoin="round";
   ctx.beginPath();ctx.moveTo(path[0][0],path[0][1]);for(let i=1;i<path.length;i++)ctx.lineTo(path[i][0],path[i][1]);
-  ctx.strokeStyle=currentSeries===1?"#8b612d":currentSeries===2?"#9b6b38":currentSeries===3?"#160d20":currentSeries===4?"#4b9fc6":"#4a2118";ctx.lineWidth=92;ctx.stroke();
+  ctx.strokeStyle=currentSeries===1?"#8b612d":currentSeries===2?"#9b6b38":currentSeries===3?"#160d20":currentSeries===4?"#4b9fc6":currentSeries===5?"#4a2118":"#3b3670";ctx.lineWidth=92;ctx.stroke();
   ctx.beginPath();ctx.moveTo(path[0][0],path[0][1]);for(let i=1;i<path.length;i++)ctx.lineTo(path[i][0],path[i][1]);
-  ctx.strokeStyle=currentSeries===1?"#a7834f":currentSeries===2?"#f0d18a":currentSeries===3?"#57405f":currentSeries===4?"#bdefff":"#3b2521";ctx.lineWidth=72;ctx.stroke();
+  ctx.strokeStyle=currentSeries===1?"#a7834f":currentSeries===2?"#f0d18a":currentSeries===3?"#57405f":currentSeries===4?"#bdefff":currentSeries===5?"#3b2521":"#5969a8";ctx.lineWidth=72;ctx.stroke();
   if(currentSeries===1){
     // Irregular darker centre and wheel-worn highlights make the forest track feel less flat.
     ctx.globalAlpha=.28;ctx.strokeStyle="#6d5233";ctx.lineWidth=48;ctx.stroke();
@@ -2891,6 +2937,11 @@ function draw(){
     ctx.globalAlpha=.9;ctx.strokeStyle="#1b1514";ctx.lineWidth=42;ctx.stroke();
     ctx.globalAlpha=.82;ctx.strokeStyle="#ff4b18";ctx.lineWidth=7;ctx.setLineDash([7,24,3,31]);ctx.stroke();ctx.setLineDash([]);
     ctx.globalAlpha=.55;ctx.strokeStyle="#ffb13b";ctx.lineWidth=3;ctx.setLineDash([4,29,2,19]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+  }else if(currentSeries===6){
+    ctx.globalAlpha=.96;ctx.strokeStyle="#34436f";ctx.lineWidth=58;ctx.stroke();
+    ctx.globalAlpha=.9;ctx.strokeStyle="#202b52";ctx.lineWidth=42;ctx.stroke();
+    ctx.globalAlpha=.75;ctx.strokeStyle="#78e9ff";ctx.lineWidth=6;ctx.setLineDash([10,22,4,28]);ctx.stroke();ctx.setLineDash([]);
+    ctx.globalAlpha=.5;ctx.strokeStyle="#c18cff";ctx.lineWidth=3;ctx.setLineDash([5,25,2,20]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
   }
   ctx.restore();
 
@@ -2924,7 +2975,7 @@ function draw(){
 
     // Finish the route beneath the themed entrance.
     ctx.save();
-    ctx.strokeStyle=currentSeries===1?"#d8b35b":currentSeries===2?"#f0d18a":currentSeries===3?"#57405f":currentSeries===4?"#bdefff":"#3b2521";
+    ctx.strokeStyle=currentSeries===1?"#d8b35b":currentSeries===2?"#f0d18a":currentSeries===3?"#57405f":currentSeries===4?"#bdefff":currentSeries===5?"#3b2521":"#5969a8";
     ctx.lineWidth=72;ctx.lineCap="round";
     ctx.beginPath();ctx.moveTo(prev[0],prev[1]);ctx.lineTo(bx,by);ctx.stroke();
     ctx.restore();
@@ -3026,7 +3077,7 @@ function draw(){
       ctx.fillStyle="#dff8ff";for(let i=0;i<7;i++){const x=-42+i*14,h=8+(i%3)*5;ctx.beginPath();ctx.moveTo(x,-27);ctx.lineTo(x+6,-27);ctx.lineTo(x+3,-27+h);ctx.closePath();ctx.fill();}
       ctx.beginPath();ctx.ellipse(0,36,57,10,0,0,Math.PI*2);ctx.fill();
       ctx.font="17px serif";ctx.textAlign="center";ctx.fillText("❄️",0,13);
-    }else{
+    }else if(currentSeries===5){
       // Volcanic Wasteland: obsidian fortress over a molten magma gate.
       ctx.fillStyle="#211514";ctx.strokeStyle="#ff4b18";ctx.lineWidth=5;ctx.beginPath();ctx.roundRect(-50,-30,100,64,7);ctx.fill();ctx.stroke();
       ctx.fillStyle="#151011";ctx.strokeStyle="#7b2c1d";ctx.lineWidth=4;ctx.fillRect(-58,-45,22,76);ctx.strokeRect(-58,-45,22,76);ctx.fillRect(36,-45,22,76);ctx.strokeRect(36,-45,22,76);
@@ -3034,6 +3085,15 @@ function draw(){
       ctx.fillStyle="#080707";ctx.beginPath();ctx.moveTo(-17,34);ctx.lineTo(-17,7);ctx.arc(0,7,17,Math.PI,0);ctx.lineTo(17,34);ctx.closePath();ctx.fill();
       ctx.fillStyle="#ff5a16";ctx.shadowColor="#ff3b00";ctx.shadowBlur=18;ctx.beginPath();ctx.ellipse(0,31,55,9,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#ffd052";ctx.beginPath();ctx.ellipse(0,31,30,4,0,0,Math.PI*2);ctx.fill();
       ctx.fillStyle="#ff7a25";ctx.beginPath();ctx.moveTo(0,-42);ctx.lineTo(10,-16);ctx.lineTo(0,-5);ctx.lineTo(-10,-16);ctx.closePath();ctx.fill();ctx.shadowColor="transparent";ctx.font="18px serif";ctx.textAlign="center";ctx.fillText("🌋",0,9);
+    }else{
+      // Crystal Caverns: glowing geode gate.
+      ctx.fillStyle="#1d2546";ctx.strokeStyle="#7cecff";ctx.lineWidth=5;ctx.beginPath();ctx.roundRect(-50,-30,100,64,8);ctx.fill();ctx.stroke();
+      ctx.fillStyle="#2a2358";ctx.strokeStyle="#b68cff";ctx.lineWidth=4;ctx.fillRect(-58,-42,22,72);ctx.strokeRect(-58,-42,22,72);ctx.fillRect(36,-42,22,72);ctx.strokeRect(36,-42,22,72);
+      ctx.fillStyle="#63e8ff";ctx.shadowColor="#72f2ff";ctx.shadowBlur=16;ctx.beginPath();ctx.moveTo(-49,-42);ctx.lineTo(-47,-70);ctx.lineTo(-35,-43);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(35,-43);ctx.lineTo(47,-72);ctx.lineTo(50,-42);ctx.closePath();ctx.fill();
+      ctx.fillStyle="#070b1c";ctx.shadowColor="transparent";ctx.beginPath();ctx.moveTo(-17,34);ctx.lineTo(-17,7);ctx.arc(0,7,17,Math.PI,0);ctx.lineTo(17,34);ctx.closePath();ctx.fill();
+      ctx.fillStyle="#9df7ff";ctx.shadowColor="#8ff4ff";ctx.shadowBlur=18;ctx.beginPath();ctx.moveTo(0,-45);ctx.lineTo(12,-15);ctx.lineTo(0,2);ctx.lineTo(-12,-15);ctx.closePath();ctx.fill();
+      ctx.fillStyle="#c395ff";ctx.beginPath();ctx.moveTo(-29,-19);ctx.lineTo(-20,-3);ctx.lineTo(-31,10);ctx.lineTo(-38,-5);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(29,-19);ctx.lineTo(38,-5);ctx.lineTo(31,10);ctx.lineTo(20,-3);ctx.closePath();ctx.fill();
+      ctx.shadowColor="transparent";ctx.font="18px serif";ctx.textAlign="center";ctx.fillText("💎",0,12);
     }
 
     // Shared sign plate, kept compact so the structure remains the focus.
