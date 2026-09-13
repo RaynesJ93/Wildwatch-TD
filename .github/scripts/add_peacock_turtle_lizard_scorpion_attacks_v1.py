@@ -6,14 +6,13 @@ s=p.read_text(encoding='utf-8')
 repls={
 'peacock:{name:"Peacock",emoji:"🦚",rarity:"Uncommon",cost:86,range:210,rate:1,dmg:20,color:"#38a",desc:"Long-range attacker."}':'peacock:{name:"Peacock",emoji:"🦚",rarity:"Uncommon",cost:86,range:210,rate:1,dmg:20,color:"#38a",desc:"Fires shimmering Peacock Feathers. At Level 10, every 6th attack triggers Royal Fan: 7 jeweled feathers fan across enemies in range, each dealing 90% current tower damage."}',
 'turtle:{name:"Turtle",emoji:"🐢",rarity:"Uncommon",cost:92,range:130,rate:1/.65,dmg:32,color:"#587",desc:"Slow heavy attacker."}':'turtle:{name:"Turtle",emoji:"🐢",rarity:"Uncommon",cost:92,range:130,rate:1/.65,dmg:32,color:"#587",desc:"Launches a spinning shell. At Level 10, every 5th attack becomes Shell Ricochet: the shell deals 2x damage to the first target then bounces to up to 4 more enemies for 80% damage each."}',
-lizard:{name:"Lizard",emoji:"🦎",rarity:"Uncommon",cost:80,range:175,rate:1/1.35,dmg:18,color:"#5a6",desc:"Fast attacker."}':'lizard:{name:"Lizard",emoji:"🦎",rarity:"Uncommon",cost:80,range:175,rate:1/1.35,dmg:18,color:"#5a6",desc:"Snaps enemies with a lightning-fast tongue. At Level 10, every 7th attack triggers Tongue Frenzy: 5 rapid lashes deal 75% current tower damage each, retargeting enemies in range."}',
+'lizard:{name:"Lizard",emoji:"🦎",rarity:"Uncommon",cost:80,range:175,rate:1/1.35,dmg:18,color:"#5a6",desc:"Fast attacker."}':'lizard:{name:"Lizard",emoji:"🦎",rarity:"Uncommon",cost:80,range:175,rate:1/1.35,dmg:18,color:"#5a6",desc:"Snaps enemies with a lightning-fast tongue. At Level 10, every 7th attack triggers Tongue Frenzy: 5 rapid lashes deal 75% current tower damage each, retargeting enemies in range."}',
 'scorpion:{name:"Scorpion",emoji:"🦂",rarity:"Uncommon",cost:90,range:160,rate:1/1.10,dmg:25,color:"#a65",desc:"Strong quick attacker."}':'scorpion:{name:"Scorpion",emoji:"🦂",rarity:"Uncommon",cost:90,range:160,rate:1/1.10,dmg:25,color:"#a65",desc:"Fires venomous stinger shots. At Level 10, every 6th attack triggers Venom Burst: 2x impact damage and a potent 6-second poison that deals 35% current tower damage per tick."}'
 }
 for old,new in repls.items():
     if old not in s: raise RuntimeError('description anchor missing: '+old[:30])
     s=s.replace(old,new,1)
 
-# Add attack logic immediately before the existing parrot/general fallback.
 anchor='''  if(t.key==="parrot" && t.level>=10){\n'''
 if anchor not in s: raise RuntimeError('tower attack insertion anchor missing')
 logic=r'''  // PEACOCK_TURTLE_LIZARD_SCORPION_ATTACKS_V1
@@ -99,13 +98,11 @@ logic=r'''  // PEACOCK_TURTLE_LIZARD_SCORPION_ATTACKS_V1
 '''
 s=s.replace(anchor,logic+anchor,1)
 
-# Add these effects to the high-visibility helper.
 old='''"woolBall","woolTrapBanner"]);'''
 new='''"woolBall","woolTrapBanner","peacockFeather","peacockRoyalFeather","peacockRoyalFanBanner","turtleShell","lizardTongue","lizardFrenzyBanner","scorpionStinger","scorpionVenomBurst"]);'''
 if old not in s: raise RuntimeError('visibility set anchor missing')
 s=s.replace(old,new,1)
 
-# Add renderer branches before sealWaterBolt.
 draw_anchor='''    }else if(s.type==="sealWaterBolt"){\n'''
 if draw_anchor not in s: raise RuntimeError('shot renderer anchor missing')
 draw=r'''    }else if(s.type==="peacockFeather"||s.type==="peacockRoyalFeather"){
