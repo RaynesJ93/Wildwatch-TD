@@ -387,7 +387,7 @@ const animals = {
   sloth:{name:"Sloth",emoji:"🦥",rarity:"Uncommon",cost:92,range:150,rate:1/.60,dmg:34,color:"#876",desc:"Throws spinning sticks. At Level 10, every 8th attack triggers Tree Topple: a whole tree crashes across the path, dealing 2x current tower damage to enemies in range and slowing them by 30% for 3s."},
   koala:{name:"Koala",emoji:"🐨",rarity:"Uncommon",cost:85,range:175,rate:1/.95,dmg:22,color:"#aaa",desc:"Attacks with eucalyptus Branch Whacks. At Level 10, every 7th attack triggers Koala Fury for 4s: attack speed doubles and each attack strikes with 3 leafy branches instead of one."},
   goat:{name:"Goat",emoji:"🐐",rarity:"Uncommon",cost:88,range:160,rate:1/.90,dmg:25,color:"#ddd",desc:"Vomit Spray attacks enemies. Every 5th attack poisons. At Level 10, every 5th attack becomes Ram Rage: 3x damage and confuses the target."},
-  sheep:{name:"Sheep",emoji:"🐑",rarity:"Uncommon",cost:82,range:155,rate:1,dmg:21,color:"#eee",desc:"Balanced attacker."},
+  sheep:{name:"Sheep",emoji:"🐑",rarity:"Uncommon",cost:82,range:155,rate:1,dmg:21,color:"#eee",desc:"Fires fluffy spinning Wool Balls. At Level 10, every 6th attack creates a Wool Trap for 5s: enemies inside are slowed by 50% and take 40% current tower damage each second."},
   ram:{name:"Ram",emoji:"🐏",rarity:"Uncommon",cost:92,range:145,rate:1/.80,dmg:29,color:"#aaa",desc:"Heavy close attacker."},
   pig:{name:"Pig",emoji:"🐖",rarity:"Uncommon",cost:90,range:150,rate:1/.85,dmg:27,color:"#eaa",desc:"Heavy attacker."},
   turkey:{name:"Turkey",emoji:"🦃",rarity:"Uncommon",cost:80,range:185,rate:1/1.15,dmg:18,color:"#963",desc:"Fast ranged attacker."},
@@ -1415,7 +1415,8 @@ function moveEnemy(e,dt){
     }
   }
   if(e.slowTimer>0)e.slowTimer-=dt;
-  if((e.slothSlowTimer||0)>0){e.slothSlowTimer=Math.max(0,e.slothSlowTimer-dt);speed*=.70;}
+  if((battle.woolTraps||[]).some(z=>z.life>0&&Math.hypot(e.x-z.x,e.y-z.y)<=z.r))speed*=.50;
+      if((e.slothSlowTimer||0)>0){e.slothSlowTimer=Math.max(0,e.slothSlowTimer-dt);speed*=.70;}
       if((e.cricketSlowTimer||0)>0){e.cricketSlowTimer=Math.max(0,e.cricketSlowTimer-dt);speed*=.70;}
     if((e.snailVulnerableTimer||0)>0)e.snailVulnerableTimer=Math.max(0,e.snailVulnerableTimer-dt);
     if((e.crowSlowTimer||0)>0){e.crowSlowTimer=Math.max(0,e.crowSlowTimer-dt);speed*=.75;}
@@ -1495,6 +1496,9 @@ function towerTickCore(t,dt){
     t.cd=cardRate(t.key);
     return;
   }
+
+  // SHEEP_WOOL_TRAP_V1: Wool Ball + Level 10 Wool Trap.
+  if(t.key==="sheep"){let trap=false;if(t.level>=10){t.sheepAttackCount=(t.sheepAttackCount||0)+1;trap=t.sheepAttackCount%6===0;}if(trap){battle.woolTraps=battle.woolTraps||[];battle.woolTraps.push({x:target.x,y:target.y,r:62,life:5,tick:0,dmg:dmg*.40});battle.shots.push({x:target.x,y:target.y,tx:target.x,ty:target.y,life:.8,maxLife:.8,type:"woolTrapBanner"});}else{target.hp-=dmg;battle.shots.push({x:t.x,y:t.y-2,tx:target.x,ty:target.y,life:.34,maxLife:.34,type:"woolBall",spin:Math.random()*6.28});}t.cd=cardRate(t.key);return;}
 
   // KOALA_FURY_V1: Branch Whack + Level 10 Koala Fury.
   if(t.key==="koala"){
@@ -2347,7 +2351,9 @@ function update(dt){
     });
   });
   battle.towers.forEach(t=>towerTick(t,dt));
-  battle.enemies=battle.enemies.filter(e=>!e.dead);battle.shots=battle.shots.filter(s=>s.life>0);
+  battle.enemies=battle.enemies.filter(e=>!e.dead);// SHEEP_WOOL_TRAP_UPDATE_V1
+  battle.woolTraps=battle.woolTraps||[];for(const z of battle.woolTraps){z.life-=dt;z.tick=(z.tick||0)+dt;if(z.tick>=1){const ticks=Math.floor(z.tick);z.tick-=ticks;for(const e of battle.enemies){if(!e.dead&&e.hp>0&&Math.hypot(e.x-z.x,e.y-z.y)<=z.r)e.hp-=z.dmg*ticks;}}}battle.woolTraps=battle.woolTraps.filter(z=>z.life>0);
+  battle.shots=battle.shots.filter(s=>s.life>0);
   if(battle.waveActive&&!battle.spawning&&battle.enemies.length===0)finishWave();
 }
 
@@ -3050,6 +3056,8 @@ function draw(){
     ctx.fillStyle="#8cc56b";ctx.beginPath();ctx.arc(z.x+28,z.y+10,7,0,Math.PI*2);ctx.fill();
     ctx.restore();
   });
+  // SHEEP_WOOL_TRAP_ZONE_DRAW_V1
+  for(const z of (battle.woolTraps||[])){ctx.save();ctx.globalAlpha=Math.min(.75,z.life);ctx.fillStyle="#f5f5f2";ctx.strokeStyle="#d5dde0";ctx.lineWidth=3;ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,Math.PI*2);ctx.fill();ctx.stroke();for(let i=0;i<11;i++){const a=i*2.399,r=(i%4)*13+8;ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(z.x+Math.cos(a)*r,z.y+Math.sin(a)*r,8+(i%3),0,Math.PI*2);ctx.fill();}ctx.restore();}
   battle.shots?.forEach(s=>{
     if(s.type==="animalAttackFlash"){
       const a=Math.max(0,s.life/(s.maxLife||.16));
@@ -3126,6 +3134,9 @@ function draw(){
       ctx.fillStyle="#fffdf2";ctx.strokeStyle="#c9b98f";ctx.lineWidth=2;ctx.shadowColor="rgba(255,245,190,.8)";ctx.shadowBlur=7;
       ctx.beginPath();ctx.ellipse(0,0,9,12,0,0,Math.PI*2);ctx.fill();ctx.stroke();
       ctx.restore();
+    // SHEEP_WOOL_TRAP_DRAW_V1
+    }else if(s.type==="woolBall"){const q=1-Math.max(0,s.life)/(s.maxLife||.34),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q;ctx.save();ctx.translate(x,y);ctx.rotate((s.spin||0)+q*9);ctx.fillStyle="#fff";ctx.strokeStyle="#c9d2d6";ctx.lineWidth=2;for(let i=0;i<6;i++){const a=i*Math.PI/3;ctx.beginPath();ctx.arc(Math.cos(a)*5,Math.sin(a)*5,6,0,Math.PI*2);ctx.fill();ctx.stroke();}ctx.restore();
+    }else if(s.type==="woolTrapBanner"){const q=1-Math.max(0,s.life)/(s.maxLife||.8);ctx.save();ctx.translate(s.x,s.y);ctx.globalAlpha=Math.max(0,1-q);ctx.fillStyle="#fff";ctx.strokeStyle="#59656b";ctx.lineWidth=3;ctx.font="bold 15px system-ui";ctx.textAlign="center";ctx.strokeText("WOOL TRAP!",0,-34-q*12);ctx.fillText("WOOL TRAP!",0,-34-q*12);ctx.restore();
     // KOALA_FURY_DRAW_V1
     }else if(s.type==="koalaBranch"){const q=1-Math.max(0,s.life)/(s.maxLife||.27),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q,a=Math.atan2(s.ty-s.y,s.tx-s.x)+Math.sin(q*Math.PI)*.45+(s.offset||0)*.13;ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.strokeStyle=s.fury?"#8f5b2e":"#72502e";ctx.lineWidth=s.fury?6:5;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(14,0);ctx.stroke();ctx.fillStyle=s.fury?"#74d85d":"#579b49";for(let i=-1;i<=1;i+=2){ctx.beginPath();ctx.ellipse(i*7,-5,6,3,i*.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(i*3,5,5,3,-i*.5,0,Math.PI*2);ctx.fill();}ctx.restore();
     }else if(s.type==="koalaFuryBanner"){const q=1-Math.max(0,s.life)/(s.maxLife||.8);ctx.save();ctx.translate(s.x,s.y);ctx.globalAlpha=Math.max(0,1-q);ctx.strokeStyle="#1f521e";ctx.fillStyle="#9cff78";ctx.lineWidth=3;ctx.font="bold 15px system-ui";ctx.textAlign="center";ctx.strokeText("KOALA FURY!",0,-34-q*12);ctx.fillText("KOALA FURY!",0,-34-q*12);for(let i=0;i<7;i++){const a=i*.9+q*5,r=20+q*24;ctx.fillText("🍃",Math.cos(a)*r,Math.sin(a)*r);}ctx.restore();
