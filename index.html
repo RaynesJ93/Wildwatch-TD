@@ -374,7 +374,7 @@ const animals = {
   caterpillar:{name:"Caterpillar",emoji:"🐛",rarity:"Common",cost:40,range:120,rate:1/1.20,dmg:12,color:"#7c5",desc:"Fires leaves; at tower level 10 every 4th attack launches a giant leaf for 5x base damage."},
   ant:{name:"Ant",emoji:"🐜",rarity:"Common",cost:38,range:105,rate:1/1.60,dmg:5,color:"#633",desc:"Fast pincer attacker. Every 3rd attack has a 25% chance to permanently boost this tower’s damage by 5% for the battle."},
   beetle:{name:"Beetle",emoji:"🪲",rarity:"Common",cost:52,range:115,rate:1/1.05,dmg:12,color:"#385",desc:"Throws spinning Dung Balls that splat on impact. At Level 10, every 8th attack triggers Dung Avalanche: 5 huge dung balls drop from above onto enemies in range, each dealing 1.5x current tower damage with a small splash."},
-  cricket:{name:"Cricket",emoji:"🦗",rarity:"Common",cost:48,range:145,rate:1/1.45,dmg:8,color:"#697",desc:"Very fast basic attacker."},
+  cricket:{name:"Cricket",emoji:"🦗",rarity:"Common",cost:48,range:145,rate:1/1.45,dmg:8,color:"#697",desc:"Fires Chirp Wave sound rings. At Level 10, every 7th attack triggers Deafening Chirp: all enemies in range take 2x current tower damage and are slowed by 30% for 2s."},
   worm:{name:"Worm",emoji:"🪱",rarity:"Common",cost:42,range:110,rate:1/1.30,dmg:7,color:"#b87",desc:"Cheap fast attacker."},
   butterfly:{name:"Butterfly",emoji:"🦋",rarity:"Common",cost:48,range:180,rate:1/1.40,dmg:12,color:"#a6e",desc:"Fast long-range attacker."},
   bee:{name:"Bee",emoji:"🐝",rarity:"Common",cost:55,range:165,rate:2.22,dmg:12,color:"#fc3",desc:"Chain-lightning attacker that strikes multiple enemies."},
@@ -1415,7 +1415,8 @@ function moveEnemy(e,dt){
     }
   }
   if(e.slowTimer>0)e.slowTimer-=dt;
-  if((e.snailVulnerableTimer||0)>0)e.snailVulnerableTimer=Math.max(0,e.snailVulnerableTimer-dt);
+  if((e.cricketSlowTimer||0)>0){e.cricketSlowTimer=Math.max(0,e.cricketSlowTimer-dt);speed*=.70;}
+    if((e.snailVulnerableTimer||0)>0)e.snailVulnerableTimer=Math.max(0,e.snailVulnerableTimer-dt);
     if((e.crowSlowTimer||0)>0){e.crowSlowTimer=Math.max(0,e.crowSlowTimer-dt);speed*=.75;}
     if((e.gooseSlowTimer||0)>0){e.gooseSlowTimer=Math.max(0,e.gooseSlowTimer-dt);speed*=.85;}
     if((e.zebraSlowTimer||0)>0)e.zebraSlowTimer=Math.max(0,e.zebraSlowTimer-dt);
@@ -1492,6 +1493,14 @@ function towerTickCore(t,dt){
     });
     t.cd=cardRate(t.key);
     return;
+  }
+
+  // CRICKET_DEAFENING_CHIRP_V1: Chirp Wave + Level 10 Deafening Chirp.
+  if(t.key==="cricket"){
+    let deaf=false;if(t.level>=10){t.cricketAttackCount=(t.cricketAttackCount||0)+1;deaf=t.cricketAttackCount%7===0;}
+    if(deaf){for(const e of battle.enemies){if(!e.dead&&e.hp>0&&Math.hypot(e.x-t.x,e.y-t.y)<=range){e.hp-=dmg*2;e.cricketSlowTimer=Math.max(e.cricketSlowTimer||0,2);}}battle.shots.push({x:t.x,y:t.y,tx:t.x,ty:t.y,life:.8,maxLife:.8,type:"deafeningChirp",radius:range});}
+    else{target.hp-=dmg;battle.shots.push({x:t.x,y:t.y-4,tx:target.x,ty:target.y,life:.30,maxLife:.30,type:"chirpWave"});}
+    t.cd=cardRate(t.key);return;
   }
 
   // BEETLE_DUNG_AVALANCHE_V1: Dung Ball + Level 10 Dung Avalanche.
@@ -3073,6 +3082,9 @@ function draw(){
       ctx.fillStyle="#fffdf2";ctx.strokeStyle="#c9b98f";ctx.lineWidth=2;ctx.shadowColor="rgba(255,245,190,.8)";ctx.shadowBlur=7;
       ctx.beginPath();ctx.ellipse(0,0,9,12,0,0,Math.PI*2);ctx.fill();ctx.stroke();
       ctx.restore();
+    // CRICKET_DEAFENING_CHIRP_DRAW_V1
+    }else if(s.type==="chirpWave"){const q=1-Math.max(0,s.life)/(s.maxLife||.30),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q,a=Math.atan2(s.ty-s.y,s.tx-s.x);ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.strokeStyle="#b8ff7a";ctx.shadowColor="#8cff55";ctx.shadowBlur=8;ctx.lineWidth=2.5;for(let i=0;i<3;i++){const r=5+i*6;ctx.beginPath();ctx.arc(0,0,r,-.75,.75);ctx.stroke();}ctx.restore();
+    }else if(s.type==="deafeningChirp"){const q=1-Math.max(0,s.life)/(s.maxLife||.8);ctx.save();ctx.translate(s.x,s.y);ctx.globalAlpha=Math.max(0,1-q);ctx.strokeStyle="#d8ff87";ctx.shadowColor="#a7ff45";ctx.shadowBlur=15;ctx.lineWidth=4;for(let i=0;i<4;i++){const r=Math.min(s.radius||145,(q*1.15-i*.10)*(s.radius||145));if(r>0){ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();}}ctx.fillStyle="#eaffb0";ctx.font="bold 14px system-ui";ctx.textAlign="center";ctx.fillText("DEAFENING CHIRP!",0,-30-q*15);ctx.restore();
     // BEETLE_DUNG_AVALANCHE_DRAW_V1
     }else if(s.type==="dungBall"){const q=1-Math.max(0,s.life)/(s.maxLife||.32),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q,rad=s.huge?10:6;ctx.save();ctx.translate(x,y);ctx.rotate((s.spin||0)+q*12);ctx.fillStyle="#654321";ctx.strokeStyle="#3d2817";ctx.lineWidth=2;ctx.shadowColor="#2c190e";ctx.shadowBlur=s.huge?9:4;ctx.beginPath();ctx.arc(0,0,rad,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.strokeStyle="#8a623e";ctx.beginPath();ctx.arc(0,0,rad*.55,.2,2.7);ctx.stroke();ctx.beginPath();ctx.arc(1,-1,rad*.7,3.3,5.6);ctx.stroke();if(q>.82){ctx.fillStyle="#7b512f";for(let i=0;i<5;i++){const a=i*1.25,r=(q-.82)*55;ctx.beginPath();ctx.arc(Math.cos(a)*r,Math.sin(a)*r,2+(i%2),0,Math.PI*2);ctx.fill();}}ctx.restore();
     }else if(s.type==="dungAvalancheBanner"){const q=1-Math.max(0,s.life)/(s.maxLife||.75);ctx.save();ctx.translate(s.x,s.y);ctx.globalAlpha=Math.max(0,1-q);ctx.fillStyle="#d39a57";ctx.strokeStyle="#4d301c";ctx.lineWidth=3;ctx.font="bold 14px system-ui";ctx.textAlign="center";ctx.strokeText("DUNG AVALANCHE!",0,-28-q*10);ctx.fillText("DUNG AVALANCHE!",0,-28-q*10);ctx.restore();
