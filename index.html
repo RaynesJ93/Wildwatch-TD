@@ -385,7 +385,7 @@ const animals = {
   badger:{name:"Badger",emoji:"🦡",rarity:"Uncommon",cost:88,range:140,rate:1/.85,dmg:26,color:"#777",desc:"Attacks with heavy Claw Swipes. At Level 10, every 5th attack triggers Savage Maul: 3 rapid strikes dealing 100%, 100% and 150% current tower damage, retargeting if an enemy is defeated."},
   otter:{name:"Otter",emoji:"🦦",rarity:"Uncommon",cost:82,range:190,rate:1/1.25,dmg:18,color:"#986",desc:"Throws spinning pebbles with a splash. At Level 10, every 8th attack triggers River Rush: a huge wave hits every enemy in range for 1.5x current tower damage and pushes them back along the path."},
   sloth:{name:"Sloth",emoji:"🦥",rarity:"Uncommon",cost:92,range:150,rate:1/.60,dmg:34,color:"#876",desc:"Throws spinning sticks. At Level 10, every 8th attack triggers Tree Topple: a whole tree crashes across the path, dealing 2x current tower damage to enemies in range and slowing them by 30% for 3s."},
-  koala:{name:"Koala",emoji:"🐨",rarity:"Uncommon",cost:85,range:175,rate:1/.95,dmg:22,color:"#aaa",desc:"Balanced attacker."},
+  koala:{name:"Koala",emoji:"🐨",rarity:"Uncommon",cost:85,range:175,rate:1/.95,dmg:22,color:"#aaa",desc:"Attacks with eucalyptus Branch Whacks. At Level 10, every 7th attack triggers Koala Fury for 4s: attack speed doubles and each attack strikes with 3 leafy branches instead of one."},
   goat:{name:"Goat",emoji:"🐐",rarity:"Uncommon",cost:88,range:160,rate:1/.90,dmg:25,color:"#ddd",desc:"Vomit Spray attacks enemies. Every 5th attack poisons. At Level 10, every 5th attack becomes Ram Rage: 3x damage and confuses the target."},
   sheep:{name:"Sheep",emoji:"🐑",rarity:"Uncommon",cost:82,range:155,rate:1,dmg:21,color:"#eee",desc:"Balanced attacker."},
   ram:{name:"Ram",emoji:"🐏",rarity:"Uncommon",cost:92,range:145,rate:1/.80,dmg:29,color:"#aaa",desc:"Heavy close attacker."},
@@ -1494,6 +1494,12 @@ function towerTickCore(t,dt){
     });
     t.cd=cardRate(t.key);
     return;
+  }
+
+  // KOALA_FURY_V1: Branch Whack + Level 10 Koala Fury.
+  if(t.key==="koala"){
+    t.koalaFury=Math.max(0,(t.koalaFury||0)-dt);let trigger=false;if(t.level>=10&&t.koalaFury<=0){t.koalaAttackCount=(t.koalaAttackCount||0)+1;trigger=t.koalaAttackCount%7===0;if(trigger){t.koalaFury=4;battle.shots.push({x:t.x,y:t.y,tx:t.x,ty:t.y,life:.8,maxLife:.8,type:"koalaFuryBanner"});}}
+    if(t.koalaFury>0){const pool=battle.enemies.filter(e=>!e.dead&&e.hp>0&&Math.hypot(e.x-t.x,e.y-t.y)<=range);for(let i=0;i<3&&pool.length;i++){const e=pool[i%pool.length];e.hp-=dmg;battle.shots.push({x:t.x,y:t.y,tx:e.x,ty:e.y,life:.22+i*.035,maxLife:.22+i*.035,type:"koalaBranch",fury:1,offset:i-1});}t.cd=cardRate(t.key)*.5;}else{target.hp-=dmg;battle.shots.push({x:t.x,y:t.y,tx:target.x,ty:target.y,life:.27,maxLife:.27,type:"koalaBranch",fury:0,offset:0});t.cd=cardRate(t.key);}return;
   }
 
   // SLOTH_STICK_THROW_V1: spinning stick projectile attack.
@@ -3120,6 +3126,9 @@ function draw(){
       ctx.fillStyle="#fffdf2";ctx.strokeStyle="#c9b98f";ctx.lineWidth=2;ctx.shadowColor="rgba(255,245,190,.8)";ctx.shadowBlur=7;
       ctx.beginPath();ctx.ellipse(0,0,9,12,0,0,Math.PI*2);ctx.fill();ctx.stroke();
       ctx.restore();
+    // KOALA_FURY_DRAW_V1
+    }else if(s.type==="koalaBranch"){const q=1-Math.max(0,s.life)/(s.maxLife||.27),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q,a=Math.atan2(s.ty-s.y,s.tx-s.x)+Math.sin(q*Math.PI)*.45+(s.offset||0)*.13;ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.strokeStyle=s.fury?"#8f5b2e":"#72502e";ctx.lineWidth=s.fury?6:5;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(14,0);ctx.stroke();ctx.fillStyle=s.fury?"#74d85d":"#579b49";for(let i=-1;i<=1;i+=2){ctx.beginPath();ctx.ellipse(i*7,-5,6,3,i*.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(i*3,5,5,3,-i*.5,0,Math.PI*2);ctx.fill();}ctx.restore();
+    }else if(s.type==="koalaFuryBanner"){const q=1-Math.max(0,s.life)/(s.maxLife||.8);ctx.save();ctx.translate(s.x,s.y);ctx.globalAlpha=Math.max(0,1-q);ctx.strokeStyle="#1f521e";ctx.fillStyle="#9cff78";ctx.lineWidth=3;ctx.font="bold 15px system-ui";ctx.textAlign="center";ctx.strokeText("KOALA FURY!",0,-34-q*12);ctx.fillText("KOALA FURY!",0,-34-q*12);for(let i=0;i<7;i++){const a=i*.9+q*5,r=20+q*24;ctx.fillText("🍃",Math.cos(a)*r,Math.sin(a)*r);}ctx.restore();
     // SLOTH_TREE_TOPPLE_DRAW_V1
     }else if(s.type==="treeTopple"){const q=1-Math.max(0,s.life)/(s.maxLife||.9),x=s.tx,y=s.ty;ctx.save();ctx.translate(x,y);const fall=Math.min(1,q*2.2),ang=-1.35+fall*1.35;ctx.rotate(ang);ctx.globalAlpha=Math.max(.25,1-Math.max(0,q-.72)*3.2);ctx.strokeStyle="#6b3f1f";ctx.lineWidth=15;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-65,0);ctx.lineTo(58,0);ctx.stroke();ctx.strokeStyle="#9b6333";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-58,-3);ctx.lineTo(50,-3);ctx.stroke();ctx.fillStyle="#3f7f3e";for(let i=0;i<7;i++){const px=-45+i*17,py=(i%2?8:-9);ctx.beginPath();ctx.arc(px,py,12,0,Math.PI*2);ctx.fill();}ctx.restore();ctx.save();ctx.translate(x,y);ctx.globalAlpha=Math.max(0,1-q);ctx.fillStyle="#dff7b0";ctx.strokeStyle="#2b4b20";ctx.lineWidth=3;ctx.font="bold 15px system-ui";ctx.textAlign="center";ctx.strokeText("TREE TOPPLE!",0,-38-q*12);ctx.fillText("TREE TOPPLE!",0,-38-q*12);ctx.restore();
     // SLOTH_STICK_THROW_DRAW_V1
