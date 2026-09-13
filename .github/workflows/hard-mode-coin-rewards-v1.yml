@@ -1,0 +1,26 @@
+name: Hard Mode Coin Rewards V1
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/scripts/hard_mode_coin_rewards_v1.py'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - run: git pull --rebase origin main
+      - run: python .github/scripts/hard_mode_coin_rewards_v1.py
+      - name: Commit update
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Set Hard Mode coin rewards to 1.65x Normal"
+          git push origin main
