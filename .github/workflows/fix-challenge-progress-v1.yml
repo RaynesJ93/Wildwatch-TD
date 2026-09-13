@@ -1,0 +1,24 @@
+name: Fix Challenge Progress V1
+on:
+  push:
+    paths:
+      - '.github/scripts/fix_challenge_progress_v1.py'
+      - '.github/workflows/fix-challenge-progress-v1.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Apply challenge progress fix
+        run: python .github/scripts/fix_challenge_progress_v1.py
+      - name: Commit game update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Fix Challenge Quest progress tracking"
+          git push
