@@ -40,3 +40,4 @@ if old not in s:
 s=s.replace(old,new,1)
 p.write_text(s,encoding='utf-8')
 print('Applied series-wide Hard Mode unlock rules')
+# trigger workflow after workflow file exists
