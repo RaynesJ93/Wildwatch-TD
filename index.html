@@ -585,16 +585,21 @@ function addCardXp(k,amount){
   }
   if(cardLevel(k)>=MAX_CARD_LEVEL)save.cardXP[k]=0;
 }
-// CARD_XP_WAVE_REWARDS_V1: every deck card earns 300 XP per cleared wave; used cards also earn +2 XP per enemy killed that wave.
-function awardWaveDeckXp(){
+// CARD_XP_MAP_COMPLETION_V2: +300 XP is awarded once on full map completion, not after every wave.
+// Cards that have been used still gain +2 XP for every enemy killed in each cleared wave.
+function awardWaveUsedKillXp(){
   const deck=[...new Set(save.deck||[])].filter(k=>save.unlocked.includes(k));
   const used=[...new Set((battle&&battle.usedCards)||[])].filter(k=>deck.includes(k));
   const kills=Math.max(0,Number(battle&&battle.waveKills||0));
-  deck.forEach(k=>addCardXp(k,300));
   if(kills>0)used.forEach(k=>addCardXp(k,kills*2));
-  return {base:300,kills,bonus:kills*2,usedCount:used.length,deckCount:deck.length};
+  return {kills,bonus:kills*2,usedCount:used.length};
 }
-// Legacy hook retained for compatibility; map completion/defeat no longer grants a separate used-card XP payout.
+function awardMapDeckXp(){
+  const deck=[...new Set(save.deck||[])].filter(k=>save.unlocked.includes(k));
+  deck.forEach(k=>addCardXp(k,300));
+  return deck.length?300:0;
+}
+// Legacy hook retained for compatibility.
 function awardUsedCardXp(completed){return 0;}
 function cardBaseDamage(k){const a=animals[k];return a.dmg*(1+(cardLevel(k)-1)*.06)*masteryDamageMult(k);}
 function cardBaseRange(k){const a=animals[k];return a.range*(1+(cardLevel(k)-1)*.035)*masteryRangeMult(k);}
@@ -2344,7 +2349,7 @@ function showMapSummary(cardXp){
   modal.querySelector('#mapSummaryKills').textContent=String(battle.mapKills||0);
   modal.querySelector('#mapSummaryCoins').textContent=`🟡 ${battle.mapCoinsEarned||0}`;
   modal.querySelector('#mapSummaryTower').innerHTML=strongestHtml;
-  modal.querySelector('#mapSummaryXp').textContent='Each cleared wave: +300 EXP to every deck card • used cards also gain +2 EXP per enemy killed';
+  modal.querySelector('#mapSummaryXp').textContent=cardXp?`+${cardXp} EXP to every deck card for completing the map • used cards also gained +2 EXP per enemy killed`:'Used cards gained +2 EXP per enemy killed';
   modal.classList.add('show');
 }
 function gameOver(){
@@ -2371,7 +2376,7 @@ function finishWave(){
   const permanentWaveCoins=hardMode?20:12;
   save.metaCoins+=permanentWaveCoins;
   battle.mapCoinsEarned=(battle.mapCoinsEarned||0)+permanentWaveCoins;
-  const waveCardXp=awardWaveDeckXp();
+  const waveCardXp=awardWaveUsedKillXp();
   battle.waveKills=0;
   if(autoWave && clearedWave<15 && !battle.ended){
     clearTimeout(autoWaveTimer);
@@ -2380,7 +2385,7 @@ function finishWave(){
   if(clearedWave>=15){
     addQuestProgress(hardMode?"hardMaps":"normalMaps",1);
     evaluateMapChallenges();
-    const cardXp=0;
+    const cardXp=awardMapDeckXp();
     setTimeout(()=>showMapSummary(cardXp),120);
     if(hardMode)save.hardCompleted[`${currentSeries}-${currentMap}`]=true;
     else save.normalCompleted[`${currentSeries}-${currentMap}`]=true;
@@ -2408,7 +2413,7 @@ function finishWave(){
     startWave.textContent="Start Next Level";
     const seriesName=seriesDisplayName(currentSeries);
     const nextText=currentMap<10?`${currentSeries}-${currentMap+1} unlocked!`:currentSeries===1?"Desert Dunes 2-1 unlocked!":currentSeries===2?"Haunted Woods 3-1 unlocked!":currentSeries===3?"Tundra Falls 4-1 unlocked!":currentSeries===4?"Volcanic Wasteland 5-1 unlocked!":currentSeries===5?"Crystal Caverns 6-1 unlocked!":"Crystal Caverns series complete!";
-    message.textContent=`🏆 ${seriesName} ${currentSeries}-${currentMap} complete! ${nextText} • 🟡 200 bonus Coins!${cardXp?` • Used cards +${cardXp} XP each`:""}`;
+    message.textContent=`🏆 ${seriesName} ${currentSeries}-${currentMap} complete! ${nextText} • 🟡 200 bonus Coins!${cardXp?` • Every deck card +${cardXp} XP`:""}`;
     updateHud();
     return;
   }
@@ -2419,7 +2424,7 @@ function finishWave(){
   addWeeklyProgress("weeklyCoins",waveCoins);
   saveBattleState();
   startWave.textContent="Start wave";
-  message.textContent=`Wave cleared! +${waveCoins} 🟡 battle coins • +300 EXP to every deck card${waveCardXp.usedCount&&waveCardXp.bonus?` • used cards +${waveCardXp.bonus} EXP from ${waveCardXp.kills} kills`:''}`;
+  message.textContent=`Wave cleared! +${waveCoins} 🟡 battle coins${waveCardXp.usedCount&&waveCardXp.bonus?` • used cards +${waveCardXp.bonus} EXP from ${waveCardXp.kills} kills`:''}`;
   updateHud();
 }
 function update(dt){
