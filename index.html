@@ -384,7 +384,7 @@ const animals = {
   skunk:{name:"Skunk",emoji:"🦨",rarity:"Uncommon",cost:82,range:155,rate:1,dmg:21,color:"#eee",desc:"Sprays a drifting stink cloud. At Level 10, every 5th attack becomes Stink Bomb: a toxic cloud lasts 4s, deals 40% base damage each second and slows enemies by 25%."},
   badger:{name:"Badger",emoji:"🦡",rarity:"Uncommon",cost:88,range:140,rate:1/.85,dmg:26,color:"#777",desc:"Attacks with heavy Claw Swipes. At Level 10, every 5th attack triggers Savage Maul: 3 rapid strikes dealing 100%, 100% and 150% current tower damage, retargeting if an enemy is defeated."},
   otter:{name:"Otter",emoji:"🦦",rarity:"Uncommon",cost:82,range:190,rate:1/1.25,dmg:18,color:"#986",desc:"Throws spinning pebbles with a splash. At Level 10, every 8th attack triggers River Rush: a huge wave hits every enemy in range for 1.5x current tower damage and pushes them back along the path."},
-  sloth:{name:"Sloth",emoji:"🦥",rarity:"Uncommon",cost:92,range:150,rate:1/.60,dmg:34,color:"#876",desc:"Slow heavy attacker that throws spinning sticks at enemies."},
+  sloth:{name:"Sloth",emoji:"🦥",rarity:"Uncommon",cost:92,range:150,rate:1/.60,dmg:34,color:"#876",desc:"Throws spinning sticks. At Level 10, every 8th attack triggers Tree Topple: a whole tree crashes across the path, dealing 2x current tower damage to enemies in range and slowing them by 30% for 3s."},
   koala:{name:"Koala",emoji:"🐨",rarity:"Uncommon",cost:85,range:175,rate:1/.95,dmg:22,color:"#aaa",desc:"Balanced attacker."},
   goat:{name:"Goat",emoji:"🐐",rarity:"Uncommon",cost:88,range:160,rate:1/.90,dmg:25,color:"#ddd",desc:"Vomit Spray attacks enemies. Every 5th attack poisons. At Level 10, every 5th attack becomes Ram Rage: 3x damage and confuses the target."},
   sheep:{name:"Sheep",emoji:"🐑",rarity:"Uncommon",cost:82,range:155,rate:1,dmg:21,color:"#eee",desc:"Balanced attacker."},
@@ -1415,7 +1415,8 @@ function moveEnemy(e,dt){
     }
   }
   if(e.slowTimer>0)e.slowTimer-=dt;
-  if((e.cricketSlowTimer||0)>0){e.cricketSlowTimer=Math.max(0,e.cricketSlowTimer-dt);speed*=.70;}
+  if((e.slothSlowTimer||0)>0){e.slothSlowTimer=Math.max(0,e.slothSlowTimer-dt);speed*=.70;}
+      if((e.cricketSlowTimer||0)>0){e.cricketSlowTimer=Math.max(0,e.cricketSlowTimer-dt);speed*=.70;}
     if((e.snailVulnerableTimer||0)>0)e.snailVulnerableTimer=Math.max(0,e.snailVulnerableTimer-dt);
     if((e.crowSlowTimer||0)>0){e.crowSlowTimer=Math.max(0,e.crowSlowTimer-dt);speed*=.75;}
     if((e.gooseSlowTimer||0)>0){e.gooseSlowTimer=Math.max(0,e.gooseSlowTimer-dt);speed*=.85;}
@@ -1496,7 +1497,8 @@ function towerTickCore(t,dt){
   }
 
   // SLOTH_STICK_THROW_V1: spinning stick projectile attack.
-  if(t.key==="sloth"){target.hp-=dmg;battle.shots.push({x:t.x,y:t.y-4,tx:target.x,ty:target.y,life:.38,maxLife:.38,type:"slothStick",spin:Math.random()*6.28});t.cd=cardRate(t.key);return;}
+  // SLOTH_TREE_TOPPLE_V1: Level 10 every 8th attack drops a tree across enemies in range.
+  if(t.key==="sloth"){let topple=false;if(t.level>=10){t.slothAttackCount=(t.slothAttackCount||0)+1;topple=t.slothAttackCount%8===0;}if(topple){const hit=battle.enemies.filter(e=>!e.dead&&e.hp>0&&Math.hypot(e.x-t.x,e.y-t.y)<=range);for(const e of hit){e.hp-=dmg*2;e.slothSlowTimer=Math.max(e.slothSlowTimer||0,3);}battle.shots.push({x:t.x,y:t.y,tx:target.x,ty:target.y,life:.9,maxLife:.9,type:"treeTopple",radius:range});}else{target.hp-=dmg;battle.shots.push({x:t.x,y:t.y-4,tx:target.x,ty:target.y,life:.38,maxLife:.38,type:"slothStick",spin:Math.random()*6.28});}t.cd=cardRate(t.key);return;}
 
   // OTTER_RIVER_RUSH_V1: Pebble Toss + Level 10 River Rush.
   if(t.key==="otter"){
@@ -3118,6 +3120,8 @@ function draw(){
       ctx.fillStyle="#fffdf2";ctx.strokeStyle="#c9b98f";ctx.lineWidth=2;ctx.shadowColor="rgba(255,245,190,.8)";ctx.shadowBlur=7;
       ctx.beginPath();ctx.ellipse(0,0,9,12,0,0,Math.PI*2);ctx.fill();ctx.stroke();
       ctx.restore();
+    // SLOTH_TREE_TOPPLE_DRAW_V1
+    }else if(s.type==="treeTopple"){const q=1-Math.max(0,s.life)/(s.maxLife||.9),x=s.tx,y=s.ty;ctx.save();ctx.translate(x,y);const fall=Math.min(1,q*2.2),ang=-1.35+fall*1.35;ctx.rotate(ang);ctx.globalAlpha=Math.max(.25,1-Math.max(0,q-.72)*3.2);ctx.strokeStyle="#6b3f1f";ctx.lineWidth=15;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-65,0);ctx.lineTo(58,0);ctx.stroke();ctx.strokeStyle="#9b6333";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-58,-3);ctx.lineTo(50,-3);ctx.stroke();ctx.fillStyle="#3f7f3e";for(let i=0;i<7;i++){const px=-45+i*17,py=(i%2?8:-9);ctx.beginPath();ctx.arc(px,py,12,0,Math.PI*2);ctx.fill();}ctx.restore();ctx.save();ctx.translate(x,y);ctx.globalAlpha=Math.max(0,1-q);ctx.fillStyle="#dff7b0";ctx.strokeStyle="#2b4b20";ctx.lineWidth=3;ctx.font="bold 15px system-ui";ctx.textAlign="center";ctx.strokeText("TREE TOPPLE!",0,-38-q*12);ctx.fillText("TREE TOPPLE!",0,-38-q*12);ctx.restore();
     // SLOTH_STICK_THROW_DRAW_V1
     }else if(s.type==="slothStick"){const q=1-Math.max(0,s.life)/(s.maxLife||.38),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q;ctx.save();ctx.translate(x,y);ctx.rotate((s.spin||0)+q*12);ctx.strokeStyle="#6b3f1f";ctx.lineWidth=5;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(10,0);ctx.stroke();ctx.strokeStyle="#a56b38";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-8,-1);ctx.lineTo(8,-1);ctx.stroke();ctx.strokeStyle="#5f8d42";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(8,-5);ctx.stroke();ctx.restore();
     // OTTER_RIVER_RUSH_DRAW_V1
