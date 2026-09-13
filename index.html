@@ -366,7 +366,7 @@ const animals = {
   chicken:{name:"Chicken",emoji:"🐔",rarity:"Common",cost:52,range:150,rate:1/1.20,dmg:9,color:"#eee",desc:"Launches cracking egg bombs. At Level 10, every 5th attack fires an Explosive Egg: 2x damage to the target, 100% splash damage within 75 range and a 20% slow for 2s."},
   bird:{name:"Pigeon",emoji:"🕊️",rarity:"Common",cost:55,range:190,rate:1/1.30,dmg:8,color:"#7f8c99",desc:"Dropping Strike attacks from above. At Level 10, every 7th attack triggers Flock Frenzy: 8 pigeons swoop across enemies in range, each dealing 60% current tower damage."},
   duck:{name:"Duck",emoji:"🦆",rarity:"Common",cost:58,range:160,rate:1/1.10,dmg:11,color:"#6b8e45",desc:"Fires Water Peck splashes. At Level 10, every 6th attack becomes Duck Dive: a piercing wave hits up to 5 enemies, dealing 1.5x damage to the first and 75% damage to enemies behind, slowing all hit enemies by 20% for 2s."},
-  goose:{name:"Goose",emoji:"🪿",rarity:"Common",cost:62,range:155,rate:1/.95,dmg:20,color:"#ddd",desc:"Strong basic attacker."},
+  goose:{name:"Goose",emoji:"🪿",rarity:"Common",cost:62,range:155,rate:1/.95,dmg:20,color:"#ddd",desc:"Fires cone-shaped Honk Blasts. At Level 10, every 7th attack triggers Angry Goose for 4s: 75% faster attacks hit up to 3 enemies for 100% current damage and slow them by 15% for 1s."},
   crow:{name:"Crow",emoji:"🐦‍⬛",rarity:"Common",cost:62,range:195,rate:1/1.15,dmg:12,color:"#222",desc:"Long-range basic attacker."},
   parrot:{name:"Parrot",emoji:"🦜",rarity:"Common",cost:64,range:205,rate:1/1.20,dmg:19,color:"#e44",desc:"Long-range basic attacker."},
   penguin:{name:"Penguin",emoji:"🐧",rarity:"Common",cost:65,range:150,rate:1/.90,dmg:15,color:"#eee",desc:"Heavy basic attacker."},
@@ -1415,7 +1415,8 @@ function moveEnemy(e,dt){
     }
   }
   if(e.slowTimer>0)e.slowTimer-=dt;
-  if((e.zebraSlowTimer||0)>0)e.zebraSlowTimer=Math.max(0,e.zebraSlowTimer-dt);
+  if((e.gooseSlowTimer||0)>0){e.gooseSlowTimer=Math.max(0,e.gooseSlowTimer-dt);speed*=.85;}
+    if((e.zebraSlowTimer||0)>0)e.zebraSlowTimer=Math.max(0,e.zebraSlowTimer-dt);
   if((e.chickenSlowTimer||0)>0)e.chickenSlowTimer=Math.max(0,e.chickenSlowTimer-dt);
   if((e.goatConfuseTimer||0)>0)e.goatConfuseTimer=Math.max(0,e.goatConfuseTimer-dt);
   if(e.hp<=0){killEnemy(e);return}
@@ -1488,6 +1489,18 @@ function towerTickCore(t,dt){
       if(e.hp<=0)killEnemy(e);
     });
     t.cd=cardRate(t.key);
+    return;
+  }
+
+  // GOOSE_ANGRY_GOOSE_V1: Honk Blast + Level 10 Angry Goose.
+  if(t.key==="goose"){
+    if(t.level>=10){t.gooseAttackCount=(t.gooseAttackCount||0)+1;if(t.gooseAttackCount%7===0){t.gooseRage=4;battle.shots.push({x:t.x,y:t.y-10,tx:t.x,ty:t.y-10,life:.75,maxLife:.75,type:"gooseRageBurst"});}}
+    const raging=(t.gooseRage||0)>0;
+    if(raging)t.gooseRage=Math.max(0,t.gooseRage-dt);
+    const pool=battle.enemies.filter(e=>!e.dead&&e.hp>0&&Math.hypot(e.x-t.x,e.y-t.y)<=range).sort((a,b)=>Math.hypot(a.x-target.x,a.y-target.y)-Math.hypot(b.x-target.x,b.y-target.y));
+    const hits=raging?pool.slice(0,3):[target];
+    hits.forEach((e,i)=>{e.hp-=dmg;if(raging){e.gooseSlowTimer=Math.max(e.gooseSlowTimer||0,1);e.gooseSlow=.15;}battle.shots.push({x:t.x,y:t.y-8,tx:e.x,ty:e.y,life:.26,maxLife:.26,type:"gooseHonk",special:raging,offset:i});});
+    t.cd=cardRate(t.key)/(raging?1.75:1);
     return;
   }
 
@@ -3018,6 +3031,11 @@ function draw(){
       ctx.fillStyle="#fffdf2";ctx.strokeStyle="#c9b98f";ctx.lineWidth=2;ctx.shadowColor="rgba(255,245,190,.8)";ctx.shadowBlur=7;
       ctx.beginPath();ctx.ellipse(0,0,9,12,0,0,Math.PI*2);ctx.fill();ctx.stroke();
       ctx.restore();
+    // GOOSE_ANGRY_GOOSE_DRAW_V1
+    }else if(s.type==="gooseHonk"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.26),ang=Math.atan2(s.ty-s.y,s.tx-s.x),dist=Math.hypot(s.tx-s.x,s.ty-s.y);ctx.save();ctx.translate(s.x,s.y);ctx.rotate(ang);ctx.strokeStyle=s.special?"#ffb347":"#e8f6ff";ctx.shadowColor=s.special?"#ff7a22":"#bdeaff";ctx.shadowBlur=s.special?14:7;ctx.lineWidth=s.special?4:3;ctx.globalAlpha=Math.max(.2,1-q);for(let i=0;i<3;i++){const r=Math.min(dist,(q*dist)+i*13);ctx.beginPath();ctx.arc(0,0,r,-.42,.42);ctx.stroke();}ctx.restore();
+    }else if(s.type==="gooseRageBurst"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.75);ctx.save();ctx.translate(s.x,s.y);ctx.globalAlpha=Math.max(0,1-q);ctx.fillStyle="#ffb347";ctx.shadowColor="#ff542e";ctx.shadowBlur=16;ctx.font="bold 15px system-ui";ctx.textAlign="center";ctx.fillText("ANGRY GOOSE!",0,-26-q*14);ctx.strokeStyle="#ff6b35";ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,18+q*20,0,Math.PI*2);ctx.stroke();ctx.restore();
     // CAT_SKUNK_PROJECTILE_DRAW_V2
     }else if(s.type==="hedgehogQuill"){
       const q=1-Math.max(0,s.life)/(s.maxLife||.24),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q,ang=Math.atan2(s.ty-s.y,s.tx-s.x)+q*10+(s.spin||0);
