@@ -1414,14 +1414,15 @@ function moveEnemy(e,dt){
       if(e.hp<=0){killEnemy(e);return}
     }
   }
+  // RECENT_SLOW_CRASH_FIX_V1: tower slows must affect this enemy only, never the global game speed.
   if(e.slowTimer>0)e.slowTimer-=dt;
-  if((battle.woolTraps||[]).some(z=>z.life>0&&Math.hypot(e.x-z.x,e.y-z.y)<=z.r))speed*=.50;
-      if((e.slothSlowTimer||0)>0){e.slothSlowTimer=Math.max(0,e.slothSlowTimer-dt);speed*=.70;}
-      if((e.cricketSlowTimer||0)>0){e.cricketSlowTimer=Math.max(0,e.cricketSlowTimer-dt);speed*=.70;}
-    if((e.snailVulnerableTimer||0)>0)e.snailVulnerableTimer=Math.max(0,e.snailVulnerableTimer-dt);
-    if((e.crowSlowTimer||0)>0){e.crowSlowTimer=Math.max(0,e.crowSlowTimer-dt);speed*=.75;}
-    if((e.gooseSlowTimer||0)>0){e.gooseSlowTimer=Math.max(0,e.gooseSlowTimer-dt);speed*=.85;}
-    if((e.zebraSlowTimer||0)>0)e.zebraSlowTimer=Math.max(0,e.zebraSlowTimer-dt);
+  const inWoolTrap=(battle.woolTraps||[]).some(z=>z.life>0&&Math.hypot(e.x-z.x,e.y-z.y)<=z.r);
+  if((e.slothSlowTimer||0)>0)e.slothSlowTimer=Math.max(0,e.slothSlowTimer-dt);
+  if((e.cricketSlowTimer||0)>0)e.cricketSlowTimer=Math.max(0,e.cricketSlowTimer-dt);
+  if((e.snailVulnerableTimer||0)>0)e.snailVulnerableTimer=Math.max(0,e.snailVulnerableTimer-dt);
+  if((e.crowSlowTimer||0)>0)e.crowSlowTimer=Math.max(0,e.crowSlowTimer-dt);
+  if((e.gooseSlowTimer||0)>0)e.gooseSlowTimer=Math.max(0,e.gooseSlowTimer-dt);
+  if((e.zebraSlowTimer||0)>0)e.zebraSlowTimer=Math.max(0,e.zebraSlowTimer-dt);
   if((e.chickenSlowTimer||0)>0)e.chickenSlowTimer=Math.max(0,e.chickenSlowTimer-dt);
   if((e.goatConfuseTimer||0)>0)e.goatConfuseTimer=Math.max(0,e.goatConfuseTimer-dt);
   if(e.hp<=0){killEnemy(e);return}
@@ -1429,7 +1430,7 @@ function moveEnemy(e,dt){
     e.freezeTimer=Math.max(0,e.freezeTimer-dt);
     return;
   }
-  let mult=e.slowTimer>0?.55:(e.chickenSlowTimer||0)>0?.80:(e.zebraSlowTimer||0)>0?.75:(e.goatConfuseTimer||0)>0?.50:1, dist=e.speed*mult*dt;
+  let mult=e.slowTimer>0?.55:inWoolTrap?.50:(e.slothSlowTimer||0)>0?.70:(e.cricketSlowTimer||0)>0?.70:(e.crowSlowTimer||0)>0?.75:(e.gooseSlowTimer||0)>0?.85:(e.chickenSlowTimer||0)>0?.80:(e.zebraSlowTimer||0)>0?.75:(e.goatConfuseTimer||0)>0?.50:1, dist=e.speed*mult*dt;
   while(dist>0 && e.seg<path.length-1){
     const [tx,ty]=path[e.seg+1], dx=tx-e.x,dy=ty-e.y,len=Math.hypot(dx,dy); if(len>0){e.dirX=dx/len;e.dirY=dy/len;e.walkPhase=(e.walkPhase||0)+dt*e.speed*.16;}
     if(dist>=len){e.x=tx;e.y=ty;e.seg++;dist-=len;}
