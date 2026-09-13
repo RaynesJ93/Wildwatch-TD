@@ -1,0 +1,18 @@
+from pathlib import Path
+p=Path('index.html');s=p.read_text(encoding='utf-8');marker='BEETLE_DUNG_AVALANCHE_V1'
+if marker in s: print('Already applied');raise SystemExit(0)
+old='beetle:{name:"Beetle",emoji:"🪲",rarity:"Common",cost:52,range:115,rate:1/1.05,dmg:12,color:"#385",desc:"Close-range basic attacker."},'
+new='beetle:{name:"Beetle",emoji:"🪲",rarity:"Common",cost:52,range:115,rate:1/1.05,dmg:12,color:"#385",desc:"Throws spinning Dung Balls that splat on impact. At Level 10, every 8th attack triggers Dung Avalanche: 5 huge dung balls drop from above onto enemies in range, each dealing 1.5x current tower damage with a small splash."},'
+if old not in s: raise RuntimeError('Beetle card anchor not found')
+s=s.replace(old,new,1)
+anchor='  // SNAIL_TOXIC_TRAIL_V1: Acid Slime + Level 10 Toxic Trail.\n'
+if anchor not in s: anchor='  // HEDGEHOG_QUILL_STORM_V1: Quill Shot + Level 10 Quill Storm.\n'
+if anchor not in s: raise RuntimeError('Attack anchor not found')
+attack='''  // BEETLE_DUNG_AVALANCHE_V1: Dung Ball + Level 10 Dung Avalanche.\n  if(t.key==="beetle"){\n    let avalanche=false;if(t.level>=10){t.beetleAttackCount=(t.beetleAttackCount||0)+1;avalanche=t.beetleAttackCount%8===0;}\n    if(avalanche){\n      battle.shots.push({x:t.x,y:t.y-8,tx:t.x,ty:t.y-8,life:.75,maxLife:.75,type:"dungAvalancheBanner"});\n      for(let i=0;i<5;i++){const pool=battle.enemies.filter(e=>!e.dead&&e.hp>0&&Math.hypot(e.x-t.x,e.y-t.y)<=range);if(!pool.length)break;const e=pool[i%pool.length],hit=dmg*1.5;e.hp-=hit;for(const o of battle.enemies){if(o!==e&&!o.dead&&o.hp>0&&Math.hypot(o.x-e.x,o.y-e.y)<=42)o.hp-=hit*.5;}battle.shots.push({x:e.x,y:e.y-95-i*9,tx:e.x,ty:e.y,life:.42+i*.05,maxLife:.42+i*.05,type:"dungBall",huge:true,spin:i});}\n    }else{target.hp-=dmg;battle.shots.push({x:t.x,y:t.y-6,tx:target.x,ty:target.y,life:.32,maxLife:.32,type:"dungBall",huge:false,spin:Math.random()*6.28});}\n    t.cd=cardRate(t.key);return;\n  }\n\n'''
+s=s.replace(anchor,attack+anchor,1)
+draw_anchor='    // SNAIL_TOXIC_TRAIL_DRAW_V1\n'
+if draw_anchor not in s: draw_anchor='    // CAT_SKUNK_PROJECTILE_DRAW_V2\n'
+if draw_anchor not in s: raise RuntimeError('Draw anchor not found')
+draw='''    // BEETLE_DUNG_AVALANCHE_DRAW_V1\n    }else if(s.type==="dungBall"){const q=1-Math.max(0,s.life)/(s.maxLife||.32),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q,rad=s.huge?10:6;ctx.save();ctx.translate(x,y);ctx.rotate((s.spin||0)+q*12);ctx.fillStyle="#654321";ctx.strokeStyle="#3d2817";ctx.lineWidth=2;ctx.shadowColor="#2c190e";ctx.shadowBlur=s.huge?9:4;ctx.beginPath();ctx.arc(0,0,rad,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.strokeStyle="#8a623e";ctx.beginPath();ctx.arc(0,0,rad*.55,.2,2.7);ctx.stroke();ctx.beginPath();ctx.arc(1,-1,rad*.7,3.3,5.6);ctx.stroke();if(q>.82){ctx.fillStyle="#7b512f";for(let i=0;i<5;i++){const a=i*1.25,r=(q-.82)*55;ctx.beginPath();ctx.arc(Math.cos(a)*r,Math.sin(a)*r,2+(i%2),0,Math.PI*2);ctx.fill();}}ctx.restore();\n    }else if(s.type==="dungAvalancheBanner"){const q=1-Math.max(0,s.life)/(s.maxLife||.75);ctx.save();ctx.translate(s.x,s.y);ctx.globalAlpha=Math.max(0,1-q);ctx.fillStyle="#d39a57";ctx.strokeStyle="#4d301c";ctx.lineWidth=3;ctx.font="bold 14px system-ui";ctx.textAlign="center";ctx.strokeText("DUNG AVALANCHE!",0,-28-q*10);ctx.fillText("DUNG AVALANCHE!",0,-28-q*10);ctx.restore();\n'''
+s=s.replace(draw_anchor,draw+draw_anchor,1)
+p.write_text(s,encoding='utf-8');print('Added Beetle Dung Ball and Dung Avalanche')
