@@ -1,0 +1,31 @@
+name: Add Tower Targeting Dropdown V1
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/add_tower_targeting_dropdown_v1.py'
+      - '.github/workflows/add-tower-targeting-dropdown-v1.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Apply tower targeting update
+        run: python .github/scripts/add_tower_targeting_dropdown_v1.py
+      - name: Commit game update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Add Closest Strongest Last tower targeting'
+          git pull --rebase origin main
+          git push origin main
