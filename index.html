@@ -1104,7 +1104,8 @@ function updateHud(){
   });
   if(selectedTower && towerModal.classList.contains("show")){
     const a=animals[selectedTower.key];
-    const mult=selectedTower.key==="pig"?.8:selectedTower.key==="tiger"?.64:.65;
+    // SILVERBACK_UPGRADE_COST_V1: Silverback uses a reduced 0.45 upgrade multiplier.
+    const mult=selectedTower.key==="pig"?.8:selectedTower.key==="tiger"?.64:selectedTower.key==="silverback"?.45:.65;
     const up=Math.floor(a.cost*.595*selectedTower.level*mult), cash=Math.floor(battle.coins);
     towerInfo.textContent=`Damage ${Math.round(towerDamage(selectedTower))} • Range ${Math.round(cardBaseRange(selectedTower.key)*(1+(selectedTower.level-1)*.06))} • Upgrade cost 🥩 ${up} • You have 🥩 ${cash}`;
     upgradeTower.textContent=`Upgrade • 🥩 ${up}`;
@@ -1367,7 +1368,7 @@ canvas.addEventListener("pointerdown",ev=>{
   message.textContent=`${a.name} placed!`;updateHud();
 });
 function openTowerModal(){
-  const t=selectedTower,a=animals[t.key], up=Math.floor(a.cost*.595*t.level*(t.key==="pig"?.8:t.key==="tiger"?.64:.65));
+  const t=selectedTower,a=animals[t.key], up=Math.floor(a.cost*.595*t.level*(t.key==="pig"?.8:t.key==="tiger"?.64:t.key==="silverback"?.45:.65));
   towerName.textContent=`${a.name} • Level ${t.level}`;
   const cash=Math.floor(battle.coins);
   towerInfo.textContent=`Damage ${Math.round(towerDamage(t))} • Range ${Math.round(cardBaseRange(t.key)*(1+(t.level-1)*.06))} • Upgrade cost 🥩 ${up} • You have 🥩 ${cash}`;
@@ -1378,7 +1379,7 @@ function openTowerModal(){
 }
 closeTower.onclick=()=>{towerModal.classList.remove("show");selectedTower=null;};
 upgradeTower.onclick=()=>{
-  if(!selectedTower)return; const a=animals[selectedTower.key], cost=Math.floor(a.cost*.595*selectedTower.level*(selectedTower.key==="pig"?.8:selectedTower.key==="tiger"?.64:.65));
+  if(!selectedTower)return; const a=animals[selectedTower.key], cost=Math.floor(a.cost*.595*selectedTower.level*(selectedTower.key==="pig"?.8:selectedTower.key==="tiger"?.64:selectedTower.key==="silverback"?.45:.65));
   if(battle.coins<cost){alert("Not enough battle coins.");return}
   battle.coins-=cost;selectedTower.spent+=cost;selectedTower.level++;battle.upgradeCount=Math.max(0,Number(battle.upgradeCount||0))+1;
   if((battle.towers||[]).filter(t=>t.level>=10).length>=4)addChallengeProgress("challengeFourLevel10",1);
