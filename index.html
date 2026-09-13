@@ -3228,6 +3228,11 @@ function draw(){
   // SHEEP_WOOL_TRAP_ZONE_DRAW_V1
   for(const z of (battle.woolTraps||[])){ctx.save();ctx.globalAlpha=Math.min(.88,z.life);ctx.fillStyle="#f5f5f2";ctx.strokeStyle="#ffffff";ctx.shadowColor="#ffffff";ctx.shadowBlur=20;ctx.lineWidth=5;ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,Math.PI*2);ctx.fill();ctx.stroke();for(let i=0;i<11;i++){const a=i*2.399,r=(i%4)*13+8;ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(z.x+Math.cos(a)*r,z.y+Math.sin(a)*r,8+(i%3),0,Math.PI*2);ctx.fill();}ctx.restore();}
   battle.shots?.forEach(s=>{
+    // HARD_BLOCK_GENERIC_BEAM_CUSTOM_FOUR_V1: never render the legacy generic beam from these custom-animation towers.
+    if(s.type==="beam"){
+      const sourceTower=(battle.towers||[]).find(t=>Math.hypot((t.x||0)-(s.x||0),(t.y||0)-(s.y||0))<28);
+      if(sourceTower && ["peacock","turtle","lizard","scorpion"].includes(sourceTower.key))return;
+    }
     // CUSTOM_FOUR_NO_GENERIC_ATTACK_V1: Peacock, Turtle, Lizard and Scorpion use only their bespoke attack animations.
     if(s.type==="beam" && (battle.towers||[]).some(t=>["peacock","turtle","lizard","scorpion"].includes(t.key) && Math.hypot((s.x??0)-t.x,(s.y??0)-t.y)<6)) return;
     drawRecentAttackVisibility(s);
