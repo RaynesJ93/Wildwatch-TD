@@ -1,0 +1,27 @@
+name: Add Boss Wave Escorts V1
+on:
+  push:
+    paths:
+      - '.github/workflows/add-boss-wave-escorts-v1.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Sync latest main
+        run: git pull --rebase origin main
+      - name: Add boss wave escorts
+        run: python .github/scripts/add_boss_wave_escorts_v1.py
+      - name: Commit game update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Spawn escort enemies with Wave 15 bosses"
+          git push origin main
