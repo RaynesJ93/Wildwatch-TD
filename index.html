@@ -817,19 +817,20 @@ function showScreen(id){
 }
 playBtn.onclick=()=>{clearBattleState();battle={};showScreen("battleScreen");};
 continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="battleScreen"));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.screen==="battleScreen"));document.body.classList.add("battle-mode");if(!loadBattleState())resetBattle();/* MAP_VISUAL_FIX_V2: force canvas render on every battle entry path */draw();if(!raf){last=performance.now();raf=requestAnimationFrame(loop);}};
-function normalCompleteForCurrentMap(){return !!save.normalCompleted?.[`${currentSeries}-${currentMap}`];}
+// SERIES_HARD_MODE_UNLOCK_V1: clearing map 10 on Normal unlocks Hard Mode for the whole series.
+function hardModeUnlockedForSeries(series=currentSeries){return !!save.normalCompleted?.[`${series}-10`];}
 function updateDifficultyUI(){
   if(!difficultyBtn)return;
-  const hardUnlocked=normalCompleteForCurrentMap();
+  const hardUnlocked=hardModeUnlockedForSeries(currentSeries);
   difficultyBtn.textContent=hardMode?"🔥 Hard":hardUnlocked?"🌿 Normal":"🔒 Hard Locked";
   difficultyBtn.style.borderColor=hardMode?"#ff8a4c":hardUnlocked?"#4b8469":"#6b6b6b";
   difficultyBtn.style.background=hardMode?"#6b2d1e":hardUnlocked?"#285842":"#343434";
   if(typeof mapLabel!=="undefined")mapLabel.textContent=`${currentSeries}-${currentMap}${hardMode?" • 🔥 HARD":""}`;
 }
 difficultyBtn.onclick=()=>{
-  if(!hardMode && !normalCompleteForCurrentMap()){
-    alert(`Complete map ${currentSeries}-${currentMap} on Normal Mode before Hard Mode unlocks.`);
-    message.textContent=`🔒 Hard Mode locked — complete ${currentSeries}-${currentMap} on Normal first.`;
+  if(!hardMode && !hardModeUnlockedForSeries(currentSeries)){
+    alert(`Complete map ${currentSeries}-10 on Normal Mode to unlock Hard Mode for every map in this series.`);
+    message.textContent=`🔒 Hard Mode locked — complete ${currentSeries}-10 on Normal first.`;
     return;
   }
   if(battle?.started && (battle.waveActive||battle.towers?.length||battle.wave>1)){
