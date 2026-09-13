@@ -333,6 +333,15 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
   <div class="sheet">
     <h2 id="towerName">Animal</h2>
     <p id="towerInfo" class="small"></p>
+    <div style="margin:10px 0 12px">
+      <label for="towerTargetMode" style="display:block;font-weight:900;margin-bottom:6px">Targeting</label>
+      <select id="towerTargetMode" style="width:100%;padding:11px 12px;border-radius:12px;border:1px solid #4b8469;background:#0f211a;color:#f4fff8;font:inherit;font-weight:800">
+        <option value="closest">Closest</option>
+        <option value="strongest">Strongest</option>
+        <option value="last">Last</option>
+      </select>
+      <div class="small" style="margin-top:5px">Closest = nearest enemy • Strongest = highest HP • Last = furthest back on the path</div>
+    </div>
     <div style="display:flex;gap:8px">
       <button class="primary" id="upgradeTower" style="flex:1">Upgrade</button>
       <button class="secondary" id="sellTower">Sell</button>
@@ -1166,6 +1175,7 @@ function updateHud(){
     upgradeTower.textContent=`Upgrade • 🥩 ${up}`;
     upgradeTower.disabled=cash<up;
     upgradeTower.style.opacity=cash<up?".55":"1";
+    if(typeof towerTargetMode!=="undefined"&&towerTargetMode)towerTargetMode.value=selectedTower.targetMode||"closest";
   }
 }
 
@@ -1414,7 +1424,7 @@ canvas.addEventListener("pointerdown",ev=>{
   if(battle.towers.some(t=>Math.hypot(t.x-x,t.y-y)<68)){message.textContent="That is too close to another tower.";return}
   const a=animals[selectedCard]; if(battle.coins<a.cost){message.textContent="Not enough coins.";return}
   battle.coins-=a.cost;
-  battle.towers.push({key:selectedCard,x,y,pad:null,cd:0,level:1,spent:a.cost});
+  battle.towers.push({key:selectedCard,x,y,pad:null,cd:0,level:1,spent:a.cost,targetMode:"closest"});
   battle.totalPlaced=Math.max(0,Number(battle.totalPlaced||0))+1;
   addQuestProgress("placed",1);
   if(animals[selectedCard]?.rarity==="Common")addWeeklyProgress("weeklyCommonPlaced",1);
@@ -1430,8 +1440,13 @@ function openTowerModal(){
   upgradeTower.textContent=`Upgrade • 🥩 ${up}`;
   upgradeTower.disabled=cash<up;
   upgradeTower.style.opacity=cash<up?".55":"1";
+  if(typeof towerTargetMode!=="undefined"&&towerTargetMode)towerTargetMode.value=t.targetMode||"closest";
   towerModal.classList.add("show");
 }
+towerTargetMode.onchange=()=>{
+  if(!selectedTower)return;
+  selectedTower.targetMode=towerTargetMode.value||"closest";
+};
 closeTower.onclick=()=>{towerModal.classList.remove("show");selectedTower=null;};
 upgradeTower.onclick=()=>{
   if(!selectedTower)return; const a=animals[selectedTower.key], cost=Math.floor(a.cost*.595*selectedTower.level*(selectedTower.key==="pig"?.8:selectedTower.key==="tiger"?.64:selectedTower.key==="silverback"?.45:.65));
@@ -1497,8 +1512,22 @@ function killEnemy(e){if(e.dead)return;e.dead=true;const killCash=Math.max(0,Mat
 function towerTickCore(t,dt){
   t.cd-=dt;if(t.cd>0)return;
   const a=animals[t.key], range=cardBaseRange(t.key)*(1+(t.level-1)*.06);
-  let target=null,best=-1;
-  battle.enemies.forEach(e=>{if(e.dead)return;const d=Math.hypot(e.x-t.x,e.y-t.y);if(d<=range){const prog=e.seg+(1-d/1000);if(prog>best){best=prog;target=e}}});
+  // TOWER_TARGETING_DROPDOWN_V1: per-tower target priority.
+  const inRange=battle.enemies.filter(e=>!e.dead&&e.hp>0&&Math.hypot(e.x-t.x,e.y-t.y)<=range);
+  let target=null;
+  const mode=t.targetMode||"closest";
+  if(inRange.length){
+    if(mode==="strongest"){
+      target=inRange.reduce((best,e)=>!best||e.hp>best.hp?e:best,null);
+    }else if(mode==="last"){
+      target=inRange.reduce((best,e)=>{
+        const ep=Number(e.seg||0),bp=best?Number(best.seg||0):Infinity;
+        return !best||ep<bp?e:best;
+      },null);
+    }else{
+      target=inRange.reduce((best,e)=>!best||Math.hypot(e.x-t.x,e.y-t.y)<Math.hypot(best.x-t.x,best.y-t.y)?e:best,null);
+    }
+  }
   if(t.key==="hedgehog"){
     // Always place a trap during an active wave, even when no enemy is nearby.
     if(!battle.waveActive){t.cd=.25;return;}
