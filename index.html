@@ -1234,9 +1234,11 @@ function regionCoinMultiplier(){
   return currentSeries===1?1:currentSeries===2?1.10:currentSeries===3?1.25:currentSeries===4?1.40:1.55;
 }
 function battleCoinReward(kind){
-  const base=kind==='wave'?12:kind==='elite'?20:kind==='boss'?45:0;
-  const hardModeMultiplier=hardMode?1.30:1;
-  return Math.round(base*regionCoinMultiplier()*hardModeMultiplier);
+  // REPAIR_ELITES_SUMMARY_V1: requested Normal/Hard reward tables.
+  const normalBase=kind==='wave'?12:kind==='elite'?22:kind==='boss'?60:0;
+  const hardBase=kind==='wave'?20:kind==='elite'?36:kind==='boss'?99:0;
+  const base=hardMode?hardBase:normalBase;
+  return Math.round(base*regionCoinMultiplier());
 }
 function spawnEnemy(){
   const boss=finalMapBossForWave();
@@ -1248,12 +1250,15 @@ function spawnEnemy(){
   const seriesDifficulty=currentSeries===1?1:currentSeries===2?1.20:currentSeries===3?1.45:1.60;
   e.hp=Math.round(e.hp*seriesDifficulty);
   if(hardMode){e.hp=Math.round(e.hp*1.75);e.speed*=1.15;}
-  if(!boss && battle.wave%10===0 && !battle.eliteSpawned){
+  // REPAIR_ELITES_SUMMARY_V1: 2 elites on Wave 5 and 6 elites on Wave 10.
+  const eliteTarget=battle.wave===5?2:battle.wave===10?6:0;
+  battle.elitesSpawned=Number(battle.elitesSpawned||0);
+  if(!boss && eliteTarget>0 && battle.elitesSpawned<eliteTarget){
     e.hp*=3;
     e.coinRewardKind='elite';
     e.size=Math.round(e.size*1.18);
     e.elite=true;
-    battle.eliteSpawned=true;
+    battle.elitesSpawned++;
   }
   Object.assign(e,{maxHp:e.hp,seg:0,x:path[0][0],y:path[0][1],dirX:1,dirY:0,walkPhase:Math.random()*Math.PI*2,poison:0,poisonTick:0,poisonDmg:0,slowTimer:0,freezeTimer:0,puddleHits:{},dead:false});
   battle.enemies.push(e);
@@ -1306,6 +1311,7 @@ startWave.onclick=()=>{
   battle.waveActive=true;
   battle.spawning=true;
   battle.eliteSpawned=false;
+  battle.elitesSpawned=0;
   battle.finalBossSpawned=false;
   const isBossWave=battle.wave===15;
   if(isBossWave){
@@ -1317,7 +1323,8 @@ startWave.onclick=()=>{
   const normalWaveCount=Math.ceil((6+battle.wave*2)*(hardMode?1.25:1));
   const previousWaveCount=Math.ceil((6+(battle.wave-1)*2)*(hardMode?1.25:1));
   const bossEscortCount=Math.max(8,Math.ceil(previousWaveCount*.55));
-  battle.spawnLeft=isBossWave?1+bossEscortCount:normalWaveCount;
+  const bonusEliteCount=battle.wave===5?2:battle.wave===10?6:0;
+  battle.spawnLeft=isBossWave?1+bossEscortCount:normalWaveCount+bonusEliteCount;
   battle.spawnTimer=0;
   spawnEnemy();
   battle.spawnLeft--;
@@ -1423,7 +1430,7 @@ function moveEnemy(e,dt){
   if(e.seg>=path.length-1&&!e.dead){e.dead=true;battle.lives--; if(battle.lives<=0)gameOver();updateHud()}
 }
 function killEnemy(e){if(e.dead)return;e.dead=true;const killCash=Math.max(0,Math.round(Number(e.reward)||0));const coinReward=battleCoinReward(e.coinRewardKind);battle.coins+=killCash+coinReward;battle.mapKills=(battle.mapKills||0)+1;addQuestProgress("kills",1);if(coinReward)addWeeklyProgress("weeklyCoins",coinReward);updateHud()}
-function towerTick(t,dt){
+function towerTickCore(t,dt){
   t.cd-=dt;if(t.cd>0)return;
   const a=animals[t.key], range=cardBaseRange(t.key)*(1+(t.level-1)*.06);
   let target=null,best=-1;
@@ -1907,16 +1914,29 @@ function towerTick(t,dt){
   }
   t.cd=cardRate(t.key);
 }
+
+function towerTick(t,dt){
+  const hpBefore=((battle&&battle.enemies)||[]).reduce((sum,e)=>sum+Math.max(0,Number(e.hp)||0),0);
+  towerTickCore(t,dt);
+  const hpAfter=((battle&&battle.enemies)||[]).reduce((sum,e)=>sum+Math.max(0,Number(e.hp)||0),0);
+  const dealt=Math.max(0,hpBefore-hpAfter);
+  if(dealt>0){
+    t.damageDealt=(Number(t.damageDealt)||0)+dealt;
+    const best=battle.topDamageTower;
+    if(!best || t.damageDealt>best.damage){
+      battle.topDamageTower={key:t.key,level:t.level,damage:t.damageDealt};
+    }else if(best && best.key===t.key && t.damageDealt>=best.damage){
+      best.level=t.level;best.damage=t.damageDealt;
+    }
+  }
+}
+
 function showMapSummary(cardXp){
   const towers=(battle&&battle.towers)||[];
-  let strongest=null;
-  towers.forEach(t=>{
-    const power=towerDamage(t);
-    if(!strongest || power>strongest.power || (power===strongest.power&&t.level>strongest.t.level))strongest={t,power};
-  });
-  const strongestHtml=strongest
-    ? `${animals[strongest.t.key].emoji} <b>${animals[strongest.t.key].name}</b><div class="small">Tower Lv ${strongest.t.level} • ${Math.round(strongest.power)} damage</div>`
-    : `<b>No towers deployed</b>`;
+  const top=battle&&battle.topDamageTower;
+  const strongestHtml=top&&animals[top.key]
+    ? `${animals[top.key].emoji} <b>${animals[top.key].name}</b><div class="small">Tower Lv ${top.level} • ${Math.round(top.damage).toLocaleString()} total damage dealt</div>`
+    : `<b>No tower damage recorded</b>`;
   let modal=document.getElementById('mapSummaryModal');
   if(!modal){
     modal=document.createElement('div');
@@ -1931,7 +1951,7 @@ function showMapSummary(cardXp){
         <div class="info-box"><div class="small">Enemies defeated</div><div id="mapSummaryKills" style="font-size:25px;font-weight:900;margin-top:3px">0</div></div>
         <div class="info-box"><div class="small">Coins earned</div><div id="mapSummaryCoins" style="font-size:25px;font-weight:900;margin-top:3px">🟡 0</div></div>
       </div>
-      <div class="info-box" style="text-align:left;margin-top:9px"><div class="small" style="margin-bottom:5px">Strongest tower deployed</div><div id="mapSummaryTower"></div></div>
+      <div class="info-box" style="text-align:left;margin-top:9px"><div class="small" style="margin-bottom:5px">Top damage tower</div><div id="mapSummaryTower"></div></div>
       <div class="info-box" style="text-align:left;margin-top:9px"><div class="small">Card EXP earned</div><div id="mapSummaryXp" style="font-size:18px;font-weight:900;margin-top:3px"></div></div>
       <button class="primary" id="closeMapSummary" style="width:100%;margin-top:13px">Continue</button>
     </div>`;
@@ -1939,7 +1959,8 @@ function showMapSummary(cardXp){
     modal.querySelector('#closeMapSummary').onclick=()=>modal.classList.remove('show');
   }
   const seriesName=seriesDisplayName(currentSeries);
-  modal.querySelector('#mapSummarySubtitle').textContent=`${seriesName} ${currentMap} • ${hardMode?'Hard':'Normal'}`;
+  const rewardRates=hardMode?'20/wave • 36/elite • 99/boss':'12/wave • 22/elite • 60/boss';
+  modal.querySelector('#mapSummarySubtitle').textContent=`${seriesName} ${currentMap} • ${hardMode?'Hard':'Normal'} • ${rewardRates}`;
   modal.querySelector('#mapSummaryKills').textContent=String(battle.mapKills||0);
   modal.querySelector('#mapSummaryCoins').textContent=`🟡 ${battle.mapCoinsEarned||0}`;
   modal.querySelector('#mapSummaryTower').innerHTML=strongestHtml;
@@ -1966,9 +1987,10 @@ function finishWave(){
   if(battle.lives===(battle.waveStartLives??battle.lives))addQuestProgress("noLossWaves",1);
   if(speed===3){addQuestProgress("speedWaves",1);addChallengeProgress("challengeSpeedWaves",1);}
   save.xp+=Math.round((12+clearedWave*3)*(hardMode?1.5:1));
-  // Permanent coin economy: 7 Coins per Normal wave, 12 Coins per Hard wave.
-  save.metaCoins+=hardMode?12:7;
-  battle.mapCoinsEarned=(battle.mapCoinsEarned||0)+(hardMode?12:7);
+  // REPAIR_ELITES_SUMMARY_V1: permanent wave rewards match the requested table.
+  const permanentWaveCoins=hardMode?20:12;
+  save.metaCoins+=permanentWaveCoins;
+  battle.mapCoinsEarned=(battle.mapCoinsEarned||0)+permanentWaveCoins;
   if(autoWave && clearedWave<15 && !battle.ended){
     clearTimeout(autoWaveTimer);
     autoWaveTimer=setTimeout(()=>{if(autoWave && !battle.waveActive && !battle.ended)startWave.click();},900);
