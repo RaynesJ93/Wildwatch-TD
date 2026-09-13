@@ -367,7 +367,7 @@ const animals = {
   bird:{name:"Pigeon",emoji:"🕊️",rarity:"Common",cost:55,range:190,rate:1/1.30,dmg:8,color:"#7f8c99",desc:"Dropping Strike attacks from above. At Level 10, every 7th attack triggers Flock Frenzy: 8 pigeons swoop across enemies in range, each dealing 60% current tower damage."},
   duck:{name:"Duck",emoji:"🦆",rarity:"Common",cost:58,range:160,rate:1/1.10,dmg:11,color:"#6b8e45",desc:"Fires Water Peck splashes. At Level 10, every 6th attack becomes Duck Dive: a piercing wave hits up to 5 enemies, dealing 1.5x damage to the first and 75% damage to enemies behind, slowing all hit enemies by 20% for 2s."},
   goose:{name:"Goose",emoji:"🪿",rarity:"Common",cost:62,range:155,rate:1/.95,dmg:20,color:"#ddd",desc:"Fires cone-shaped Honk Blasts. At Level 10, every 7th attack triggers Angry Goose for 4s: 75% faster attacks hit up to 3 enemies for 100% current damage and slow them by 15% for 1s."},
-  crow:{name:"Crow",emoji:"🐦‍⬛",rarity:"Common",cost:62,range:195,rate:1/1.15,dmg:12,color:"#222",desc:"Long-range basic attacker."},
+  crow:{name:"Crow",emoji:"🐦‍⬛",rarity:"Common",cost:62,range:195,rate:1/1.15,dmg:12,color:"#222",desc:"Fires spinning Feather Darts. At Level 10, every 8th attack creates Blackout for 4s: enemies in the dark cloud take 40% current tower damage each second and are slowed by 25%."},
   parrot:{name:"Parrot",emoji:"🦜",rarity:"Common",cost:64,range:205,rate:1/1.20,dmg:19,color:"#e44",desc:"Long-range basic attacker."},
   penguin:{name:"Penguin",emoji:"🐧",rarity:"Common",cost:65,range:150,rate:1/.90,dmg:15,color:"#eee",desc:"Heavy basic attacker."},
   snail:{name:"Snail",emoji:"🐌",rarity:"Common",cost:55,range:110,rate:1/.55,dmg:18,color:"#a87",desc:"Slow but heavy basic attacker."},
@@ -1415,7 +1415,8 @@ function moveEnemy(e,dt){
     }
   }
   if(e.slowTimer>0)e.slowTimer-=dt;
-  if((e.gooseSlowTimer||0)>0){e.gooseSlowTimer=Math.max(0,e.gooseSlowTimer-dt);speed*=.85;}
+  if((e.crowSlowTimer||0)>0){e.crowSlowTimer=Math.max(0,e.crowSlowTimer-dt);speed*=.75;}
+    if((e.gooseSlowTimer||0)>0){e.gooseSlowTimer=Math.max(0,e.gooseSlowTimer-dt);speed*=.85;}
     if((e.zebraSlowTimer||0)>0)e.zebraSlowTimer=Math.max(0,e.zebraSlowTimer-dt);
   if((e.chickenSlowTimer||0)>0)e.chickenSlowTimer=Math.max(0,e.chickenSlowTimer-dt);
   if((e.goatConfuseTimer||0)>0)e.goatConfuseTimer=Math.max(0,e.goatConfuseTimer-dt);
@@ -1490,6 +1491,20 @@ function towerTickCore(t,dt){
     });
     t.cd=cardRate(t.key);
     return;
+  }
+
+  // CROW_BLACKOUT_V1: Feather Dart + Level 10 Blackout.
+  if(t.key==="crow"){
+    let blackout=false;
+    if(t.level>=10){t.crowAttackCount=(t.crowAttackCount||0)+1;blackout=t.crowAttackCount%8===0;}
+    target.hp-=dmg;
+    battle.shots.push({x:t.x,y:t.y-8,tx:target.x,ty:target.y,life:.28,maxLife:.28,type:"crowFeather",special:blackout});
+    if(blackout){
+      battle.crowClouds=battle.crowClouds||[];
+      battle.crowClouds.push({x:target.x,y:target.y,life:4,tick:1,damage:dmg*.4,radius:72});
+      battle.shots.push({x:target.x,y:target.y,tx:target.x,ty:target.y,life:.8,maxLife:.8,type:"crowBlackoutBurst"});
+    }
+    t.cd=cardRate(t.key);return;
   }
 
   // GOOSE_ANGRY_GOOSE_V1: Honk Blast + Level 10 Angry Goose.
@@ -2169,7 +2184,9 @@ function update(dt){
     }
   });
   battle.trashZones=battle.trashZones.filter(z=>z.life>0);
-  // SKUNK_CLOUD_UPDATE_V2
+// CROW_BLACKOUT_UPDATE_V1
+  if(battle.crowClouds){for(const c of battle.crowClouds){c.life-=dt;c.tick-=dt;if(c.tick<=0){c.tick+=1;for(const e of battle.enemies){if(!e.dead&&e.hp>0&&Math.hypot(e.x-c.x,e.y-c.y)<=c.radius){e.hp-=c.damage;e.crowSlowTimer=Math.max(e.crowSlowTimer||0,1.05);}}}}battle.crowClouds=battle.crowClouds.filter(c=>c.life>0);}
+    // SKUNK_CLOUD_UPDATE_V2
   battle.skunkCloudZones=battle.skunkCloudZones||[];
   battle.skunkCloudZones.forEach(z=>{
     z.life-=dt;z.tick=(z.tick??1)-dt;
@@ -2211,6 +2228,8 @@ function update(dt){
   battle.eggSplashes=battle.eggSplashes.filter(z=>z.life>0);
   battle.needles=battle.needles||[];
   battle.enemies.forEach(e=>moveEnemy(e,dt));
+  // CROW_BLACKOUT_ZONE_DRAW_V1
+  if(battle.crowClouds){for(const c of battle.crowClouds){ctx.save();const pulse=.82+.12*Math.sin(performance.now()/180);ctx.globalAlpha=Math.min(.58,c.life*.3);ctx.fillStyle="#130f19";ctx.shadowColor="#4e326a";ctx.shadowBlur=18;ctx.beginPath();ctx.arc(c.x,c.y,c.radius*pulse,0,Math.PI*2);ctx.fill();ctx.fillStyle="#28202f";for(let i=0;i<8;i++){const a=i*2.1+c.life,r=(i%3)*16+12;ctx.beginPath();ctx.arc(c.x+Math.cos(a)*r,c.y+Math.sin(a)*r*.55,9+(i%2)*5,0,Math.PI*2);ctx.fill();}ctx.restore();}}
   battle.shots.forEach(s=>{
     if(s.type==="pigHam" && s.special && !s.dropped && s.life-dt<=0){
       s.dropped=true;
@@ -3031,6 +3050,11 @@ function draw(){
       ctx.fillStyle="#fffdf2";ctx.strokeStyle="#c9b98f";ctx.lineWidth=2;ctx.shadowColor="rgba(255,245,190,.8)";ctx.shadowBlur=7;
       ctx.beginPath();ctx.ellipse(0,0,9,12,0,0,Math.PI*2);ctx.fill();ctx.stroke();
       ctx.restore();
+    // CROW_BLACKOUT_DRAW_V1
+    }else if(s.type==="crowFeather"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.28),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q,ang=Math.atan2(s.ty-s.y,s.tx-s.x)+q*9;ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.strokeStyle=s.special?"#9b6cff":"#17131d";ctx.fillStyle=s.special?"#5d35a8":"#27212d";ctx.shadowColor=s.special?"#8e5cff":"#000";ctx.shadowBlur=s.special?12:5;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-11,0);ctx.quadraticCurveTo(0,-7,12,0);ctx.quadraticCurveTo(0,7,-11,0);ctx.fill();ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(12,0);ctx.stroke();ctx.restore();
+    }else if(s.type==="crowBlackoutBurst"){
+      const q=1-Math.max(0,s.life)/(s.maxLife||.8);ctx.save();ctx.translate(s.x,s.y);ctx.globalAlpha=Math.max(0,1-q);ctx.fillStyle="#17101f";ctx.shadowColor="#6f43a8";ctx.shadowBlur=18;for(let i=0;i<9;i++){const a=i*2.4+q*4,r=12+(i%4)*7+q*20;ctx.beginPath();ctx.arc(Math.cos(a)*r,Math.sin(a)*r*.55,8+(i%3)*3,0,Math.PI*2);ctx.fill();}ctx.fillStyle="#b995ff";ctx.font="bold 14px system-ui";ctx.textAlign="center";ctx.fillText("BLACKOUT!",0,-30-q*10);ctx.restore();
     // GOOSE_ANGRY_GOOSE_DRAW_V1
     }else if(s.type==="gooseHonk"){
       const q=1-Math.max(0,s.life)/(s.maxLife||.26),ang=Math.atan2(s.ty-s.y,s.tx-s.x),dist=Math.hypot(s.tx-s.x,s.ty-s.y);ctx.save();ctx.translate(s.x,s.y);ctx.rotate(ang);ctx.strokeStyle=s.special?"#ffb347":"#e8f6ff";ctx.shadowColor=s.special?"#ff7a22":"#bdeaff";ctx.shadowBlur=s.special?14:7;ctx.lineWidth=s.special?4:3;ctx.globalAlpha=Math.max(.2,1-q);for(let i=0;i<3;i++){const r=Math.min(dist,(q*dist)+i*13);ctx.beginPath();ctx.arc(0,0,r,-.42,.42);ctx.stroke();}ctx.restore();
