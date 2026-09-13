@@ -52,3 +52,4 @@ if draw_anchor not in s: raise RuntimeError('Pigeon draw insertion anchor not fo
 s=s.replace(draw_anchor,draw,1)
 p.write_text(s,encoding='utf-8')
 print('Applied Pigeon Dropping Strike and Flock Frenzy V1')
+# trigger v2
