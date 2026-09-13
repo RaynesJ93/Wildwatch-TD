@@ -434,6 +434,20 @@ const spritePos={
   monkey:"0% 0%", frog:"33.333% 0%", owl:"66.667% 0%", snake:"100% 0%",
   rhino:"0% 50%", eagle:"33.333% 50%", panda:"66.667% 50%", lion:"100% 50%"
 };
+// ANIMAL_THEMED_TOWER_BASES_V1: unique habitat/object plinth for every placed animal.
+function drawAnimalBase(ctx,t){
+  const k=t.key,x=t.x,y=t.y+11;
+  ctx.save();ctx.translate(x,y);ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.globalAlpha=.45;ctx.fillStyle="#000";ctx.beginPath();ctx.ellipse(0,5,22,9,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  const themes={
+    monkey:["🪨","🍌"],frog:["🪷","💧"],owl:["🪵","🍂"],snake:["🪨","🍃"],hedgehog:["🍂","🌿"],goose:["💧","🌾"],crow:["🪵","🪶"],snail:["🪨","💧"],beetle:["🟤","🟤"],cricket:["🌱","🌿"],worm:["🟫","🕳️"],chicken:["🌾","🥚"],bird:["🏙️","🪶"],duck:["💧","🌾"],cat:["🧱","🐾"],dog:["🦴","🐾"],raccoon:["🗑️","🌙"],badger:["🕳️","🪨"],goat:["🪨","🌿"],skunk:["🌿","🍂"],otter:["🪨","💧"],sloth:["🪵","🌿"],koala:["🪵","🍃"],sheep:["🌱","☁️"],ram:["⛰️","🪨"],pig:["🟤","💦"],turkey:["🍂","🌾"],flamingo:["💧","🌸"],peacock:["🌿","🪶"],swan:["💧","🪷"],turtle:["🏖️","🪨"],lizard:["🪨","☀️"],scorpion:["🏜️","🪨"],spider:["🕸️","🪨"],fox:["🍂","🪵"],eagle:["⛰️","🪹"],panda:["🎋","🪨"],lion:["🪨","🌾"],rhino:["🟤","🪨"],whiteRhino:["🪨","🌾"],tiger:["🌿","🪨"],zebra:["🌾","🪨"],penguin:["🧊","❄️"],jaguar:["🌿","🪨"],elephant:["💧","🟤"],silverback:["🪨","🌿"],ant:["🟫","🍂"],bee:["🌼","🍯"]
+  };
+  const a=themes[k]||["🪨","🌿"];
+  ctx.fillStyle="#493d31";ctx.strokeStyle="#1d1813";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,20,8,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.font="16px Apple Color Emoji,Segoe UI Emoji,sans-serif";ctx.fillText(a[0],-7,-1);ctx.font="12px Apple Color Emoji,Segoe UI Emoji,sans-serif";ctx.fillText(a[1],10,1);
+  ctx.restore();
+}
+
 function animalVisual(k, cls="mini-portrait"){
   const a=animals[k];
   return a ? `<span class="animal-emoji ${cls}" style="background-image:none!important;display:flex!important;align-items:center;justify-content:center;${a.whiteVariant?"background-color:#18251f!important;border-radius:16px!important;box-shadow:0 8px 18px #0008,inset 0 0 0 2px #ffffff33;filter:grayscale(1) brightness(2.25) contrast(.55);":""}font-family:'Apple Color Emoji','Segoe UI Emoji',sans-serif;font-size:${cls==="reward-portrait"?"68px":cls==="animal-portrait"?"48px":"30px"};line-height:1">${a.emoji}</span>` : "";
@@ -2912,7 +2926,7 @@ function draw(){
   // Free-placement mode: no fixed tower pads are shown.
   ctx.textAlign="center";ctx.textBaseline="middle";
 
-  battle.towers?.forEach(t=>{
+  battle.towers?.forEach(t=>{drawAnimalBase(ctx,t);
     const a=animals[t.key];
     if(selectedTower===t){
       ctx.beginPath();ctx.arc(t.x,t.y,a.range*(1+(t.level-1)*.06),0,Math.PI*2);
