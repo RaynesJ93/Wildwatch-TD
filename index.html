@@ -3741,12 +3741,15 @@ function addMilestoneProgress(type,n=1){
   save.milestoneProgress=save.milestoneProgress||{};
   save.milestoneProgress[type]=(save.milestoneProgress[type]||0)+n;
 }
+// CHALLENGE_PROGRESS_FIX_V1: keep one tier-aware challenge progress implementation.
 function addChallengeProgress(type,n=1){
   if(typeof save==='undefined')return;
   ensureChallengeQuests();
-  const q=CHALLENGE_QUESTS.find(x=>x.type===type);
-  if(!q||save.challengeQuests.claimed[q.id])return;
-  save.challengeQuests.progress[type]=Math.min(Number(q.goal||1),Math.max(0,Number(save.challengeQuests.progress[type]||0)+(Number(n)||0)));
+  const qs=CHALLENGE_QUESTS.filter(x=>x.type===type);
+  if(!qs.length)return;
+  const maxGoal=Math.max(...qs.map(q=>Number(q.goal||1)));
+  const current=Math.max(0,Number(save.challengeQuests.progress[type]||0));
+  save.challengeQuests.progress[type]=Math.min(maxGoal,current+(Number(n)||0));
   persist();
   if(typeof renderExtraQuestBoards==='function')renderExtraQuestBoards();
 }
