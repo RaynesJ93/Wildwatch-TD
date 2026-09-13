@@ -1312,7 +1312,12 @@ startWave.onclick=()=>{
     const boss=bossForSeriesMap();
     message.textContent=`⚠️ BOSS WAVE — ${boss.name.toUpperCase()}!`;
   }
-  battle.spawnLeft=isBossWave?1:Math.ceil((6+battle.wave*2)*(hardMode?1.25:1));
+  // BOSS_WAVE_ESCORTS_V1: Wave 15 spawns the boss plus a reduced escort group.
+  // Escort size is about 55% of Wave 14, so the boss wave stays busy without being as crowded as the previous round.
+  const normalWaveCount=Math.ceil((6+battle.wave*2)*(hardMode?1.25:1));
+  const previousWaveCount=Math.ceil((6+(battle.wave-1)*2)*(hardMode?1.25:1));
+  const bossEscortCount=Math.max(8,Math.ceil(previousWaveCount*.55));
+  battle.spawnLeft=isBossWave?1+bossEscortCount:normalWaveCount;
   battle.spawnTimer=0;
   spawnEnemy();
   battle.spawnLeft--;
