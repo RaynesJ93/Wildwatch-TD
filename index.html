@@ -375,7 +375,7 @@ const animals = {
   ant:{name:"Ant",emoji:"🐜",rarity:"Common",cost:38,range:105,rate:1/1.60,dmg:5,color:"#633",desc:"Fast pincer attacker. Every 3rd attack has a 25% chance to permanently boost this tower’s damage by 5% for the battle."},
   beetle:{name:"Beetle",emoji:"🪲",rarity:"Common",cost:52,range:115,rate:1/1.05,dmg:12,color:"#385",desc:"Throws spinning Dung Balls that splat on impact. At Level 10, every 8th attack triggers Dung Avalanche: 5 huge dung balls drop from above onto enemies in range, each dealing 1.5x current tower damage with a small splash."},
   cricket:{name:"Cricket",emoji:"🦗",rarity:"Common",cost:48,range:145,rate:1/1.45,dmg:8,color:"#697",desc:"Fires Chirp Wave sound rings. At Level 10, every 7th attack triggers Deafening Chirp: all enemies in range take 2x current tower damage and are slowed by 30% for 2s."},
-  worm:{name:"Worm",emoji:"🪱",rarity:"Common",cost:42,range:110,rate:1/1.30,dmg:16,color:"#b87",desc:"Throws globs of sludge and mud that splatter enemies."},
+  worm:{name:"Worm",emoji:"🪱",rarity:"Common",cost:42,range:110,rate:1/1.30,dmg:16,color:"#b87",desc:"Throws globs of sludge and mud. At Level 10, every 8th attack triggers Worm Stampede: worms burst from the ground beneath up to 8 enemies in range, each hit dealing 1.5x current tower damage."},
   butterfly:{name:"Butterfly",emoji:"🦋",rarity:"Common",cost:48,range:180,rate:1/1.40,dmg:12,color:"#a6e",desc:"Fast long-range attacker."},
   bee:{name:"Bee",emoji:"🐝",rarity:"Common",cost:55,range:165,rate:2.22,dmg:12,color:"#fc3",desc:"Chain-lightning attacker that strikes multiple enemies."},
   cat:{name:"Cat",emoji:"🐱",rarity:"Uncommon",cost:75,range:170,rate:1/1.30,dmg:17,color:"#d99",desc:"Fast Paw Slash attacker. At tower level 10, every 9th attack triggers Nine Lives: 9 rapid claw strikes dealing 50% current tower damage each across enemies in range."},
@@ -1496,7 +1496,13 @@ function towerTickCore(t,dt){
   }
 
   // WORM_MUD_SHOT_V1: sludge/mud projectile attack.
-  if(t.key==="worm"){target.hp-=dmg;battle.shots.push({x:t.x,y:t.y-4,tx:target.x,ty:target.y,life:.34,maxLife:.34,type:"wormMud",spin:Math.random()*6.28});t.cd=cardRate(t.key);return;}
+  // WORM_STAMPEDE_V1: Level 10 every 8th attack erupts beneath up to 8 enemies.
+  if(t.key==="worm"){
+    let stampede=false;if(t.level>=10){t.wormAttackCount=(t.wormAttackCount||0)+1;stampede=t.wormAttackCount%8===0;}
+    if(stampede){const pool=battle.enemies.filter(e=>!e.dead&&e.hp>0&&Math.hypot(e.x-t.x,e.y-t.y)<=range).slice(0,8);for(let i=0;i<pool.length;i++){const e=pool[i];e.hp-=dmg*1.5;battle.shots.push({x:e.x,y:e.y+22,tx:e.x,ty:e.y,life:.62+i*.035,maxLife:.62+i*.035,type:"wormStampede",delay:i*.035});}battle.shots.push({x:t.x,y:t.y,tx:t.x,ty:t.y,life:.85,maxLife:.85,type:"wormStampedeBanner"});}
+    else{target.hp-=dmg;battle.shots.push({x:t.x,y:t.y-4,tx:target.x,ty:target.y,life:.34,maxLife:.34,type:"wormMud",spin:Math.random()*6.28});}
+    t.cd=cardRate(t.key);return;
+  }
 
   // CRICKET_DEAFENING_CHIRP_V1: Chirp Wave + Level 10 Deafening Chirp.
   if(t.key==="cricket"){
@@ -3085,6 +3091,9 @@ function draw(){
       ctx.fillStyle="#fffdf2";ctx.strokeStyle="#c9b98f";ctx.lineWidth=2;ctx.shadowColor="rgba(255,245,190,.8)";ctx.shadowBlur=7;
       ctx.beginPath();ctx.ellipse(0,0,9,12,0,0,Math.PI*2);ctx.fill();ctx.stroke();
       ctx.restore();
+    // WORM_STAMPEDE_DRAW_V1
+    }else if(s.type==="wormStampede"){const q=1-Math.max(0,s.life)/(s.maxLife||.62),x=s.tx,y=s.ty;ctx.save();ctx.translate(x,y);const rise=Math.sin(Math.min(1,q)*Math.PI)*20;ctx.fillStyle="#493525";ctx.globalAlpha=Math.max(0,1-q*.7);ctx.beginPath();ctx.ellipse(0,8,14+q*5,5+q*2,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle="#d08c72";ctx.lineWidth=6;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-5,8);ctx.quadraticCurveTo(0,-rise-8,7,-rise);ctx.stroke();ctx.strokeStyle="#f0ad91";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-4,5);ctx.quadraticCurveTo(1,-rise-6,6,-rise+1);ctx.stroke();ctx.fillStyle="#6b4c34";for(let i=0;i<5;i++){const a=i*1.3;ctx.beginPath();ctx.arc(Math.cos(a)*(8+q*12),8+Math.sin(a)*4,2,0,Math.PI*2);ctx.fill();}ctx.restore();
+    }else if(s.type==="wormStampedeBanner"){const q=1-Math.max(0,s.life)/(s.maxLife||.85);ctx.save();ctx.translate(s.x,s.y);ctx.globalAlpha=Math.max(0,1-q);ctx.fillStyle="#f2b28f";ctx.strokeStyle="#4b2e22";ctx.lineWidth=3;ctx.font="bold 14px system-ui";ctx.textAlign="center";ctx.strokeText("WORM STAMPEDE!",0,-30-q*12);ctx.fillText("WORM STAMPEDE!",0,-30-q*12);ctx.restore();
     // WORM_MUD_SHOT_DRAW_V1
     }else if(s.type==="wormMud"){const q=1-Math.max(0,s.life)/(s.maxLife||.34),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q;ctx.save();ctx.translate(x,y);ctx.rotate((s.spin||0)+q*7);ctx.fillStyle="#66503a";ctx.strokeStyle="#3d3024";ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,0,6,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle="#8b7355";ctx.beginPath();ctx.arc(-2,-2,2,0,Math.PI*2);ctx.fill();if(q>.78){ctx.fillStyle="#594330";for(let i=0;i<7;i++){const a=i*.9,r=(q-.78)*65;ctx.beginPath();ctx.arc(Math.cos(a)*r,Math.sin(a)*r*.7,2+(i%2),0,Math.PI*2);ctx.fill();}}ctx.restore();
     // CRICKET_DEAFENING_CHIRP_DRAW_V1
