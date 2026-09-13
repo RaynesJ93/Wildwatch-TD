@@ -1,0 +1,36 @@
+name: Add Hedgehog Quill Storm V1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/add_hedgehog_quill_storm_v1.py'
+      - '.github/workflows/add-hedgehog-quill-storm-v1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Patch Hedgehog attack and Level 10 ability
+        run: python .github/scripts/add_hedgehog_quill_storm_v1.py
+      - name: Commit game update
+        run: |
+          if git diff --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Add Hedgehog Quill Shot and Quill Storm"
+          git push
