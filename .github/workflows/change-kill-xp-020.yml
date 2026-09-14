@@ -1,0 +1,39 @@
+name: Change card kill XP to 0.20
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/change-kill-xp-020.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-kill-xp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Update kill XP
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          old = s
+          s = s.replace('Cards that have been used still gain +2 XP for every enemy killed in each cleared wave.', 'Cards that have been used still gain +0.20 XP for every enemy killed in each cleared wave.')
+          s = s.replace('const earned=kills*2;', 'const earned=kills*0.20;')
+          s = s.replace('return {kills,bonus:kills*2,usedCount:used.length};', 'return {kills,bonus:kills*0.20,usedCount:used.length};')
+          if s == old:
+              raise SystemExit('Expected kill XP code was not found; refusing to make an unrelated commit.')
+          p.write_text(s)
+          PY
+      - name: Commit game update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Set card kill XP to 0.20 per enemy'
+          git push origin main
