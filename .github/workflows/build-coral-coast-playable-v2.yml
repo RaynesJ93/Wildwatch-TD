@@ -1,0 +1,27 @@
+name: Build Coral Coast playable maps
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-coral-coast-playable-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-game:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch index for Region 7
+        run: python3 scripts/patch-coral-coast-v2.py
+      - name: Commit playable Coral Coast
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Build playable Coral Coast Region 7 maps'
+          git push origin main
