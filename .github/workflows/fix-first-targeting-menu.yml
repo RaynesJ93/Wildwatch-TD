@@ -1,0 +1,78 @@
+name: Fix First targeting option in tower menu
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-first-targeting-menu.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix-first-targeting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Add First option and targeting logic
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text()
+          original=s
+
+          # Add First to the visible tower targeting dropdown if it is missing.
+          if '<option value="first">First</option>' not in s:
+              s=s.replace(
+                  '<option value="closest">Closest</option>\n        <option value="strongest">Strongest</option>',
+                  '<option value="closest">Closest</option>\n        <option value="first">First</option>\n        <option value="strongest">Strongest</option>',
+                  1
+              )
+
+          # Update the help text shown below the dropdown.
+          s=s.replace(
+              'Closest = nearest enemy • Strongest = highest HP • Last = furthest back on the path',
+              'First = furthest along the path • Closest = nearest enemy • Strongest = highest HP • Last = furthest back on the path'
+          )
+
+          # Add actual First-target logic if it is not already present.
+          marker='''    if(mode==="strongest"){
+      target=inRange.reduce((best,e)=>!best||e.hp>best.hp?e:best,null);
+    }else if(mode==="last"){'''
+          replacement='''    if(mode==="first"){
+      target=inRange.reduce((best,e)=>{
+        if(!best)return e;
+        const es=Number(e.seg||0),bs=Number(best.seg||0);
+        if(es!==bs)return es>bs?e:best;
+        const en=path[Math.min(es+1,path.length-1)],bn=path[Math.min(bs+1,path.length-1)];
+        const ed=en?Math.hypot(en[0]-e.x,en[1]-e.y):0;
+        const bd=bn?Math.hypot(bn[0]-best.x,bn[1]-best.y):0;
+        return ed<bd?e:best;
+      },null);
+    }else if(mode==="strongest"){
+      target=inRange.reduce((best,e)=>!best||e.hp>best.hp?e:best,null);
+    }else if(mode==="last"){'''
+          if 'if(mode==="first")' not in s:
+              s=s.replace(marker,replacement,1)
+
+          if s==original:
+              raise SystemExit('No change made: expected targeting menu/code was not found or was already fixed.')
+
+          if '<option value="first">First</option>' not in s:
+              raise SystemExit('Failed to add First to the dropdown.')
+          if 'if(mode==="first")' not in s:
+              raise SystemExit('Failed to add First targeting logic.')
+
+          p.write_text(s)
+          PY
+      - name: Commit game fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Fix First tower targeting menu and logic'
+          git push origin main
