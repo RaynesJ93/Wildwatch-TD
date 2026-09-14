@@ -170,6 +170,10 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
 #questScreen.active .questPanel[style*='display: grid']{display:grid!important}
 
 </style>
+<style id="coral-coast-v2-style">
+.region-hero.coral{background:linear-gradient(135deg,#073d5b,#0d91a8 55%,#ddb967);border-color:#58dbe4}
+.stage-thumb.coral{background:linear-gradient(145deg,#1aaec4,#50d8dc 52%,#edcd7a);color:#fff;text-shadow:0 2px 5px #06475d}
+</style>
 </head>
 <body>
 <div id="app">
@@ -2696,10 +2700,11 @@ function draw(){
   const tundraIce=["#bfe8f4","#abdbe9","#cbeef6","#9fd2e5","#d6f3f8","#a7d9ea","#c5edf5","#95cde1","#d9f6fb","#b2e2ef"];
   const volcanicRock=["#2a211f","#30231f","#251d1c","#35251f","#291e1b","#33221c","#241b1a","#38251e","#2d201c","#211817"];
   const crystalStone=["#172238","#192740","#20234b","#152d45","#251d50","#18354a","#212b55","#172c42","#2a2058","#193149"];
-  ctx.fillStyle=currentSeries===1?forestGreens[currentMap-1]:currentSeries===2?desertSands[currentMap-1]:currentSeries===3?hauntedPurples[currentMap-1]:currentSeries===4?tundraIce[currentMap-1]:currentSeries===5?volcanicRock[currentMap-1]:crystalStone[currentMap-1];ctx.fillRect(0,0,W,H);
+  const coralWater=["#36bfd0","#2eb6ca","#43c7d4","#27afc4","#3ac1cf","#2ab4c7","#45c9d3","#25aec1","#36bdcd","#22a8bd"];
+  ctx.fillStyle=currentSeries===1?forestGreens[currentMap-1]:currentSeries===2?desertSands[currentMap-1]:currentSeries===3?hauntedPurples[currentMap-1]:currentSeries===4?tundraIce[currentMap-1]:currentSeries===5?volcanicRock[currentMap-1]:currentSeries===6?crystalStone[currentMap-1]:coralWater[currentMap-1];ctx.fillRect(0,0,W,H);
 
   // Subtle forest edge.
-  ctx.fillStyle=currentSeries===1?"#24552b":currentSeries===2?"#a77c36":currentSeries===3?"#140b1d":currentSeries===4?"#e7fbff":currentSeries===5?"#120e0d":"#101a35";
+  ctx.fillStyle=currentSeries===1?"#24552b":currentSeries===2?"#a77c36":currentSeries===3?"#140b1d":currentSeries===4?"#e7fbff":currentSeries===5?"#120e0d":currentSeries===6?"#101a35":"#087f97";
   for(let x=0;x<W;x+=70){ctx.beginPath();ctx.arc(x,22,48,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x,H-12,52,0,Math.PI*2);ctx.fill();}
   if(currentSeries===4){
     ctx.save();
@@ -2980,9 +2985,9 @@ function draw(){
   ctx.save();
   ctx.lineCap="round";ctx.lineJoin="round";
   ctx.beginPath();ctx.moveTo(path[0][0],path[0][1]);for(let i=1;i<path.length;i++)ctx.lineTo(path[i][0],path[i][1]);
-  ctx.strokeStyle=currentSeries===1?"#8b612d":currentSeries===2?"#9b6b38":currentSeries===3?"#160d20":currentSeries===4?"#4b9fc6":currentSeries===5?"#4a2118":"#3b3670";ctx.lineWidth=92;ctx.stroke();
+  ctx.strokeStyle=currentSeries===1?"#8b612d":currentSeries===2?"#9b6b38":currentSeries===3?"#160d20":currentSeries===4?"#4b9fc6":currentSeries===5?"#4a2118":currentSeries===6?"#3b3670":"#d2ab62";ctx.lineWidth=92;ctx.stroke();
   ctx.beginPath();ctx.moveTo(path[0][0],path[0][1]);for(let i=1;i<path.length;i++)ctx.lineTo(path[i][0],path[i][1]);
-  ctx.strokeStyle=currentSeries===1?"#a7834f":currentSeries===2?"#f0d18a":currentSeries===3?"#57405f":currentSeries===4?"#bdefff":currentSeries===5?"#3b2521":"#5969a8";ctx.lineWidth=72;ctx.stroke();
+  ctx.strokeStyle=currentSeries===1?"#a7834f":currentSeries===2?"#f0d18a":currentSeries===3?"#57405f":currentSeries===4?"#bdefff":currentSeries===5?"#3b2521":currentSeries===6?"#5969a8":"#f1d38e";ctx.lineWidth=72;ctx.stroke();
   if(currentSeries===1){
     // Irregular darker centre and wheel-worn highlights make the forest track feel less flat.
     ctx.globalAlpha=.28;ctx.strokeStyle="#6d5233";ctx.lineWidth=48;ctx.stroke();
@@ -4288,5 +4293,6 @@ function questWeeklyKey(now=new Date()){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 </script>
+<script src="coral-coast.js"></script>
 </body>
 </html>
