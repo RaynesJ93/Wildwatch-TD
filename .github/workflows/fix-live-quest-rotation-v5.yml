@@ -17,5 +17,11 @@ jobs:
         with:
           ref: main
       - name: Patch quest system
+        run: python3 .github/scripts/fix_live_quest_v5.py
+      - name: Commit quest fix
         run: |
-          echo 'CmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAppbXBvcnQgcmUKcD1QYXRoKCJpbmRleC5odG1sIikKcz1wLnJlYWRfdGV4dCgpCm9yaWdpbmFsPXMKCndlZWtseT0iIiJjb25zdCBXRUVLTFlfUVVFU1RTPVsKIHtpZDon d0VuZW15RXJhZGljYXRvcicsbmFtZTonRW5lbXkgRXJhZGljYXRvcicsaWNvbjon4pqU77iPJy...REPLACE_ME...'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Fix and refresh Daily and Weekly quests'
+          git push origin main
