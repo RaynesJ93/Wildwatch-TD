@@ -1,0 +1,83 @@
+name: Add expanded daily and weekly quest pools
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/add-daily-weekly-quest-pools.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-game:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Add quest pools
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          marker='// EXPANDED_DAILY_WEEKLY_QUEST_POOLS_V1'
+          if marker in s: raise SystemExit('Quest pools already installed')
+          insert=r'''
+
+// EXPANDED_DAILY_WEEKLY_QUEST_POOLS_V1
+// Five random easy dailies are intended per 06:00 daily rotation; eight harder weeklies per Tuesday 06:00 rotation.
+const expandedDailyQuestPool=[
+ {id:'dGettingStarted',icon:'🐾',name:'Getting Started',desc:'Place 5 towers',type:'placeTowers',goal:5,rewardCoins:50},
+ {id:'dPestControl',icon:'⚔️',name:'Pest Control',desc:'Kill 50 enemies',type:'kills',goal:50,rewardCoins:75},
+ {id:'dPowerUp',icon:'⬆️',name:'Power Up',desc:'Upgrade towers 5 times',type:'upgrades',goal:5,rewardCoins:75},
+ {id:'dWaveRider',icon:'🌊',name:'Wave Rider',desc:'Clear 10 waves',type:'waves',goal:10,rewardCoins:75},
+ {id:'dPocketMoney',icon:'🪙',name:'Pocket Money',desc:'Earn 500 battle coins/meat',type:'battleCurrency',goal:500,rewardCoins:75},
+ {id:'dFirstInLine',icon:'🎯',name:'First in Line',desc:'Kill 30 enemies using First targeting',type:'firstKills',goal:30,rewardCoins:75},
+ {id:'dPickBigGuy',icon:'💪',name:'Pick on the Big Guy',desc:'Kill 20 enemies using Strongest targeting',type:'strongestKills',goal:20,rewardCoins:75},
+ {id:'dMixItUp',icon:'🃏',name:'Mix It Up',desc:'Place 3 different animal types',type:'uniqueTowerTypes',goal:3,rewardCoins:75},
+ {id:'dExperienced',icon:'⭐',name:'Experienced',desc:'Earn 25 Card XP',type:'cardXp',goal:25,rewardCoins:100},
+ {id:'dWinner',icon:'🏆',name:'Winner',desc:'Complete 1 map',type:'maps',goal:1,rewardCoins:100},
+ {id:'dStillStanding',icon:'❤️',name:'Still Standing',desc:'Clear 5 waves without losing a life',type:'flawlessWaves',goal:5,rewardCoins:75},
+ {id:'dBuilder',icon:'🏗️',name:'Builder',desc:'Place 10 towers',type:'placeTowers',goal:10,rewardCoins:100},
+ {id:'dHeavyHitter',icon:'💥',name:'Heavy Hitter',desc:'Deal 5,000 tower damage',type:'damage',goal:5000,rewardCoins:100},
+ {id:'dAnimalArmy',icon:'🐾',name:'Animal Army',desc:'Place 15 total towers',type:'placeTowers',goal:15,rewardCoins:125},
+ {id:'dTargetPractice',icon:'🔄',name:'Target Practice',desc:'Use 2 different targeting modes in one battle',type:'targetModes',goal:2,rewardCoins:100}
+];
+const expandedWeeklyQuestPool=[
+ {id:'wEnemyEradicator',icon:'⚔️',name:'Enemy Eradicator',desc:'Kill 1,500 enemies',type:'kills',goal:1500,rewardChest:'rare'},
+ {id:'wMasterBuilder',icon:'🏗️',name:'Master Builder',desc:'Place 150 towers',type:'placeTowers',goal:150,rewardChest:'rare'},
+ {id:'wUpgradeFrenzy',icon:'⬆️',name:'Upgrade Frenzy',desc:'Upgrade towers 100 times',type:'upgrades',goal:100,rewardChest:'rare'},
+ {id:'wWinningStreak',icon:'🏆',name:'Winning Streak',desc:'Complete 10 maps',type:'maps',goal:10,rewardChest:'rare',rewardCoins:500},
+ {id:'wFlawlessWeek',icon:'❤️',name:'Flawless Week',desc:'Complete 5 maps without losing a life',type:'flawlessMaps',goal:5,rewardChest:'epic'},
+ {id:'wHardWeek',icon:'🔥',name:'Hard Week',desc:'Complete 5 Hard Mode maps',type:'hardMaps',goal:5,rewardChest:'epic'},
+ {id:'wFirstPriority',icon:'🎯',name:'First Priority',desc:'Kill 750 enemies using First targeting',type:'firstKills',goal:750,rewardChest:'rare'},
+ {id:'wBigGameHunter',icon:'💪',name:'Big Game Hunter',desc:'Kill 400 enemies using Strongest targeting',type:'strongestKills',goal:400,rewardChest:'rare'},
+ {id:'wVarietyPack',icon:'🃏',name:'Variety Pack',desc:'Win maps using 10 different animal cards across the week',type:'winningCards',goal:10,rewardChest:'rare'},
+ {id:'wTrainingWeek',icon:'⭐',name:'Training Week',desc:'Earn 1,000 total Card XP',type:'cardXp',goal:1000,rewardChest:'epic'},
+ {id:'wDamageDealer',icon:'💥',name:'Damage Dealer',desc:'Deal 500,000 tower damage',type:'damage',goal:500000,rewardChest:'rare',rewardCoins:500},
+ {id:'wWaveCrusher',icon:'🌊',name:'Wave Crusher',desc:'Clear 150 waves',type:'waves',goal:150,rewardChest:'rare'},
+ {id:'wResourceHunter',icon:'🪙',name:'Resource Hunter',desc:'Earn 25,000 battle coins/meat',type:'battleCurrency',goal:25000,rewardChest:'rare'},
+ {id:'wMaximumPower',icon:'🔟',name:'Maximum Power',desc:'Get 10 towers to Level 10',type:'level10Towers',goal:10,rewardChest:'epic'},
+ {id:'wCommonHeroes',icon:'🐾',name:'Common Heroes',desc:'Complete 3 maps using only Common/Uncommon cards',type:'commonUncommonWins',goal:3,rewardChest:'epic'},
+ {id:'wWorldTraveller',icon:'🌍',name:'World Traveller',desc:'Complete maps in 4 different regions',type:'regions',goal:4,rewardChest:'epic'},
+ {id:'wAnimalSpecialist',icon:'🦍',name:'Animal Specialist',desc:'Get 500 kills with one animal card',type:'singleCardKills',goal:500,rewardChest:'rare'},
+ {id:'wEliteDefence',icon:'💎',name:'Elite Defence',desc:'Complete 3 maps using only Rare-or-better cards',type:'rarePlusWins',goal:3,rewardChest:'epic'}
+];
+// Expose the pools for the quest rotation system without removing existing compatible quests.
+window.WILDWATCH_DAILY_QUEST_POOL=expandedDailyQuestPool;
+window.WILDWATCH_WEEKLY_QUEST_POOL=expandedWeeklyQuestPool;
+'''
+          idx=s.rfind('</script>')
+          if idx<0: raise SystemExit('No closing script tag')
+          s=s[:idx]+insert+s[idx:]
+          p.write_text(s)
+          PY
+      - name: Commit game update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Add expanded daily and weekly quest pools'
+          git push origin main
