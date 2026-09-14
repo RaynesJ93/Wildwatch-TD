@@ -1,0 +1,38 @@
+name: Round card kill XP up
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/round-card-kill-xp.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  round-kill-xp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Round kill XP upward
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old=s
+          s=s.replace('const earned=kills*0.20;', 'const earned=Math.ceil(kills*0.20);')
+          s=s.replace('return {kills,bonus:kills*0.20,usedCount:used.length};', 'return {kills,bonus:Math.ceil(kills*0.20),usedCount:used.length};')
+          if s == old:
+              raise SystemExit('Expected 0.20 kill XP code was not found; refusing unrelated change.')
+          p.write_text(s)
+          PY
+      - name: Commit game update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Round card kill XP up to whole XP'
+          git push origin main
