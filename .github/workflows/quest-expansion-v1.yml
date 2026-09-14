@@ -1,0 +1,11 @@
+name: Quest expansion v1
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/install-quest-expansion.py
+      - run: git add index.html && git -c user.name=github-actions -c user.email=actions@github.com commit -m "Enable expanded quests" && git push
