@@ -1,0 +1,21 @@
+name: Fix live quest rotation v5
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-live-quest-rotation-v5.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-quests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch quest system
+        run: |
+          echo 'CmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAppbXBvcnQgcmUKcD1QYXRoKCJpbmRleC5odG1sIikKcz1wLnJlYWRfdGV4dCgpCm9yaWdpbmFsPXMKCndlZWtseT0iIiJjb25zdCBXRUVLTFlfUVVFU1RTPVsKIHtpZDon d0VuZW15RXJhZGljYXRvcicsbmFtZTonRW5lbXkgRXJhZGljYXRvcicsaWNvbjon4pqU77iPJy...REPLACE_ME...'
