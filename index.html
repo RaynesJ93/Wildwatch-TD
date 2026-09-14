@@ -298,7 +298,7 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
     <div class="hero">
       <div style="font-size:46px;text-align:center">📜</div>
       <h1 style="text-align:center">Daily Quests</h1>
-      <p style="text-align:center">Complete 5 fresh quests each day. Daily quests reset at 6:00 AM.</p>
+      <p style="text-align:center">Complete 5 random Daily quests. Resets every day at 6:00 AM.</p>
     </div>
     <div class="questTabs" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0 10px">
       <button class="secondary questTab active" data-qtab="daily">Daily</button>
@@ -3941,23 +3941,38 @@ setTimeout(()=>{
 
 // ---- Quest category tabs ----
 const WEEKLY_QUESTS=[
- {id:'weeklyWaves150',icon:'🌊',name:'Wave Marathon',text:'Complete 150 waves',goal:150,reward:300,type:'weeklyWaves'},
- {id:'weeklyCoins2500',icon:'🪙',name:'Coin Collector',text:'Collect 2,500 coins',goal:2500,reward:350,type:'weeklyCoins'},
- {id:'weeklyCommon50',icon:'⚪',name:'Common Commander',text:'Place 50 Common towers',goal:50,reward:200,rewardType:'tierExp',rewardTier:'Common',type:'weeklyCommonPlaced'},
- {id:'weeklyLegendary15',icon:'🌟',name:'Legendary Force',text:'Place 15 Legendary towers',goal:15,reward:400,rewardType:'tierExp',rewardTier:'Legendary',type:'weeklyLegendaryPlaced'},
- {id:'weeklyLevels5',icon:'⬆️',name:'Level Climber',text:'Gain 5 player levels',goal:5,reward:500,type:'weeklyLevels'}
+ {id:'wEnemyEradicator',name:'Enemy Eradicator',icon:'⚔️',text:'Kill 1,500 enemies',goal:1500,reward:250,type:'kills'},
+ {id:'wMasterBuilder',name:'Master Builder',icon:'🏗️',text:'Place 150 towers',goal:150,reward:250,type:'placed'},
+ {id:'wUpgradeFrenzy',name:'Upgrade Frenzy',icon:'⬆️',text:'Upgrade towers 100 times',goal:100,reward:250,type:'upgrades'},
+ {id:'wWinningStreak',name:'Winning Streak',icon:'🏆',text:'Complete 10 maps',goal:10,reward:350,type:'maps'},
+ {id:'wFlawlessWeek',name:'Flawless Week',icon:'❤️',text:'Complete 5 maps without losing a life',goal:5,reward:400,type:'flawlessMaps'},
+ {id:'wHardWeek',name:'Hard Week',icon:'🔥',text:'Complete 5 Hard Mode maps',goal:5,reward:450,type:'hardMaps'},
+ {id:'wFirstPriority',name:'First Priority',icon:'🎯',text:'Kill 750 enemies using First targeting',goal:750,reward:300,type:'firstKills'},
+ {id:'wBigGameHunter',name:'Big Game Hunter',icon:'💪',text:'Kill 400 enemies using Strongest targeting',goal:400,reward:300,type:'strongestKills'},
+ {id:'wVarietyPack',name:'Variety Pack',icon:'🃏',text:'Win maps using 10 different animal cards across the week',goal:10,reward:350,type:'winningCards'},
+ {id:'wTrainingWeek',name:'Training Week',icon:'⭐',text:'Earn 1,000 total Card XP',goal:1000,reward:400,type:'cardXp'},
+ {id:'wDamageDealer',name:'Damage Dealer',icon:'💥',text:'Deal 500,000 tower damage',goal:500000,reward:350,type:'damage'},
+ {id:'wWaveCrusher',name:'Wave Crusher',icon:'🌊',text:'Clear 150 waves',goal:150,reward:300,type:'waves'},
+ {id:'wResourceHunter',name:'Resource Hunter',icon:'🪙',text:'Earn 25,000 battle coins/meat',goal:25000,reward:300,type:'battleCurrency'},
+ {id:'wMaximumPower',name:'Maximum Power',icon:'🔟',text:'Get 10 towers to Level 10',goal:10,reward:450,type:'level10Towers'},
+ {id:'wCommonHeroes',name:'Common Heroes',icon:'🐾',text:'Complete 3 maps using only Common/Uncommon cards',goal:3,reward:450,type:'commonUncommonWins'},
+ {id:'wWorldTraveller',name:'World Traveller',icon:'🌍',text:'Complete maps in 4 different regions',goal:4,reward:450,type:'regions'},
+ {id:'wAnimalSpecialist',name:'Animal Specialist',icon:'🦍',text:'Get 500 kills with one animal card',goal:500,reward:350,type:'singleCardKills'},
+ {id:'wEliteDefence',name:'Elite Defence',icon:'💎',text:'Complete 3 maps using only Rare-or-better cards',goal:3,reward:500,type:'rarePlusWins'}
 ];
 
-function weeklyKey(){
-  const d=new Date(),day=(d.getUTCDay()+6)%7;
-  d.setUTCDate(d.getUTCDate()-day);
-  return d.toISOString().slice(0,10);
+function weeklyKey(now=new Date()){
+  const d=new Date(now.getTime()-6*60*60*1000);
+  const back=(d.getDay()-2+7)%7;
+  d.setDate(d.getDate()-back);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function ensureWeeklyQuests(){
   const key=weeklyKey();
-  const old=save.weeklyProgress&&typeof save.weeklyProgress==='object'?save.weeklyProgress:{};
-  if(!save.weeklyQuests||typeof save.weeklyQuests!=='object'||save.weeklyQuests.week!==key){
-    save.weeklyQuests={week:key,progress:{...old},claimed:{}};
+  const needsNew=!save.weeklyQuests||typeof save.weeklyQuests!=='object'||save.weeklyQuests.week!==key||save.weeklyQuests.version!==4||!Array.isArray(save.weeklyQuests.items)||save.weeklyQuests.items.length!==8||save.weeklyQuests.items.some(id=>!WEEKLY_QUESTS.some(q=>q.id===id));
+  if(needsNew){
+    const pool=[...WEEKLY_QUESTS].sort(()=>Math.random()-.5).slice(0,8);
+    save.weeklyQuests={week:key,version:4,items:pool.map(q=>q.id),progress:{},claimed:{}};
     save.weeklyProgress={};
     persist();
   }
@@ -3966,7 +3981,7 @@ function ensureWeeklyQuests(){
 }
 function weeklyQuestCards(){
   ensureWeeklyQuests();
-  return WEEKLY_QUESTS.map(q=>{
+  return save.weeklyQuests.items.map(id=>WEEKLY_QUESTS.find(q=>q.id===id)).filter(Boolean).map(q=>{
     const progress=Math.max(0,Number(save.weeklyQuests.progress[q.type]||0));
     const goal=Number(q.goal||1),done=progress>=goal,claimed=!!save.weeklyQuests.claimed[q.id];
     const reward=q.rewardType==='tierExp'?`${q.reward} ${q.rewardTier} XP`:`🟡 ${q.reward}`;
@@ -4230,12 +4245,15 @@ const _questObserver=new MutationObserver(()=>{const qs=document.getElementById(
 const _questScreen=document.getElementById('questScreen');if(_questScreen)_questObserver.observe(_questScreen,{attributes:true,attributeFilter:['class']});
 
 // ---- Daily quest board ----
-function questDay(){return new Date().toISOString().slice(0,10)}
+function questDay(now=new Date()){
+ const d=new Date(now.getTime()-6*60*60*1000);
+ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function ensureDailyQuests(){
  save.dailyQuests=save.dailyQuests||{};
- if(save.dailyQuests.day!==questDay()){
+ if(save.dailyQuests.day!==questDay()||save.dailyQuests.version!==4||!Array.isArray(save.dailyQuests.items)||save.dailyQuests.items.length!==5||save.dailyQuests.items.some(x=>!DAILY_QUEST_POOL.some(q=>q.id===x.id))){
    const pool=[...DAILY_QUEST_POOL].sort(()=>Math.random()-.5).slice(0,5);
-   save.dailyQuests={day:questDay(),items:pool.map(q=>({id:q.id,progress:0,claimed:false})),rerolled:false};persist();
+   save.dailyQuests={day:questDay(),version:4,items:pool.map(q=>({id:q.id,progress:0,claimed:false})),rerolled:false};persist();
  }
 }
 function questDef(id){return DAILY_QUEST_POOL.find(q=>q.id===id)}
