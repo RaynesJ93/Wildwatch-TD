@@ -3967,8 +3967,14 @@ function weeklyKey(now=new Date()){
   d.setDate(d.getDate()-back);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+function weeklyKeyV4(now=new Date()){
+  const d=new Date(now.getTime()-6*60*60*1000);
+  const back=(d.getDay()-2+7)%7;
+  d.setDate(d.getDate()-back);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function ensureWeeklyQuests(){
-  const key=weeklyKey();
+  const key=weeklyKeyV4();
   const needsNew=!save.weeklyQuests||typeof save.weeklyQuests!=='object'||save.weeklyQuests.week!==key||save.weeklyQuests.version!==4||!Array.isArray(save.weeklyQuests.items)||save.weeklyQuests.items.length!==8||save.weeklyQuests.items.some(id=>!WEEKLY_QUESTS.some(q=>q.id===id));
   if(needsNew){
     const pool=[...WEEKLY_QUESTS].sort(()=>Math.random()-.5).slice(0,8);
@@ -4249,11 +4255,15 @@ function questDay(now=new Date()){
  const d=new Date(now.getTime()-6*60*60*1000);
  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+function questDayV4(now=new Date()){
+ const d=new Date(now.getTime()-6*60*60*1000);
+ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function ensureDailyQuests(){
  save.dailyQuests=save.dailyQuests||{};
- if(save.dailyQuests.day!==questDay()||save.dailyQuests.version!==4||!Array.isArray(save.dailyQuests.items)||save.dailyQuests.items.length!==5||save.dailyQuests.items.some(x=>!DAILY_QUEST_POOL.some(q=>q.id===x.id))){
+ if(save.dailyQuests.day!==questDayV4()||save.dailyQuests.version!==4||!Array.isArray(save.dailyQuests.items)||save.dailyQuests.items.length!==5||save.dailyQuests.items.some(x=>!DAILY_QUEST_POOL.some(q=>q.id===x.id))){
    const pool=[...DAILY_QUEST_POOL].sort(()=>Math.random()-.5).slice(0,5);
-   save.dailyQuests={day:questDay(),version:4,items:pool.map(q=>({id:q.id,progress:0,claimed:false})),rerolled:false};persist();
+   save.dailyQuests={day:questDayV4(),version:4,items:pool.map(q=>({id:q.id,progress:0,claimed:false})),rerolled:false};persist();
  }
 }
 function questDef(id){return DAILY_QUEST_POOL.find(q=>q.id===id)}
