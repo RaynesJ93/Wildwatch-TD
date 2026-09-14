@@ -598,11 +598,11 @@ function awardWaveUsedKillXp(){
   const kills=Math.max(0,Number(battle&&battle.waveKills||0));
   battle.cardKillXp=battle.cardKillXp||{};
   if(kills>0)used.forEach(k=>{
-    const earned=Math.ceil(kills*0.20);
+    const earned=Math.ceil(kills*0.60);
     addCardXp(k,earned);
     battle.cardKillXp[k]=(battle.cardKillXp[k]||0)+earned;
   });
-  return {kills,bonus:Math.ceil(kills*0.20),usedCount:used.length};
+  return {kills,bonus:Math.ceil(kills*0.60),usedCount:used.length};
 }
 function awardMapDeckXp(){
   const deck=[...new Set(save.deck||[])].filter(k=>save.unlocked.includes(k));
