@@ -1,0 +1,41 @@
+name: Make First the default tower targeting
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/default-target-first.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-game:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Change default tower targeting to First
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old=s
+          s=s.replace('targetMode:"closest"', 'targetMode:"first"')
+          s=s.replace('selectedTower.targetMode||"closest"', 'selectedTower.targetMode||"first"')
+          s=s.replace('t.targetMode||"closest"', 't.targetMode||"first"')
+          s=s.replace('towerTargetMode.value||"closest"', 'towerTargetMode.value||"first"')
+          s=s.replace('const mode=t.targetMode||"closest";', 'const mode=t.targetMode||"first";')
+          if s == old:
+              raise SystemExit('Expected tower targeting defaults not found; refusing unrelated change.')
+          p.write_text(s)
+          PY
+      - name: Commit game update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Make First the default tower targeting'
+          git push origin main
