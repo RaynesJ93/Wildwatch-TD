@@ -1203,7 +1203,7 @@ function updateHud(){
     upgradeTower.textContent=`Upgrade • 🥩 ${up}`;
     upgradeTower.disabled=cash<up;
     upgradeTower.style.opacity=cash<up?".55":"1";
-    if(typeof towerTargetMode!=="undefined"&&towerTargetMode)towerTargetMode.value=selectedTower.targetMode||"closest";
+    if(typeof towerTargetMode!=="undefined"&&towerTargetMode)towerTargetMode.value=selectedTower.targetMode||"first";
   }
 }
 
@@ -1472,7 +1472,7 @@ canvas.addEventListener("pointerdown",ev=>{
   if(battle.towers.some(t=>Math.hypot(t.x-x,t.y-y)<68)){message.textContent="That is too close to another tower.";return}
   const a=animals[selectedCard]; if(battle.coins<a.cost){message.textContent="Not enough coins.";return}
   battle.coins-=a.cost;
-  battle.towers.push({key:selectedCard,x,y,pad:null,cd:0,level:1,spent:a.cost,targetMode:"closest"});
+  battle.towers.push({key:selectedCard,x,y,pad:null,cd:0,level:1,spent:a.cost,targetMode:"first"});
   battle.totalPlaced=Math.max(0,Number(battle.totalPlaced||0))+1;
   addQuestProgress("placed",1);
   if(animals[selectedCard]?.rarity==="Common")addWeeklyProgress("weeklyCommonPlaced",1);
@@ -1488,12 +1488,12 @@ function openTowerModal(){
   upgradeTower.textContent=`Upgrade • 🥩 ${up}`;
   upgradeTower.disabled=cash<up;
   upgradeTower.style.opacity=cash<up?".55":"1";
-  if(typeof towerTargetMode!=="undefined"&&towerTargetMode)towerTargetMode.value=t.targetMode||"closest";
+  if(typeof towerTargetMode!=="undefined"&&towerTargetMode)towerTargetMode.value=t.targetMode||"first";
   towerModal.classList.add("show");
 }
 towerTargetMode.onchange=()=>{
   if(!selectedTower)return;
-  selectedTower.targetMode=towerTargetMode.value||"closest";
+  selectedTower.targetMode=towerTargetMode.value||"first";
 };
 closeTower.onclick=()=>{towerModal.classList.remove("show");selectedTower=null;};
 upgradeTower.onclick=()=>{
@@ -1564,7 +1564,7 @@ function towerTickCore(t,dt){
   // TOWER_TARGETING_DROPDOWN_V1: per-tower target priority.
   const inRange=battle.enemies.filter(e=>!e.dead&&e.hp>0&&Math.hypot(e.x-t.x,e.y-t.y)<=range);
   let target=null;
-  const mode=t.targetMode||"closest";
+  const mode=t.targetMode||"first";
   if(inRange.length){
     if(mode==="strongest"){
       target=inRange.reduce((best,e)=>!best||e.hp>best.hp?e:best,null);
