@@ -339,11 +339,12 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
     <div style="margin:10px 0 12px">
       <label for="towerTargetMode" style="display:block;font-weight:900;margin-bottom:6px">Targeting</label>
       <select id="towerTargetMode" style="width:100%;padding:11px 12px;border-radius:12px;border:1px solid #4b8469;background:#0f211a;color:#f4fff8;font:inherit;font-weight:800">
+        <option value="first">First</option>
         <option value="closest">Closest</option>
         <option value="strongest">Strongest</option>
         <option value="last">Last</option>
       </select>
-      <div class="small" style="margin-top:5px">Closest = nearest enemy • Strongest = highest HP • Last = furthest back on the path</div>
+      <div class="small" style="margin-top:5px">First = furthest along the path • Closest = nearest enemy • Strongest = highest HP • Last = furthest back on the path</div>
     </div>
     <div style="display:flex;gap:8px">
       <button class="primary" id="upgradeTower" style="flex:1">Upgrade</button>
@@ -1594,7 +1595,17 @@ function towerTickCore(t,dt){
   let target=null;
   const mode=t.targetMode||"first";
   if(inRange.length){
-    if(mode==="strongest"){
+    if(mode==="first"){
+      target=inRange.reduce((best,e)=>{
+        if(!best)return e;
+        const es=Number(e.seg||0),bs=Number(best.seg||0);
+        if(es!==bs)return es>bs?e:best;
+        const en=path[Math.min(es+1,path.length-1)],bn=path[Math.min(bs+1,path.length-1)];
+        const ed=en?Math.hypot(en[0]-e.x,en[1]-e.y):0;
+        const bd=bn?Math.hypot(bn[0]-best.x,bn[1]-best.y):0;
+        return ed<bd?e:best;
+      },null);
+    }else if(mode==="strongest"){
       target=inRange.reduce((best,e)=>!best||e.hp>best.hp?e:best,null);
     }else if(mode==="last"){
       target=inRange.reduce((best,e)=>{
