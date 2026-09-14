@@ -27,37 +27,38 @@ weekly="""const WEEKLY_QUESTS=[
 s,n=re.subn(r"const WEEKLY_QUESTS=\[[\s\S]*?\n\];",weekly,s,count=1)
 if n!=1: raise SystemExit('Could not replace WEEKLY_QUESTS')
 
-old_daily="function questDay(){return new Date().toISOString().slice(0,10)}"
-new_daily="""function questDay(now=new Date()){
+quest_day="""function questDay(now=new Date()){
  const d=new Date(now.getTime()-6*60*60*1000);
  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}"""
-if old_daily not in s: raise SystemExit('questDay marker missing')
-s=s.replace(old_daily,new_daily,1)
+}
+"""
+s,n=re.subn(r"function questDay\([^)]*\)\{[\s\S]*?\}\n(?=function ensureDailyQuests)",quest_day,s,count=1)
+if n!=1:
+    s,n=re.subn(r"function questDay\([^)]*\)\{[^\n]*\}\n(?=function ensureDailyQuests)",quest_day,s,count=1)
+if n!=1: raise SystemExit('Could not replace questDay')
 
-old_ensure_daily="""if(save.dailyQuests.day!==questDay()){
-   const pool=[...DAILY_QUEST_POOL].sort(()=>Math.random()-.5).slice(0,5);
-   save.dailyQuests={day:questDay(),items:pool.map(q=>({id:q.id,progress:0,claimed:false})),rerolled:false};persist();
- }"""
-new_ensure_daily="""if(save.dailyQuests.day!==questDay()||save.dailyQuests.version!==4||!Array.isArray(save.dailyQuests.items)||save.dailyQuests.items.length!==5||save.dailyQuests.items.some(x=>!DAILY_QUEST_POOL.some(q=>q.id===x.id))){
+ensure_daily="""function ensureDailyQuests(){
+ save.dailyQuests=save.dailyQuests||{};
+ if(save.dailyQuests.day!==questDay()||save.dailyQuests.version!==4||!Array.isArray(save.dailyQuests.items)||save.dailyQuests.items.length!==5||save.dailyQuests.items.some(x=>!DAILY_QUEST_POOL.some(q=>q.id===x.id))){
    const pool=[...DAILY_QUEST_POOL].sort(()=>Math.random()-.5).slice(0,5);
    save.dailyQuests={day:questDay(),version:4,items:pool.map(q=>({id:q.id,progress:0,claimed:false})),rerolled:false};persist();
- }"""
-if old_ensure_daily not in s: raise SystemExit('daily ensure marker missing')
-s=s.replace(old_ensure_daily,new_ensure_daily,1)
+ }
+}
+"""
+s,n=re.subn(r"function ensureDailyQuests\(\)\{[\s\S]*?\n\}\n(?=function questDef)",ensure_daily,s,count=1)
+if n!=1: raise SystemExit('Could not replace ensureDailyQuests')
 
-weekly_key_re=r"function weeklyKey\(\)\{[\s\S]*?\n\}"
-weekly_key_new="""function weeklyKey(now=new Date()){
+weekly_key="""function weeklyKey(now=new Date()){
   const d=new Date(now.getTime()-6*60*60*1000);
   const back=(d.getDay()-2+7)%7;
   d.setDate(d.getDate()-back);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}"""
-s,n=re.subn(weekly_key_re,weekly_key_new,s,count=1)
+}
+"""
+s,n=re.subn(r"function weeklyKey\([^)]*\)\{[\s\S]*?\n\}\n(?=function ensureWeeklyQuests)",weekly_key,s,count=1)
 if n!=1: raise SystemExit('Could not replace weeklyKey')
 
-ensure_re=r"function ensureWeeklyQuests\(\)\{[\s\S]*?\n\}"
-ensure_new="""function ensureWeeklyQuests(){
+ensure_weekly="""function ensureWeeklyQuests(){
   const key=weeklyKey();
   const needsNew=!save.weeklyQuests||typeof save.weeklyQuests!=='object'||save.weeklyQuests.week!==key||save.weeklyQuests.version!==4||!Array.isArray(save.weeklyQuests.items)||save.weeklyQuests.items.length!==8||save.weeklyQuests.items.some(id=>!WEEKLY_QUESTS.some(q=>q.id===id));
   if(needsNew){
@@ -68,15 +69,12 @@ ensure_new="""function ensureWeeklyQuests(){
   }
   save.weeklyQuests.progress=save.weeklyQuests.progress&&typeof save.weeklyQuests.progress==='object'?save.weeklyQuests.progress:{};
   save.weeklyQuests.claimed=save.weeklyQuests.claimed&&typeof save.weeklyQuests.claimed==='object'?save.weeklyQuests.claimed:{};
-}"""
-s,n=re.subn(ensure_re,ensure_new,s,count=1)
+}
+"""
+s,n=re.subn(r"function ensureWeeklyQuests\(\)\{[\s\S]*?\n\}\n(?=function weeklyQuestCards)",ensure_weekly,s,count=1)
 if n!=1: raise SystemExit('Could not replace ensureWeeklyQuests')
 
-old_cards="return WEEKLY_QUESTS.map(q=>{"
-new_cards="return save.weeklyQuests.items.map(id=>WEEKLY_QUESTS.find(q=>q.id===id)).filter(Boolean).map(q=>{"
-if old_cards not in s: raise SystemExit('weeklyQuestCards marker missing')
-s=s.replace(old_cards,new_cards,1)
-
+s=s.replace('return WEEKLY_QUESTS.map(q=>{','return save.weeklyQuests.items.map(id=>WEEKLY_QUESTS.find(q=>q.id===id)).filter(Boolean).map(q=>{',1)
 s=s.replace('Complete 5 fresh quests each day. Daily quests reset at 6:00 AM.','Complete 5 random Daily quests. Resets every day at 6:00 AM.',1)
 
 if s==original: raise SystemExit('No changes made')
