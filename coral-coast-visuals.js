@@ -1,4 +1,4 @@
-// CORAL_COAST_VISUALS_V14 — global legacy-base suppression + branded title/play button
+// CORAL_COAST_VISUALS_V15 — global legacy-base suppression + branded title/buttons
 (()=>{
  const coreDraw=draw,MAP_MAX=10;
 
@@ -9,14 +9,12 @@
   brand.setAttribute('aria-label','Critter Clash Tower Defence');
   brand.innerHTML='';
   const img=document.createElement('img');
-  img.src='assets/critter-clash-tower-defence-banner.png?v=14';
+  img.src='assets/critter-clash-tower-defence-banner.png?v=15';
   img.alt='Critter Clash Tower Defence';
   img.style.cssText='display:block;width:min(290px,52vw);height:74px;object-fit:contain;object-position:left center;';
   brand.appendChild(img);
  }
 
- // Replace only the visual contents of the existing Play Now button. The original
- // button element, id, click listener and navigation behaviour are left untouched.
  function installPlayNowArtwork(){
   const buttons=[...document.querySelectorAll('button')];
   const btn=buttons.find(b=>/play\s*now/i.test((b.textContent||'').trim()));
@@ -26,15 +24,25 @@
   btn.textContent='';
   btn.style.cssText+='background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;overflow:visible!important;height:auto!important;min-height:0!important;';
   const img=document.createElement('img');
-  img.src='assets/critter-clash-play-now-button.png?v=14';
+  img.src='assets/critter-clash-play-now-button.png?v=15';
   img.alt='Play Now';
   img.draggable=false;
   img.style.cssText='display:block;width:100%;height:auto;max-height:118px;object-fit:contain;pointer-events:none;';
   btn.appendChild(img);
  }
- function installUiArtwork(){installTopBrandBanner();installPlayNowArtwork();}
+
+ // Change ONLY the appearance of the existing Continue Battle button. Its text,
+ // DOM element and existing click handler remain exactly as they are.
+ function installContinueBattleBorder(){
+  const buttons=[...document.querySelectorAll('button')];
+  const btn=buttons.find(b=>/continue\s*battle/i.test((b.textContent||'').trim()));
+  if(!btn||btn.dataset.ccContinueBorder==='1')return;
+  btn.dataset.ccContinueBorder='1';
+  btn.style.cssText+='background-color:#245f47!important;background-image:url("assets/critter-clash-continue-battle-border.png?v=15")!important;background-size:100% 100%!important;background-position:center!important;background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;';
+ }
+ function installUiArtwork(){installTopBrandBanner();installPlayNowArtwork();installContinueBattleBorder();}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installUiArtwork);else installUiArtwork();
- new MutationObserver(installPlayNowArtwork).observe(document.body,{childList:true,subtree:true});
+ new MutationObserver(()=>{installPlayNowArtwork();installContinueBattleBorder();}).observe(document.body,{childList:true,subtree:true});
 
  function drawWithoutLegacyBase(){
   const c=document.getElementById('game')||document.querySelector('canvas');
@@ -64,5 +72,5 @@
 
  function coastDecor(ctx,w,h,map){ctx.save();ctx.globalAlpha=.14;ctx.strokeStyle=map>=8?'#063d67':'#e8ffff';ctx.lineWidth=4;for(let y=45;y<h;y+=88){ctx.beginPath();for(let x=-25;x<w+45;x+=44){ctx.moveTo(x,y);ctx.quadraticCurveTo(x+11,y-7,x+22,y);ctx.quadraticCurveTo(x+33,y+7,x+44,y)}ctx.stroke()}ctx.globalAlpha=.42;ctx.font='15px system-ui';const a=['🪸','🐚','🌿','🫧'],pts=[[.06,.34],[.91,.42],[.11,.85],[.85,.68],[.48,.13],[.53,.90],[.29,.53],[.71,.52],[.19,.44],[.79,.32],[.37,.72],[.63,.26]];pts.forEach((p,i)=>ctx.fillText(a[(i+map)%4],w*p[0],h*p[1]));ctx.restore();}
  draw=function(){drawWithoutLegacyBase();if(currentSeries!==7||currentMap<1||currentMap>MAP_MAX)return;const c=document.getElementById('game')||document.querySelector('canvas'),ctx=c?.getContext('2d');if(!ctx)return;coastDecor(ctx,c.width,c.height,currentMap);};
- const s=document.createElement('script');s.src='regions-8-10.js?v=14';s.onload=()=>{const u=document.createElement('script');u.src='regions-8-10-ui.js?v=14';document.body.appendChild(u)};document.body.appendChild(s);
+ const s=document.createElement('script');s.src='regions-8-10.js?v=15';s.onload=()=>{const u=document.createElement('script');u.src='regions-8-10-ui.js?v=15';document.body.appendChild(u)};document.body.appendChild(s);
 })();
