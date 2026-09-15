@@ -1,5 +1,9 @@
 name: Quest expansion v1
-on: workflow_dispatch
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/quest-expansion-v1.yml'
 permissions:
   contents: write
 jobs:
@@ -7,5 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - run: python3 scripts/install-quest-expansion.py
-      - run: git add index.html && git -c user.name=github-actions -c user.email=actions@github.com commit -m "Enable expanded quests" && git push
+      - run: |
+          git config user.name github-actions
+          git config user.email actions@github.com
+          git add index.html
+          git commit -m 'Enable expanded Milestone and Challenge quests'
+          git push origin main
