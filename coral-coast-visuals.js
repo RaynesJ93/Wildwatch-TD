@@ -1,14 +1,7 @@
-// CORAL_COAST_VISUALS_V10 — clean Coral Coast PNG base on maps 1-10
+// CORAL_COAST_VISUALS_V11 — Coral Coast visuals only; all base-specific overlays removed
 (()=>{
  const oldDraw=draw,MAP_MAX=10;
- const coralBaseImg=new Image();
- coralBaseImg.src='assets/Coral-coast-based-png.png';
- function basePos(w,h){if(!path||path.length<2)return{x:w/2,y:h-82,prev:null,end:null};const end=path[path.length-1],prev=path[path.length-2],margin=76,dx=end[0]-prev[0],dy=end[1]-prev[1];let t=1;if(dx>0)t=Math.min(t,(w-margin-prev[0])/dx);else if(dx<0)t=Math.min(t,(margin-prev[0])/dx);if(dy>0)t=Math.min(t,(h-margin-prev[1])/dy);else if(dy<0)t=Math.min(t,(margin-prev[1])/dy);t=Math.max(0,Math.min(1,t));return{x:prev[0]+dx*t,y:prev[1]+dy*t,prev,end};}
  function coastDecor(ctx,w,h,map){ctx.save();ctx.globalAlpha=.14;ctx.strokeStyle=map>=8?'#063d67':'#e8ffff';ctx.lineWidth=4;for(let y=45;y<h;y+=88){ctx.beginPath();for(let x=-25;x<w+45;x+=44){ctx.moveTo(x,y);ctx.quadraticCurveTo(x+11,y-7,x+22,y);ctx.quadraticCurveTo(x+33,y+7,x+44,y)}ctx.stroke()}ctx.globalAlpha=.42;ctx.font='15px system-ui';const a=['🪸','🐚','🌿','🫧'],pts=[[.06,.34],[.91,.42],[.11,.85],[.85,.68],[.48,.13],[.53,.90],[.29,.53],[.71,.52],[.19,.44],[.79,.32],[.37,.72],[.63,.26]];pts.forEach((p,i)=>ctx.fillText(a[(i+map)%4],w*p[0],h*p[1]));ctx.restore();}
- function cleanOldBase(ctx,w,h){const b=basePos(w,h);if(!b.end)return;ctx.save();ctx.fillStyle='#36b9c9';ctx.beginPath();ctx.arc(b.end[0],b.end[1],68,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.13;ctx.strokeStyle='#e8ffff';ctx.lineWidth=3;for(let yy=b.end[1]-55;yy<=b.end[1]+55;yy+=25){ctx.beginPath();ctx.moveTo(b.end[0]-65,yy);ctx.quadraticCurveTo(b.end[0]-32,yy-7,b.end[0],yy);ctx.quadraticCurveTo(b.end[0]+32,yy+7,b.end[0]+65,yy);ctx.stroke()}ctx.restore();}
- function route(ctx,w,h){const b=basePos(w,h);if(!b.prev)return;ctx.save();ctx.lineCap='round';ctx.beginPath();ctx.moveTo(b.prev[0],b.prev[1]);ctx.lineTo(b.x,b.y);ctx.strokeStyle='#d2ab62';ctx.lineWidth=84;ctx.stroke();ctx.beginPath();ctx.moveTo(b.prev[0],b.prev[1]);ctx.lineTo(b.x,b.y);ctx.strokeStyle='#f1d38e';ctx.lineWidth=68;ctx.stroke();ctx.restore();}
- function fortress(ctx,w,h){if(!(coralBaseImg.complete&&coralBaseImg.naturalWidth))return;const b=basePos(w,h),size=148;ctx.save();ctx.drawImage(coralBaseImg,b.x-size/2,b.y-size*.57,size,size);ctx.restore();}
- draw=function(){oldDraw();if(currentSeries!==7||currentMap<1||currentMap>MAP_MAX)return;const c=document.getElementById('game')||document.querySelector('canvas'),ctx=c?.getContext('2d');if(!ctx)return;cleanOldBase(ctx,c.width,c.height);coastDecor(ctx,c.width,c.height,currentMap);route(ctx,c.width,c.height);fortress(ctx,c.width,c.height);};
- coralBaseImg.onload=()=>{try{draw()}catch(e){}};
+ draw=function(){oldDraw();if(currentSeries!==7||currentMap<1||currentMap>MAP_MAX)return;const c=document.getElementById('game')||document.querySelector('canvas'),ctx=c?.getContext('2d');if(!ctx)return;coastDecor(ctx,c.width,c.height,currentMap);};
  const s=document.createElement('script');s.src='regions-8-10.js?v=3';s.onload=()=>{const u=document.createElement('script');u.src='regions-8-10-ui.js?v=3';document.body.appendChild(u)};document.body.appendChild(s);
 })();
