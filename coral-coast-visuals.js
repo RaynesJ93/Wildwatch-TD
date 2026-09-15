@@ -5,58 +5,17 @@
  function basePos(w,h){
   if(typeof path==='undefined'||!path||path.length<2)return {x:w/2,y:h-82,prev:null,end:null};
   const end=path[path.length-1],prev=path[path.length-2],margin=62;
-  const dx=end[0]-prev[0],dy=end[1]-prev[1];
-  let t=1;
+  const dx=end[0]-prev[0],dy=end[1]-prev[1];let t=1;
   if(dx>0)t=Math.min(t,(w-margin-prev[0])/dx); else if(dx<0)t=Math.min(t,(margin-prev[0])/dx);
   if(dy>0)t=Math.min(t,(h-margin-prev[1])/dy); else if(dy<0)t=Math.min(t,(margin-prev[1])/dy);
-  t=Math.max(0,Math.min(1,t));
-  return {x:prev[0]+dx*t,y:prev[1]+dy*t,prev,end};
+  t=Math.max(0,Math.min(1,t));return {x:prev[0]+dx*t,y:prev[1]+dy*t,prev,end};
  }
- function legacyBasePos(w,h){
-  if(typeof path==='undefined'||!path||path.length<2)return null;
-  const end=path[path.length-1],prev=path[path.length-2],dx=end[0]-prev[0],dy=end[1]-prev[1],len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,margin=82;
-  return {x:Math.max(margin,Math.min(w-margin,end[0]-ux*78)),y:Math.max(margin,Math.min(h-margin,end[1]-uy*78))};
- }
- function coastDecor(ctx,w,h,map){
-  if(map<1||map>MAP_MAX)return;ctx.save();const deep=map>=8;
-  ctx.globalAlpha=.14;ctx.strokeStyle=deep?'#063d67':'#e8ffff';ctx.lineWidth=4;
-  for(let y=45;y<h;y+=88){ctx.beginPath();for(let x=-25;x<w+45;x+=44){ctx.moveTo(x,y);ctx.quadraticCurveTo(x+11,y-7,x+22,y);ctx.quadraticCurveTo(x+33,y+7,x+44,y)}ctx.stroke()}
-  ctx.strokeStyle='#e9ffff';ctx.lineWidth=1.4;ctx.globalAlpha=.30;
-  [[.10,.24,3],[.15,.27,2],[.30,.48,3],[.33,.45,2],[.52,.16,2],[.68,.31,3],[.72,.34,2],[.87,.55,3],[.83,.58,2],[.58,.79,3],[.25,.82,2],[.43,.65,2]].forEach((b,i)=>{if((i+map)%3!==0){ctx.beginPath();ctx.arc(w*b[0],h*b[1],b[2],0,Math.PI*2);ctx.stroke()}});
-  const sets=[['🪸','🐚','🌿','🫧'],['🐚','🪸','🫧','🌿'],['🪨','🐚','🪸','🌿'],['🪸','🫧','🌿','🐚']],pts=[[.06,.34],[.91,.42],[.11,.85],[.85,.68],[.48,.13],[.53,.90],[.29,.53],[.71,.52],[.19,.44],[.79,.32],[.37,.72],[.63,.26],[.13,.73],[.88,.20],[.45,.80],[.57,.43]];
-  ctx.globalAlpha=.42;ctx.font='15px system-ui';pts.forEach((p,i)=>ctx.fillText(sets[(map-1)%sets.length][i%4],w*p[0],h*p[1]));ctx.restore();
- }
- function removeLegacyCrystalBase(ctx,w,h){
-  const p=legacyBasePos(w,h);if(!p)return;
-  // The core renderer treats unknown region 7 as Crystal Caverns. Paint that old base away before drawing the Coral Coast finish.
-  ctx.save();ctx.fillStyle='#35b4c5';ctx.beginPath();ctx.arc(p.x,p.y,78,0,Math.PI*2);ctx.fill();ctx.restore();
- }
- function fixCoralRoute(ctx,w,h){
-  const b=basePos(w,h);if(!b.prev)return;
-  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
-  ctx.beginPath();ctx.moveTo(b.prev[0],b.prev[1]);ctx.lineTo(b.x,b.y);ctx.strokeStyle='#d2ab62';ctx.lineWidth=92;ctx.stroke();
-  ctx.beginPath();ctx.moveTo(b.prev[0],b.prev[1]);ctx.lineTo(b.x,b.y);ctx.strokeStyle='#f1d38e';ctx.lineWidth=72;ctx.stroke();ctx.restore();
- }
- function coralFortress(ctx,w,h,map){
-  if(map<1||map>MAP_MAX)return;const b=basePos(w,h),x=b.x,y=b.y;ctx.save();
-  ctx.globalAlpha=.98;ctx.fillStyle='#c99c4d';ctx.beginPath();ctx.ellipse(x,y+18,53,25,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#f4d98e';ctx.beginPath();ctx.ellipse(x,y+13,48,20,0,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#68e5ea';ctx.lineWidth=4;ctx.globalAlpha=.78;ctx.beginPath();ctx.ellipse(x,y+17,55,27,0,0,Math.PI*2);ctx.stroke();
-  ctx.globalAlpha=1;ctx.fillStyle='#f2ead8';ctx.strokeStyle='#8e8169';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x-30,y-34,60,47,10);ctx.fill();ctx.stroke();
-  for(let q=-29;q<=19;q+=16){ctx.fillStyle='#fff4dc';ctx.fillRect(x+q,y-43,11,13);ctx.strokeRect(x+q,y-43,11,13)}
-  const g=ctx.createRadialGradient(x,y-1,2,x,y-1,20);g.addColorStop(0,'#eaffff');g.addColorStop(.38,'#33e4ff');g.addColorStop(1,'#0864c7');ctx.fillStyle=g;
-  ctx.beginPath();ctx.arc(x,y-2,17,Math.PI,0);ctx.lineTo(x+17,y+13);ctx.lineTo(x-17,y+13);ctx.closePath();ctx.fill();ctx.strokeStyle='#fff8dd';ctx.lineWidth=4;ctx.stroke();
-  ctx.fillStyle='#7a4d2d';ctx.fillRect(x-19,y+13,5,28);ctx.fillRect(x+14,y+13,5,28);for(let j=0;j<4;j++){ctx.fillStyle=j%2?'#9d693b':'#b77b43';ctx.fillRect(x-22,y+15+j*7,44,6)}
-  ctx.strokeStyle='#70452a';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x,y-42);ctx.lineTo(x,y-67);ctx.stroke();ctx.fillStyle='#16a8c5';ctx.beginPath();ctx.moveTo(x+2,y-65);ctx.lineTo(x+27,y-59);ctx.lineTo(x+2,y-49);ctx.closePath();ctx.fill();
-  ctx.font='16px system-ui';ctx.fillText('🪸',x-43,y+7);ctx.fillText('🐚',x+29,y+9);ctx.font='13px system-ui';ctx.fillText('⭐',x-31,y+29);ctx.fillText('🌿',x+27,y+29);ctx.restore();
- }
- draw=function(){
-  oldDraw();
-  if(currentSeries!==7||currentMap<1||currentMap>MAP_MAX)return;
-  const c=document.getElementById('game')||document.querySelector('canvas');if(!c)return;const ctx=c.getContext('2d');if(!ctx)return;
-  removeLegacyCrystalBase(ctx,c.width,c.height);
-  coastDecor(ctx,c.width,c.height,currentMap);
-  fixCoralRoute(ctx,c.width,c.height);
-  coralFortress(ctx,c.width,c.height,currentMap);
- };
+ function legacyBasePos(w,h){if(typeof path==='undefined'||!path||path.length<2)return null;const end=path[path.length-1],prev=path[path.length-2],dx=end[0]-prev[0],dy=end[1]-prev[1],len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,margin=82;return {x:Math.max(margin,Math.min(w-margin,end[0]-ux*78)),y:Math.max(margin,Math.min(h-margin,end[1]-uy*78))};}
+ function coastDecor(ctx,w,h,map){if(map<1||map>MAP_MAX)return;ctx.save();const deep=map>=8;ctx.globalAlpha=.14;ctx.strokeStyle=deep?'#063d67':'#e8ffff';ctx.lineWidth=4;for(let y=45;y<h;y+=88){ctx.beginPath();for(let x=-25;x<w+45;x+=44){ctx.moveTo(x,y);ctx.quadraticCurveTo(x+11,y-7,x+22,y);ctx.quadraticCurveTo(x+33,y+7,x+44,y)}ctx.stroke()}ctx.strokeStyle='#e9ffff';ctx.lineWidth=1.4;ctx.globalAlpha=.30;[[.10,.24,3],[.15,.27,2],[.30,.48,3],[.33,.45,2],[.52,.16,2],[.68,.31,3],[.72,.34,2],[.87,.55,3],[.83,.58,2],[.58,.79,3],[.25,.82,2],[.43,.65,2]].forEach((b,i)=>{if((i+map)%3!==0){ctx.beginPath();ctx.arc(w*b[0],h*b[1],b[2],0,Math.PI*2);ctx.stroke()}});const sets=[['🪸','🐚','🌿','🫧'],['🐚','🪸','🫧','🌿'],['🪨','🐚','🪸','🌿'],['🪸','🫧','🌿','🐚']],pts=[[.06,.34],[.91,.42],[.11,.85],[.85,.68],[.48,.13],[.53,.90],[.29,.53],[.71,.52],[.19,.44],[.79,.32],[.37,.72],[.63,.26],[.13,.73],[.88,.20],[.45,.80],[.57,.43]];ctx.globalAlpha=.42;ctx.font='15px system-ui';pts.forEach((p,i)=>ctx.fillText(sets[(map-1)%sets.length][i%4],w*p[0],h*p[1]));ctx.restore();}
+ function removeLegacyCrystalBase(ctx,w,h){const p=legacyBasePos(w,h);if(!p)return;ctx.save();ctx.fillStyle='#35b4c5';ctx.beginPath();ctx.arc(p.x,p.y,78,0,Math.PI*2);ctx.fill();ctx.restore();}
+ function fixCoralRoute(ctx,w,h){const b=basePos(w,h);if(!b.prev)return;ctx.save();ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(b.prev[0],b.prev[1]);ctx.lineTo(b.x,b.y);ctx.strokeStyle='#d2ab62';ctx.lineWidth=92;ctx.stroke();ctx.beginPath();ctx.moveTo(b.prev[0],b.prev[1]);ctx.lineTo(b.x,b.y);ctx.strokeStyle='#f1d38e';ctx.lineWidth=72;ctx.stroke();ctx.restore();}
+ function coralFortress(ctx,w,h,map){if(map<1||map>MAP_MAX)return;const b=basePos(w,h),x=b.x,y=b.y;ctx.save();ctx.globalAlpha=.98;ctx.fillStyle='#c99c4d';ctx.beginPath();ctx.ellipse(x,y+18,53,25,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f4d98e';ctx.beginPath();ctx.ellipse(x,y+13,48,20,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#68e5ea';ctx.lineWidth=4;ctx.globalAlpha=.78;ctx.beginPath();ctx.ellipse(x,y+17,55,27,0,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle='#f2ead8';ctx.strokeStyle='#8e8169';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x-30,y-34,60,47,10);ctx.fill();ctx.stroke();for(let q=-29;q<=19;q+=16){ctx.fillStyle='#fff4dc';ctx.fillRect(x+q,y-43,11,13);ctx.strokeRect(x+q,y-43,11,13)}const g=ctx.createRadialGradient(x,y-1,2,x,y-1,20);g.addColorStop(0,'#eaffff');g.addColorStop(.38,'#33e4ff');g.addColorStop(1,'#0864c7');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y-2,17,Math.PI,0);ctx.lineTo(x+17,y+13);ctx.lineTo(x-17,y+13);ctx.closePath();ctx.fill();ctx.strokeStyle='#fff8dd';ctx.lineWidth=4;ctx.stroke();ctx.fillStyle='#7a4d2d';ctx.fillRect(x-19,y+13,5,28);ctx.fillRect(x+14,y+13,5,28);for(let j=0;j<4;j++){ctx.fillStyle=j%2?'#9d693b':'#b77b43';ctx.fillRect(x-22,y+15+j*7,44,6)}ctx.strokeStyle='#70452a';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x,y-42);ctx.lineTo(x,y-67);ctx.stroke();ctx.fillStyle='#16a8c5';ctx.beginPath();ctx.moveTo(x+2,y-65);ctx.lineTo(x+27,y-59);ctx.lineTo(x+2,y-49);ctx.closePath();ctx.fill();ctx.font='16px system-ui';ctx.fillText('🪸',x-43,y+7);ctx.fillText('🐚',x+29,y+9);ctx.font='13px system-ui';ctx.fillText('⭐',x-31,y+29);ctx.fillText('🌿',x+27,y+29);ctx.restore();}
+ draw=function(){oldDraw();if(currentSeries!==7||currentMap<1||currentMap>MAP_MAX)return;const c=document.getElementById('game')||document.querySelector('canvas');if(!c)return;const ctx=c.getContext('2d');if(!ctx)return;removeLegacyCrystalBase(ctx,c.width,c.height);coastDecor(ctx,c.width,c.height,currentMap);fixCoralRoute(ctx,c.width,c.height);coralFortress(ctx,c.width,c.height,currentMap);};
 })();
+// Load the Regions 8-10 expansion after all existing Coral Coast overrides are installed.
+(()=>{const s=document.createElement('script');s.src='regions-8-10.js?v=1';document.body.appendChild(s);})();
