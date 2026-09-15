@@ -3,7 +3,7 @@
  const addMilestones=[
   {id:'animalKeeper10',icon:'🐾',name:'Animal Keeper',text:'Unlock 10 animal cards',reward:500,type:'allOwned',goal:10},
   {id:'masterCollector25',icon:'🃏',name:'Master Collector',text:'Unlock 25 animal cards',reward:750,type:'allOwned',goal:25},
-  {id:'zooKeeper75',icon:'🦁',name:'Zoo Keeper',text:'Collect 75 cards from packs',reward:1500,type:'cardsCollected',goal:75},
+  {id:'zooKeeper75',icon:'🃏',name:'Zoo Keeper',text:'Collect 75 cards from packs',reward:1500,type:'cardsCollected',goal:75},
   {id:'fullSanctuary',icon:'🏆',name:'Full Sanctuary',text:'Unlock every animal card',reward:2500,type:'allOwned',goal:'allCards'},
   {id:'veteranDefenderKills',icon:'⚔️',name:'Veteran Defender',text:'Defeat 1,000 enemies',reward:500,type:'totalKills',goal:1000},
   {id:'exterminator',icon:'💥',name:'Exterminator',text:'Defeat 10,000 enemies',reward:2000,type:'totalKills',goal:10000},
@@ -44,19 +44,22 @@
  setTimeout(()=>{if(typeof renderExtraQuestBoards==='function')renderExtraQuestBoards()},0);
  const homeStyle=document.createElement('style');homeStyle.id='home-yellow-text-progress-fit-v2';homeStyle.textContent=`#homeScreen,#homeScreen .section-title,#homeScreen .hero h1,#homeScreen .hero p,#homeScreen .deckslot,#homeScreen .info-box,#homeScreen .info-box b,#homeScreen #bestWave,#homeScreen #ownedCount{color:#ffd65a!important}#homeScreen .info-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:8px!important}#homeScreen .info-grid .info-box{min-width:0!important;overflow:hidden!important;padding:7px 5px!important;text-align:center!important}#homeScreen .info-grid .info-box b{display:block!important;width:100%!important;font-size:11px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;letter-spacing:-.2px!important}#homeScreen #bestWave,#homeScreen #ownedCount{font-size:22px!important;line-height:.95!important;margin-top:3px!important;white-space:nowrap!important}@media(max-width:390px){#homeScreen .info-grid .info-box b{font-size:10px!important}#homeScreen #bestWave,#homeScreen #ownedCount{font-size:20px!important}}`;document.head.appendChild(homeStyle);
 
- // FIVE_UNCOMMON_ATTACKS_V1
+ // FIVE_UNCOMMON_ATTACKS_V2 — bespoke attacks only; late-wave optimised.
  Object.assign(animals.ram,{desc:'Horn Charge attacks head-first. At Level 10, every 6th attack becomes Battering Ram: charges through up to 5 enemies, dealing 2x damage to the first and 75% to the rest with knockback.'});
  Object.assign(animals.turkey,{desc:'Fires spinning tail feathers. At Level 10, every 7th attack triggers Turkey Tantrum: 8 rapid feathers, each dealing 65% damage.'});
  Object.assign(animals.flamingo,{desc:'Long-range Beak Strike. At Level 10, every 6th attack triggers Flamingo Flock: 5 swooping flamingos deal 90% damage each and slow enemies by 20% for 2 seconds.'});
  Object.assign(animals.swan,{desc:'Fires a white Wing Gust. At Level 10, every 7th attack triggers Swan Storm: a powerful gust deals 1.75x damage to enemies in range and pushes them backwards.'});
  Object.assign(animals.spider,{desc:'Shoots sticky Web Shots. At Level 10, every 6th attack creates a Giant Web for 4 seconds, slowing enemies by 50% and dealing 35% tower damage per second.'});
+ const fiveKeys=new Set(['ram','turkey','flamingo','swan','spider']);
  const _fiveOldTick=towerTickCore;
  towerTickCore=function(t,dt){
-   if(!['ram','turkey','flamingo','swan','spider'].includes(t.key))return _fiveOldTick(t,dt);
+   if(!fiveKeys.has(t.key))return _fiveOldTick(t,dt);
    battle.lastAttackingTower=t;t.cd-=dt;if(t.cd>0)return;
-   const range=cardBaseRange(t.key)*(1+(t.level-1)*.06),pool=battle.enemies.filter(e=>!e.dead&&e.hp>0&&Math.hypot(e.x-t.x,e.y-t.y)<=range);if(!pool.length)return;
-   const target=pool.sort((a,b)=>(b.seg||0)-(a.seg||0))[0],dmg=towerDamage(t);t.fiveCount=(t.fiveCount||0)+1;
-   const shot=(kind,e=target,life=.38,extra={})=>battle.shots.push({x:t.x,y:t.y-7,tx:e.x,ty:e.y,life,maxLife:life,type:'animalAttackFlash',customAttack:kind,...extra});
+   const range=cardBaseRange(t.key)*(1+(t.level-1)*.06),r2=range*range;
+   const pool=[];for(const e of battle.enemies){if(!e.dead&&e.hp>0){const dx=e.x-t.x,dy=e.y-t.y;if(dx*dx+dy*dy<=r2)pool.push(e)}}if(!pool.length)return;
+   let target=pool[0];for(let i=1;i<pool.length;i++)if((pool[i].seg||0)>(target.seg||0))target=pool[i];
+   const dmg=towerDamage(t);t.fiveCount=(t.fiveCount||0)+1;
+   const shot=(kind,e=target,life=.38,extra={})=>{battle.shots.push({x:t.x,y:t.y-7,tx:e.x,ty:e.y,life,maxLife:life,type:'fiveCustomAttack',customAttack:kind,...extra});if(battle.shots.length>220)battle.shots.splice(0,battle.shots.length-220)};
    if(t.key==='ram'){
      const special=t.level>=10&&t.fiveCount%6===0,hits=special?pool.slice(0,5):[target];hits.forEach((e,i)=>{e.hp-=dmg*(i===0?(special?2:1):.75);if(special)e.tigerRoar=Math.max(e.tigerRoar||0,.28);shot('ram',e,.40,{special,index:i});if(e.hp<=0)killEnemy(e)});
    }else if(t.key==='turkey'){
@@ -66,14 +69,33 @@
    }else if(t.key==='swan'){
      const special=t.level>=10&&t.fiveCount%7===0,hits=special?pool:[target];hits.forEach(e=>{e.hp-=dmg*(special?1.75:1);if(special)e.tigerRoar=Math.max(e.tigerRoar||0,.38);shot('swan',e,.42,{special});if(e.hp<=0)killEnemy(e)});
    }else{
-     const special=t.level>=10&&t.fiveCount%6===0;target.hp-=dmg;shot('spider',target,.34,{special});if(special){battle.spiderWebs=battle.spiderWebs||[];battle.spiderWebs.push({x:target.x,y:target.y,r:72,life:4,tick:1,dmg:dmg*.35});}if(target.hp<=0)killEnemy(target);
+     const special=t.level>=10&&t.fiveCount%6===0;target.hp-=dmg;shot('spider',target,.34,{special});if(special){battle.spiderWebs=battle.spiderWebs||[];battle.spiderWebs.push({x:target.x,y:target.y,r:72,life:4,tick:0,slowTick:0,dmg:dmg*.35});if(battle.spiderWebs.length>8)battle.spiderWebs.splice(0,battle.spiderWebs.length-8)}if(target.hp<=0)killEnemy(target);
    }
    t.cd=cardRate(t.key);
  };
- const _fiveOldUpdate=update;update=function(dt){_fiveOldUpdate(dt);battle.spiderWebs=battle.spiderWebs||[];for(const z of battle.spiderWebs){z.life-=dt;z.tick-=dt;for(const e of battle.enemies){if(!e.dead&&Math.hypot(e.x-z.x,e.y-z.y)<=z.r)e.slowTimer=Math.max(e.slowTimer||0,.15);}if(z.tick<=0){z.tick+=1;for(const e of battle.enemies){if(!e.dead&&Math.hypot(e.x-z.x,e.y-z.y)<=z.r){e.hp-=z.dmg;if(e.hp<=0)killEnemy(e);}}}}battle.spiderWebs=battle.spiderWebs.filter(z=>z.life>0);};
- const _fiveOldDraw=draw;draw=function(){_fiveOldDraw();
+ // PERFORMANCE_V2: the original damage-summary wrapper scanned every enemy twice for every tower every frame.
+ // Only do those scans when a tower is actually ready to fire; cooldown frames go straight to towerTickCore.
+ towerTick=function(t,dt){
+   if((Number(t.cd)||0)>dt){towerTickCore(t,dt);return}
+   const enemies=(battle&&battle.enemies)||[];let before=0;for(const e of enemies)before+=Math.max(0,Number(e.hp)||0);
+   towerTickCore(t,dt);
+   let after=0;for(const e of enemies)after+=Math.max(0,Number(e.hp)||0);
+   const dealt=Math.max(0,before-after);if(dealt>0){t.damageDealt=(Number(t.damageDealt)||0)+dealt;const best=battle.topDamageTower;if(!best||t.damageDealt>best.damage)battle.topDamageTower={key:t.key,level:t.level,damage:t.damageDealt};else if(best.key===t.key&&t.damageDealt>=best.damage){best.level=t.level;best.damage=t.damageDealt}}
+ };
+ const _fiveOldUpdate=update;update=function(dt){
+   _fiveOldUpdate(dt);battle.spiderWebs=battle.spiderWebs||[];
+   for(const z of battle.spiderWebs){z.life-=dt;z.slowTick-=dt;z.tick-=dt;const r2=z.r*z.r;
+     if(z.slowTick<=0){z.slowTick=.12;for(const e of battle.enemies){if(!e.dead){const dx=e.x-z.x,dy=e.y-z.y;if(dx*dx+dy*dy<=r2)e.slowTimer=Math.max(e.slowTimer||0,.24)}}}
+     if(z.tick<=0){z.tick+=1;for(const e of battle.enemies){if(!e.dead){const dx=e.x-z.x,dy=e.y-z.y;if(dx*dx+dy*dy<=r2){e.hp-=z.dmg;if(e.hp<=0)killEnemy(e)}}}}
+   }
+   battle.spiderWebs=battle.spiderWebs.filter(z=>z.life>0);
+   if((battle.shots||[]).length>220)battle.shots.splice(0,battle.shots.length-220);
+ };
+ const _fiveOldDraw=draw;draw=function(){
+   // Keep bespoke shots out of the legacy renderer so there is no generic flash/beam underneath them.
+   const allShots=battle.shots||[],custom=allShots.filter(s=>s.customAttack),normal=allShots.filter(s=>!s.customAttack);battle.shots=normal;_fiveOldDraw();battle.shots=allShots;
    for(const z of (battle.spiderWebs||[])){ctx.save();ctx.globalAlpha=Math.min(.7,z.life/4);ctx.strokeStyle='#e7eef2';ctx.lineWidth=2;for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.beginPath();ctx.moveTo(z.x,z.y);ctx.lineTo(z.x+Math.cos(a)*z.r,z.y+Math.sin(a)*z.r);ctx.stroke();}for(let r=18;r<=z.r;r+=18){ctx.beginPath();ctx.arc(z.x,z.y,r,0,Math.PI*2);ctx.stroke();}ctx.restore();}
-   for(const s of (battle.shots||[])){if(!s.customAttack)continue;const q=1-Math.max(0,s.life)/(s.maxLife||.4),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q,ang=Math.atan2(s.ty-s.y,s.tx-s.x);ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.textAlign='center';ctx.textBaseline='middle';
+   for(const s of custom){const q=1-Math.max(0,s.life)/(s.maxLife||.4),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q,ang=Math.atan2(s.ty-s.y,s.tx-s.x);ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.textAlign='center';ctx.textBaseline='middle';
      if(s.customAttack==='ram'){ctx.font=s.special?'38px serif':'30px serif';ctx.fillText('🐏',0,0);if(s.special){ctx.strokeStyle='#f5df9a';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-30,-12);ctx.lineTo(-48,-12);ctx.moveTo(-30,12);ctx.lineTo(-48,12);ctx.stroke();}}
      if(s.customAttack==='turkey'){ctx.rotate(q*8);ctx.strokeStyle=s.special?'#ffd45b':'#8d5a35';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-14,0);ctx.quadraticCurveTo(0,-8,15,0);ctx.quadraticCurveTo(0,8,-14,0);ctx.stroke();}
      if(s.customAttack==='flamingo'){ctx.rotate(-ang);ctx.font=s.special?'28px serif':'22px serif';ctx.fillText('🦩',0,0);}
