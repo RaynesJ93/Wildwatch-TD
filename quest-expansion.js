@@ -53,18 +53,18 @@
  addQuestProgress=function(type,n=1){oldAdd(type,n);if(type==='firstKills')addChallengeProgress('challengeFirstKills',n);if(type==='strongestKills')addChallengeProgress('challengeStrongestKills',n);if(type==='lastKills')addChallengeProgress('challengeLastKills',n);};
  setTimeout(()=>{if(typeof renderExtraQuestBoards==='function')renderExtraQuestBoards()},0);
 
- // HOME_YELLOW_TEXT_PROGRESS_FIT_V1
+ // HOME_YELLOW_TEXT_PROGRESS_FIT_V2
  const homeStyle=document.createElement('style');
- homeStyle.id='home-yellow-text-progress-fit-v1';
+ homeStyle.id='home-yellow-text-progress-fit-v2';
  homeStyle.textContent=`
    #homeScreen, #homeScreen .section-title, #homeScreen .hero h1, #homeScreen .hero p,
    #homeScreen .deckslot, #homeScreen .info-box, #homeScreen .info-box b,
    #homeScreen #bestWave, #homeScreen #ownedCount { color:#ffd65a !important; }
    #homeScreen .info-grid { grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important; gap:8px !important; }
-   #homeScreen .info-grid .info-box { min-width:0 !important; overflow:hidden !important; padding:8px 6px !important; text-align:center !important; }
-   #homeScreen .info-grid .info-box b { display:block !important; width:100% !important; font-size:clamp(12px,3.5vw,17px) !important; line-height:1.05 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:clip !important; }
-   #homeScreen #bestWave, #homeScreen #ownedCount { font-size:clamp(22px,7vw,32px) !important; line-height:1 !important; margin-top:4px !important; white-space:nowrap !important; }
-   @media(max-width:380px){ #homeScreen .info-grid .info-box b{font-size:11px !important;} #homeScreen #bestWave,#homeScreen #ownedCount{font-size:23px !important;} }
+   #homeScreen .info-grid .info-box { min-width:0 !important; overflow:hidden !important; padding:7px 5px !important; text-align:center !important; }
+   #homeScreen .info-grid .info-box b { display:block !important; width:100% !important; font-size:11px !important; line-height:1 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:clip !important; letter-spacing:-0.2px !important; }
+   #homeScreen #bestWave, #homeScreen #ownedCount { font-size:22px !important; line-height:.95 !important; margin-top:3px !important; white-space:nowrap !important; }
+   @media(max-width:390px){ #homeScreen .info-grid .info-box b{font-size:10px !important;} #homeScreen #bestWave,#homeScreen #ownedCount{font-size:20px !important;} }
  `;
  document.head.appendChild(homeStyle);
 })();
