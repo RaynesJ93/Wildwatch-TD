@@ -1,0 +1,20 @@
+name: Install Coral Coast visuals v1
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/install-coral-coast-visuals-v1.yml']
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - run: python3 scripts/install-coral-coast-visuals.py
+      - run: |
+          git config user.name github-actions
+          git config user.email actions@github.com
+          git add index.html
+          git commit -m 'Enable detailed Coral Coast maps and themed base'
+          git push origin main
