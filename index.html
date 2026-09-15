@@ -1507,7 +1507,8 @@ canvas.addEventListener("pointerdown",ev=>{
   battle.coins-=a.cost;
   battle.towers.push({key:selectedCard,x,y,pad:null,cd:0,level:1,spent:a.cost,targetMode:"first"});
   battle.totalPlaced=Math.max(0,Number(battle.totalPlaced||0))+1;
-  addQuestProgress("placed",1);
+  addQuestProgress("placed",1);addWeeklyProgress("placed",1);
+  battle.questTowerTypes=battle.questTowerTypes||[];if(!battle.questTowerTypes.includes(selectedCard)){battle.questTowerTypes.push(selectedCard);addQuestProgress("uniqueTowerTypes",1);}
   if(animals[selectedCard]?.rarity==="Common")addWeeklyProgress("weeklyCommonPlaced",1);
   if(animals[selectedCard]?.rarity==="Legendary")addWeeklyProgress("weeklyLegendaryPlaced",1);
   if(!battle.usedCards.includes(selectedCard))battle.usedCards.push(selectedCard);
@@ -1532,7 +1533,7 @@ closeTower.onclick=()=>{towerModal.classList.remove("show");selectedTower=null;}
 upgradeTower.onclick=()=>{
   if(!selectedTower)return; const a=animals[selectedTower.key], cost=Math.floor(a.cost*.595*selectedTower.level*(selectedTower.key==="pig"?.8:selectedTower.key==="tiger"?.64:selectedTower.key==="silverback"?.45:.65));
   if(battle.coins<cost){alert("Not enough battle coins.");return}
-  battle.coins-=cost;selectedTower.spent+=cost;selectedTower.level++;battle.upgradeCount=Math.max(0,Number(battle.upgradeCount||0))+1;
+  battle.coins-=cost;selectedTower.spent+=cost;selectedTower.level++;battle.upgradeCount=Math.max(0,Number(battle.upgradeCount||0))+1;addQuestProgress("upgrades",1);addWeeklyProgress("upgrades",1);
   if((battle.towers||[]).filter(t=>t.level>=10).length>=4)addChallengeProgress("challengeFourLevel10",1);
   updateHud();openTowerModal();
 };
@@ -1590,8 +1591,11 @@ function moveEnemy(e,dt){
   if(e.seg>=path.length-1&&!e.dead){e.dead=true;battle.lives--; if(battle.lives<=0)gameOver();updateHud()}
 }
 function killEnemy(e){if(e.dead)return;e.dead=true;const killCash=Math.max(0,Math.round(Number(e.reward)||0));const coinReward=battleCoinReward(e.coinRewardKind);battle.coins+=killCash+coinReward;battle.mapKills=(battle.mapKills||0)+1;
-  battle.waveKills=(battle.waveKills||0)+1;addQuestProgress("kills",1);if(coinReward)addWeeklyProgress("weeklyCoins",coinReward);updateHud()}
+  battle.waveKills=(battle.waveKills||0)+1;addQuestProgress("kills",1);addWeeklyProgress("kills",1);
+  const killer=battle.lastAttackingTower||null;if(killer){const mode=killer.targetMode||"first";if(mode==="first"){addQuestProgress("firstKills",1);addWeeklyProgress("firstKills",1);}else if(mode==="strongest"){addQuestProgress("strongestKills",1);addWeeklyProgress("strongestKills",1);}}
+  if(coinReward){addQuestProgress("battleCurrency",coinReward);addWeeklyProgress("battleCurrency",coinReward);}updateHud()}
 function towerTickCore(t,dt){
+  battle.lastAttackingTower=t;
   t.cd-=dt;if(t.cd>0)return;
   const a=animals[t.key], range=cardBaseRange(t.key)*(1+(t.level-1)*.06);
   // TOWER_TARGETING_DROPDOWN_V1: per-tower target priority.
@@ -1654,7 +1658,7 @@ function towerTickCore(t,dt){
     }
   }
   const selfDamageBoost=t.key==="ant"?(1+(t.antDamageBoost||0)):1;
-  const dmg=towerDamage(t)*(nearbyLion?1.15:1)*selfDamageBoost;
+  const dmg=towerDamage(t)*(nearbyLion?1.15:1)*selfDamageBoost;addQuestProgress("damage",Math.max(0,Math.round(dmg)));addWeeklyProgress("damage",Math.max(0,Math.round(dmg)));
 
   // Bee: chain lightning. Levels 1-9 hit up to 3 enemies; level 10+ hits up to 5.
   // At level 10+, the 4th and 5th targets take 4x the Bee's raw base damage.
