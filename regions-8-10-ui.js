@@ -1,4 +1,4 @@
-// REGIONS_8_10_UI_V1
+// REGIONS_8_10_UI_V2
 (()=>{
  const names={8:'Lost Jungle',9:'Enchanted Wilds',10:'Sky Highlands'};
  const icons={8:'🌿',9:'🍄',10:'🌩️'};
@@ -25,4 +25,20 @@
  nextMap.onclick=()=>{if(currentMap<10){if(currentMap<currentSeriesUnlocked()){clearBattleState();applyMap(currentSeries,currentMap+1);resetBattle();draw()}return}if(currentSeries<10&&seriesUnlockedCount(currentSeries+1)>0){clearBattleState();applyMap(currentSeries+1,1);resetBattle();draw()}};
  // Re-render immediately so newly available region tabs appear without a reload.
  if(document.getElementById('mapSanctuary'))renderMapSanctuary();
+
+ // HOME_PROGRESS_ARTWORK_V1: use the supplied Waves/Cards Collected PNG as the two Progress panel borders.
+ function installHomeProgressArtwork(){
+  const home=document.getElementById('homeScreen');if(!home)return;
+  const best=document.getElementById('bestWave')?.closest('.info-box');
+  const owned=document.getElementById('ownedCount')?.closest('.info-box');
+  if(!best||!owned)return;
+  [best,owned].forEach((box,i)=>{
+   box.dataset.ccProgressArtwork='1';
+   box.style.cssText+='position:relative!important;min-height:112px!important;padding:28px 34px!important;border:0!important;border-radius:0!important;background-color:transparent!important;background-image:url("assets/Waves-cards-collected-png.png?v=20")!important;background-repeat:no-repeat!important;background-size:200% 100%!important;background-position:'+(i===0?'left center':'right center')+'!important;box-shadow:none!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;overflow:visible!important;';
+   const label=box.querySelector('b');if(label)label.style.cssText+='position:relative!important;z-index:2!important;text-shadow:0 2px 3px #000!important;';
+   const value=i===0?document.getElementById('bestWave'):document.getElementById('ownedCount');if(value)value.style.cssText+='position:relative!important;z-index:2!important;text-shadow:0 2px 3px #000!important;';
+  });
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installHomeProgressArtwork);else installHomeProgressArtwork();
+ new MutationObserver(installHomeProgressArtwork).observe(document.getElementById('homeScreen')||document.body,{childList:true,subtree:true});
 })();
