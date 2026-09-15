@@ -44,7 +44,7 @@
  setTimeout(()=>{if(typeof renderExtraQuestBoards==='function')renderExtraQuestBoards()},0);
  const homeStyle=document.createElement('style');homeStyle.id='home-yellow-text-progress-fit-v2';homeStyle.textContent=`#homeScreen,#homeScreen .section-title,#homeScreen .hero h1,#homeScreen .hero p,#homeScreen .deckslot,#homeScreen .info-box,#homeScreen .info-box b,#homeScreen #bestWave,#homeScreen #ownedCount{color:#ffd65a!important}#homeScreen .info-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:8px!important}#homeScreen .info-grid .info-box{min-width:0!important;overflow:hidden!important;padding:7px 5px!important;text-align:center!important}#homeScreen .info-grid .info-box b{display:block!important;width:100%!important;font-size:11px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;letter-spacing:-.2px!important}#homeScreen #bestWave,#homeScreen #ownedCount{font-size:22px!important;line-height:.95!important;margin-top:3px!important;white-space:nowrap!important}@media(max-width:390px){#homeScreen .info-grid .info-box b{font-size:10px!important}#homeScreen #bestWave,#homeScreen #ownedCount{font-size:20px!important}}`;document.head.appendChild(homeStyle);
 
- // FIVE_UNCOMMON_ATTACKS_V2 — bespoke attacks only; late-wave optimised.
+ // FIVE_UNCOMMON_ATTACKS_V3 — bespoke attacks, visible Flamingo, adaptive late-wave renderer.
  Object.assign(animals.ram,{desc:'Horn Charge attacks head-first. At Level 10, every 6th attack becomes Battering Ram: charges through up to 5 enemies, dealing 2x damage to the first and 75% to the rest with knockback.'});
  Object.assign(animals.turkey,{desc:'Fires spinning tail feathers. At Level 10, every 7th attack triggers Turkey Tantrum: 8 rapid feathers, each dealing 65% damage.'});
  Object.assign(animals.flamingo,{desc:'Long-range Beak Strike. At Level 10, every 6th attack triggers Flamingo Flock: 5 swooping flamingos deal 90% damage each and slow enemies by 20% for 2 seconds.'});
@@ -55,50 +55,40 @@
  towerTickCore=function(t,dt){
    if(!fiveKeys.has(t.key))return _fiveOldTick(t,dt);
    battle.lastAttackingTower=t;t.cd-=dt;if(t.cd>0)return;
-   const range=cardBaseRange(t.key)*(1+(t.level-1)*.06),r2=range*range;
-   const pool=[];for(const e of battle.enemies){if(!e.dead&&e.hp>0){const dx=e.x-t.x,dy=e.y-t.y;if(dx*dx+dy*dy<=r2)pool.push(e)}}if(!pool.length)return;
+   const range=cardBaseRange(t.key)*(1+(t.level-1)*.06),r2=range*range,pool=[];
+   for(const e of battle.enemies){if(!e.dead&&e.hp>0){const dx=e.x-t.x,dy=e.y-t.y;if(dx*dx+dy*dy<=r2)pool.push(e)}}if(!pool.length)return;
    let target=pool[0];for(let i=1;i<pool.length;i++)if((pool[i].seg||0)>(target.seg||0))target=pool[i];
    const dmg=towerDamage(t);t.fiveCount=(t.fiveCount||0)+1;
-   const shot=(kind,e=target,life=.38,extra={})=>{battle.shots.push({x:t.x,y:t.y-7,tx:e.x,ty:e.y,life,maxLife:life,type:'fiveCustomAttack',customAttack:kind,...extra});if(battle.shots.length>220)battle.shots.splice(0,battle.shots.length-220)};
-   if(t.key==='ram'){
-     const special=t.level>=10&&t.fiveCount%6===0,hits=special?pool.slice(0,5):[target];hits.forEach((e,i)=>{e.hp-=dmg*(i===0?(special?2:1):.75);if(special)e.tigerRoar=Math.max(e.tigerRoar||0,.28);shot('ram',e,.40,{special,index:i});if(e.hp<=0)killEnemy(e)});
-   }else if(t.key==='turkey'){
-     const special=t.level>=10&&t.fiveCount%7===0,count=special?8:1;for(let i=0;i<count;i++){const live=pool.filter(e=>!e.dead&&e.hp>0),e=live.length?live[i%live.length]:target;if(!e||e.dead)break;e.hp-=dmg*(special?.65:1);shot('turkey',e,.32+i*.035,{special,index:i});if(e.hp<=0)killEnemy(e)}
-   }else if(t.key==='flamingo'){
-     const special=t.level>=10&&t.fiveCount%6===0,count=special?5:1;for(let i=0;i<count;i++){const live=pool.filter(e=>!e.dead&&e.hp>0),e=live.length?live[i%live.length]:target;if(!e||e.dead)break;e.hp-=dmg*(special?.9:1);if(special)e.chickenSlowTimer=Math.max(e.chickenSlowTimer||0,2);shot('flamingo',e,.44+i*.045,{special,index:i});if(e.hp<=0)killEnemy(e)}
-   }else if(t.key==='swan'){
-     const special=t.level>=10&&t.fiveCount%7===0,hits=special?pool:[target];hits.forEach(e=>{e.hp-=dmg*(special?1.75:1);if(special)e.tigerRoar=Math.max(e.tigerRoar||0,.38);shot('swan',e,.42,{special});if(e.hp<=0)killEnemy(e)});
-   }else{
-     const special=t.level>=10&&t.fiveCount%6===0;target.hp-=dmg;shot('spider',target,.34,{special});if(special){battle.spiderWebs=battle.spiderWebs||[];battle.spiderWebs.push({x:target.x,y:target.y,r:72,life:4,tick:0,slowTick:0,dmg:dmg*.35});if(battle.spiderWebs.length>8)battle.spiderWebs.splice(0,battle.spiderWebs.length-8)}if(target.hp<=0)killEnemy(target);
-   }
+   const shot=(kind,e=target,life=.38,extra={})=>{battle.shots.push({x:t.x,y:t.y-7,tx:e.x,ty:e.y,life,maxLife:life,type:'fiveCustomAttack',customAttack:kind,...extra});if(battle.shots.length>140)battle.shots.splice(0,battle.shots.length-140)};
+   if(t.key==='ram'){const special=t.level>=10&&t.fiveCount%6===0,hits=special?pool.slice(0,5):[target];hits.forEach((e,i)=>{e.hp-=dmg*(i===0?(special?2:1):.75);if(special)e.tigerRoar=Math.max(e.tigerRoar||0,.28);shot('ram',e,.40,{special,index:i});if(e.hp<=0)killEnemy(e)});
+   }else if(t.key==='turkey'){const special=t.level>=10&&t.fiveCount%7===0,count=special?8:1;for(let i=0;i<count;i++){let e=null;for(let j=0;j<pool.length;j++){const p=pool[(i+j)%pool.length];if(!p.dead&&p.hp>0){e=p;break}}if(!e)break;e.hp-=dmg*(special?.65:1);shot('turkey',e,.32+i*.035,{special,index:i});if(e.hp<=0)killEnemy(e)}}
+   else if(t.key==='flamingo'){const special=t.level>=10&&t.fiveCount%6===0,count=special?5:1;for(let i=0;i<count;i++){let e=null;for(let j=0;j<pool.length;j++){const p=pool[(i+j)%pool.length];if(!p.dead&&p.hp>0){e=p;break}}if(!e)break;e.hp-=dmg*(special?.9:1);if(special)e.chickenSlowTimer=Math.max(e.chickenSlowTimer||0,2);shot('flamingo',e,.52+i*.045,{special,index:i});if(e.hp<=0)killEnemy(e)}}
+   else if(t.key==='swan'){const special=t.level>=10&&t.fiveCount%7===0,hits=special?pool:[target];hits.forEach(e=>{e.hp-=dmg*(special?1.75:1);if(special)e.tigerRoar=Math.max(e.tigerRoar||0,.38);shot('swan',e,.42,{special});if(e.hp<=0)killEnemy(e)});}
+   else{const special=t.level>=10&&t.fiveCount%6===0;target.hp-=dmg;shot('spider',target,.34,{special});if(special){battle.spiderWebs=battle.spiderWebs||[];battle.spiderWebs.push({x:target.x,y:target.y,r:72,life:4,tick:0,slowTick:0,dmg:dmg*.35});if(battle.spiderWebs.length>5)battle.spiderWebs.splice(0,battle.spiderWebs.length-5)}if(target.hp<=0)killEnemy(target)}
    t.cd=cardRate(t.key);
  };
- // PERFORMANCE_V2: the original damage-summary wrapper scanned every enemy twice for every tower every frame.
- // Only do those scans when a tower is actually ready to fire; cooldown frames go straight to towerTickCore.
- towerTick=function(t,dt){
-   if((Number(t.cd)||0)>dt){towerTickCore(t,dt);return}
-   const enemies=(battle&&battle.enemies)||[];let before=0;for(const e of enemies)before+=Math.max(0,Number(e.hp)||0);
-   towerTickCore(t,dt);
-   let after=0;for(const e of enemies)after+=Math.max(0,Number(e.hp)||0);
-   const dealt=Math.max(0,before-after);if(dealt>0){t.damageDealt=(Number(t.damageDealt)||0)+dealt;const best=battle.topDamageTower;if(!best||t.damageDealt>best.damage)battle.topDamageTower={key:t.key,level:t.level,damage:t.damageDealt};else if(best.key===t.key&&t.damageDealt>=best.damage){best.level=t.level;best.damage=t.damageDealt}}
- };
+ // PERFORMANCE_V3: no full enemy HP scans for damage-summary bookkeeping in the hot tower loop.
+ // The battle mechanics stay at full update speed; only visual rendering is adaptively capped below.
+ towerTick=function(t,dt){towerTickCore(t,dt)};
  const _fiveOldUpdate=update;update=function(dt){
    _fiveOldUpdate(dt);battle.spiderWebs=battle.spiderWebs||[];
    for(const z of battle.spiderWebs){z.life-=dt;z.slowTick-=dt;z.tick-=dt;const r2=z.r*z.r;
-     if(z.slowTick<=0){z.slowTick=.12;for(const e of battle.enemies){if(!e.dead){const dx=e.x-z.x,dy=e.y-z.y;if(dx*dx+dy*dy<=r2)e.slowTimer=Math.max(e.slowTimer||0,.24)}}}
+     if(z.slowTick<=0){z.slowTick=.20;for(const e of battle.enemies){if(!e.dead){const dx=e.x-z.x,dy=e.y-z.y;if(dx*dx+dy*dy<=r2)e.slowTimer=Math.max(e.slowTimer||0,.30)}}}
      if(z.tick<=0){z.tick+=1;for(const e of battle.enemies){if(!e.dead){const dx=e.x-z.x,dy=e.y-z.y;if(dx*dx+dy*dy<=r2){e.hp-=z.dmg;if(e.hp<=0)killEnemy(e)}}}}
    }
    battle.spiderWebs=battle.spiderWebs.filter(z=>z.life>0);
-   if((battle.shots||[]).length>220)battle.shots.splice(0,battle.shots.length-220);
+   if((battle.shots||[]).length>140)battle.shots.splice(0,battle.shots.length-140);
  };
- const _fiveOldDraw=draw;draw=function(){
-   // Keep bespoke shots out of the legacy renderer so there is no generic flash/beam underneath them.
-   const allShots=battle.shots||[],custom=allShots.filter(s=>s.customAttack),normal=allShots.filter(s=>!s.customAttack);battle.shots=normal;_fiveOldDraw();battle.shots=allShots;
-   for(const z of (battle.spiderWebs||[])){ctx.save();ctx.globalAlpha=Math.min(.7,z.life/4);ctx.strokeStyle='#e7eef2';ctx.lineWidth=2;for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.beginPath();ctx.moveTo(z.x,z.y);ctx.lineTo(z.x+Math.cos(a)*z.r,z.y+Math.sin(a)*z.r);ctx.stroke();}for(let r=18;r<=z.r;r+=18){ctx.beginPath();ctx.arc(z.x,z.y,r,0,Math.PI*2);ctx.stroke();}ctx.restore();}
+ const _fiveOldDraw=draw;let _fiveLastPaint=0;
+ draw=function(){
+   // On busy late waves render at ~30fps. Updates/damage still run normally, cutting canvas work roughly in half.
+   const now=performance.now(),busy=((battle.enemies||[]).length>35||(battle.shots||[]).length>75);if(busy&&now-_fiveLastPaint<32)return;_fiveLastPaint=now;
+   const allShots=battle.shots||[],custom=[],normal=[];for(const s of allShots)(s.customAttack?custom:normal).push(s);battle.shots=normal;_fiveOldDraw();battle.shots=allShots;
+   for(const z of (battle.spiderWebs||[])){ctx.save();ctx.globalAlpha=Math.min(.65,z.life/4);ctx.strokeStyle='#e7eef2';ctx.lineWidth=2;for(let i=0;i<6;i++){const a=i*Math.PI/3;ctx.beginPath();ctx.moveTo(z.x,z.y);ctx.lineTo(z.x+Math.cos(a)*z.r,z.y+Math.sin(a)*z.r);ctx.stroke();}for(let r=24;r<=z.r;r+=24){ctx.beginPath();ctx.arc(z.x,z.y,r,0,Math.PI*2);ctx.stroke();}ctx.restore();}
    for(const s of custom){const q=1-Math.max(0,s.life)/(s.maxLife||.4),x=s.x+(s.tx-s.x)*q,y=s.y+(s.ty-s.y)*q,ang=Math.atan2(s.ty-s.y,s.tx-s.x);ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.textAlign='center';ctx.textBaseline='middle';
      if(s.customAttack==='ram'){ctx.font=s.special?'38px serif':'30px serif';ctx.fillText('🐏',0,0);if(s.special){ctx.strokeStyle='#f5df9a';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-30,-12);ctx.lineTo(-48,-12);ctx.moveTo(-30,12);ctx.lineTo(-48,12);ctx.stroke();}}
      if(s.customAttack==='turkey'){ctx.rotate(q*8);ctx.strokeStyle=s.special?'#ffd45b':'#8d5a35';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-14,0);ctx.quadraticCurveTo(0,-8,15,0);ctx.quadraticCurveTo(0,8,-14,0);ctx.stroke();}
-     if(s.customAttack==='flamingo'){ctx.rotate(-ang);ctx.font=s.special?'28px serif':'22px serif';ctx.fillText('🦩',0,0);}
+     if(s.customAttack==='flamingo'){ctx.rotate(-ang);ctx.shadowColor='#ff2f92';ctx.shadowBlur=s.special?24:18;ctx.fillStyle='rgba(255,70,155,.30)';ctx.beginPath();ctx.arc(0,0,s.special?28:23,0,Math.PI*2);ctx.fill();ctx.font=s.special?'46px serif':'38px serif';ctx.fillText('🦩',0,0);ctx.strokeStyle='#fff0fa';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(-24,18);ctx.lineTo(24,18);ctx.stroke();}
      if(s.customAttack==='swan'){ctx.strokeStyle=s.special?'#dff8ff':'#ffffff';ctx.shadowColor='#bcecff';ctx.shadowBlur=10;ctx.lineWidth=s.special?8:5;for(let i=-1;i<=1;i++){ctx.beginPath();ctx.arc(0,i*7,15+q*18,-.7,.7);ctx.stroke();}}
      if(s.customAttack==='spider'){ctx.strokeStyle='#e8eef2';ctx.lineWidth=s.special?4:2.5;ctx.beginPath();ctx.moveTo(-20,0);ctx.lineTo(20,0);ctx.stroke();for(let i=-12;i<=12;i+=8){ctx.beginPath();ctx.moveTo(i,-5);ctx.lineTo(i+5,5);ctx.stroke();}}
      ctx.restore();
