@@ -1,4 +1,4 @@
-// HOME_MOBILE_FIT_V3 — compact Home without throttling battle animation.
+// HOME_MOBILE_FIT_V4 — compact Home + safe global map-base removal.
 (()=>{
  const css=`
 @media (max-width:600px){
@@ -49,4 +49,36 @@
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync);else sync();
  const screens=[...document.querySelectorAll('.screen')];
  const observer=new MutationObserver(sync);screens.forEach(el=>observer.observe(el,{attributes:true,attributeFilter:['class']}));
+
+ // REMOVE_ALL_MAP_BASES_V1
+ // Install the canvas hooks once. During normal drawing they are transparent pass-throughs.
+ // Only while draw() is running do they suppress the legacy THEMATIC_MAP_BASES block and
+ // its artificial route extension. Enemy paths, spawning, towers and gameplay are untouched.
+ const c=document.getElementById('game'),g=c?.getContext('2d');
+ if(g&&typeof draw==='function'&&!window.__critterNoMapBases){
+   window.__critterNoMapBases=true;
+   const oldDraw=draw;
+   const o={
+     save:g.save.bind(g),restore:g.restore.bind(g),translate:g.translate.bind(g),beginPath:g.beginPath.bind(g),moveTo:g.moveTo.bind(g),lineTo:g.lineTo.bind(g),stroke:g.stroke.bind(g),fill:g.fill.bind(g),fillRect:g.fillRect.bind(g),strokeRect:g.strokeRect.bind(g),fillText:g.fillText.bind(g),strokeText:g.strokeText.bind(g)
+   };
+   const st={on:false,bx:0,by:0,px:0,py:0,armed:false,depth:0,baseDepth:-1,lastMove:null,lastLine:null};
+   g.save=function(){if(st.on)st.depth++;return o.save();};
+   g.translate=function(x,y){if(st.on&&!st.armed&&Math.abs(x-st.bx)<.02&&Math.abs(y-st.by)<.02){st.armed=true;st.baseDepth=st.depth;return o.translate(100000,100000);}return o.translate(x,y);};
+   g.restore=function(){const base=st.on&&st.armed&&st.depth===st.baseDepth,r=o.restore();if(st.on){if(base){st.armed=false;st.baseDepth=-1;}st.depth=Math.max(0,st.depth-1);}return r;};
+   g.beginPath=function(){if(st.on){st.lastMove=null;st.lastLine=null;}return o.beginPath();};
+   g.moveTo=function(x,y){if(st.on)st.lastMove=[x,y];return o.moveTo(x,y);};
+   g.lineTo=function(x,y){if(st.on)st.lastLine=[x,y];return o.lineTo(x,y);};
+   g.stroke=function(){if(st.on){const route=!!(st.lastMove&&st.lastLine&&Math.hypot(st.lastMove[0]-st.px,st.lastMove[1]-st.py)<.02&&Math.hypot(st.lastLine[0]-st.bx,st.lastLine[1]-st.by)<.02&&g.lineWidth===72);if(st.armed||route)return;}return o.stroke();};
+   g.fill=function(){if(st.on&&st.armed)return;return o.fill();};
+   g.fillRect=function(...a){if(st.on&&st.armed)return;return o.fillRect(...a);};
+   g.strokeRect=function(...a){if(st.on&&st.armed)return;return o.strokeRect(...a);};
+   g.fillText=function(...a){if(st.on&&st.armed)return;return o.fillText(...a);};
+   g.strokeText=function(...a){if(st.on&&st.armed)return;return o.strokeText(...a);};
+   draw=function(){
+     if(!Array.isArray(path)||path.length<2)return oldDraw();
+     const end=path[path.length-1],prev=path[path.length-2],dx=end[0]-prev[0],dy=end[1]-prev[1],len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,margin=82;
+     st.bx=Math.max(margin,Math.min(c.width-margin,end[0]-ux*78));st.by=Math.max(margin,Math.min(c.height-margin,end[1]-uy*78));st.px=prev[0];st.py=prev[1];st.armed=false;st.depth=0;st.baseDepth=-1;st.lastMove=null;st.lastLine=null;st.on=true;
+     try{return oldDraw();}finally{st.on=false;st.armed=false;st.depth=0;st.baseDepth=-1;}
+   };
+ }
 })();
