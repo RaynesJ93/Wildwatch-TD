@@ -364,6 +364,30 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
 #packsScreen .chestBtn.levelLocked{cursor:not-allowed}
 #packsScreen .chestBtn.levelLocked .simplePackArt{filter:grayscale(.7);opacity:.55}
 </style>
+<style id="quest-vine-content-fit">
+/* Keep quest content inside the leaf edges; the vine artwork is the only frame. */
+#questScreen .hero,#questScreen .info-box{
+  border:0;box-shadow:none;outline:none;
+}
+#questScreen .info-box{
+  padding:22px 13%;min-width:0;
+  background-size:140% 117%;
+}
+#questScreen .info-box :is(summary,div:first-child):has(>b + b){
+  flex-wrap:wrap;align-items:flex-start!important;gap:6px 10px!important;
+}
+#questScreen .info-box :is(summary,div:first-child):has(>b + b)>b:first-child{
+  flex:1 1 125px;min-width:0;line-height:1.35;overflow-wrap:anywhere;
+}
+#questScreen .info-box :is(summary,div:first-child):has(>b + b)>b:last-child{
+  flex:0 1 auto;max-width:100%;margin-left:auto;text-align:right;
+  line-height:1.35;white-space:normal;overflow-wrap:anywhere;
+}
+#questScreen .info-box .small{line-height:1.4;overflow-wrap:anywhere}
+#questScreen .info-box button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+#questScreen .questDrop summary:focus-visible{outline:2px solid #8cd58a;outline-offset:4px;border-radius:4px}
+@media(min-width:600px){#questScreen .info-box{padding-top:26px;padding-bottom:26px}}
+</style>
 </head>
 <body>
 <div id="app">
