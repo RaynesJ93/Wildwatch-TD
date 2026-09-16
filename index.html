@@ -232,6 +232,27 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
 #packsScreen .simplePackBtn:active .simplePackArt{transform:translateY(2px)}
 @media(min-width:700px){#packsScreen .hero>div:has(>.simplePackBtn){grid-template-columns:repeat(4,minmax(0,1fr))}}
 
+
+
+/* PACKS_VINE_FRAME_FIT_V1
+   Packs screen: let the vine artwork be the frame, remove the extra gold/olive outline,
+   and fit the vine border more naturally around the panel on phones. */
+#packsScreen .hero{
+  border:0!important;
+  box-shadow:0 3px 8px #0004!important;
+  background-size:112% 104%!important;
+  background-position:center top!important;
+  background-repeat:no-repeat!important;
+  border-radius:20px!important;
+  overflow:hidden;
+}
+@media(max-width:520px){
+  #packsScreen .hero{
+    background-size:118% 103%!important;
+    padding:24px 20px!important;
+  }
+}
+
 </style>
 <style id="coral-coast-v2-style">
 .region-hero.coral{background:linear-gradient(135deg,#073d5b,#0d91a8 55%,#ddb967);border-color:#58dbe4}
