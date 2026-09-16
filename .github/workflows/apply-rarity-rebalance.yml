@@ -14,18 +14,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Update rarity level gates
+      - name: Lock Legendary Pack until level 20
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-          old='const minLevel={Common:1,Uncommon:1,Rare:3,Legendary:6}[rarity]||1;'
-          new='const minLevel={Common:1,Uncommon:1,Rare:10,Legendary:20}[rarity]||1;'
-          if old in s:
-              s=s.replace(old,new)
-          elif new not in s:
-              raise SystemExit('Could not locate rarity level gates')
+          old='''  const cfg=chestConfig[btn.dataset.chest];
+  if(save.metaCoins<cfg.cost){alert(`You need ${cfg.cost} Coins for this pack. Earn more by completing levels.`);return}'''
+          new='''  const cfg=chestConfig[btn.dataset.chest];
+  if(btn.dataset.chest==='legendary' && (save.level||1)<20){alert(`🔒 Legendary Packs unlock at Player Level 20. You are currently Level ${save.level||1}.`);return}
+  if(save.metaCoins<cfg.cost){alert(`You need ${cfg.cost} Coins for this pack. Earn more by completing levels.`);return}'''
+          if new in s:
+              pass
+          elif old in s:
+              s=s.replace(old,new,1)
+          else:
+              raise SystemExit('Could not locate pack purchase handler')
           p.write_text(s)
           PY
       - name: Commit update
@@ -34,5 +39,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "Lock Rare cards at level 10 and Legendary at level 20"
+          git commit -m "Lock Legendary Pack until player level 20"
           git push
