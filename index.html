@@ -472,7 +472,7 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
     <div class="hero center">
       <div style="font-size:70px">🃏</div>
       <h1>Animal Card Packs</h1>
-      <p>Earn Coins by completing waves. Spend those permanent Coins on card packs to collect animal cards. Every pack contains 1 card from its matching rarity. Battle currency is separate and is only used for towers. <span style="display:inline-block;color:#38d96b;font-weight:800;white-space:nowrap">Scroll down for more packs ↓</span></p>
+      <p>Earn Coins by completing waves. Spend those permanent Coins on card packs to collect animal cards. Common, Uncommon and Rare packs contain 1 matching card. Legendary packs contain shards or a complete Legendary card. Battle currency is separate and is only used for towers. <span style="display:inline-block;color:#38d96b;font-weight:800;white-space:nowrap">Scroll down for more packs ↓</span></p>
       <div style="height:14px"></div>
       <div style="display:grid;gap:12px">
         <button class="primary chestBtn simplePackBtn commonPack" data-chest="common"><span class="simplePackArt"><span class="packBrand">CRITTER CLASH</span><svg class="packIllustration" viewBox="0 0 240 250" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="pack0sky" x2="0" y2="1"><stop stop-color="#526e67"/><stop offset="1" stop-color="#c9d9d4"/></linearGradient><radialGradient id="pack0halo"><stop stop-color="#eaf4eb" stop-opacity=".6"/><stop offset="1" stop-color="#eaf4eb" stop-opacity="0"/></radialGradient></defs><rect width="240" height="250" fill="url(#pack0sky)"/><circle cx="120" cy="95" r="100" fill="url(#pack0halo)"/><circle cx="177" cy="47" r="23" fill="#eaf4eb" opacity=".55"/><path d="M0 143L45 82 87 134 142 65 240 154V250H0" fill="#526e67" opacity=".45"/><path d="M0 178Q60 142 118 174T240 159V250H0" fill="#526e67"/><path d="M12 82l-18 36h10l-17 25h20v25h10v-25h20l-17-25h10Z" fill="#526e67" opacity=".8"/><path d="M208 74l-18 36h10l-17 25h20v25h10v-25h20l-17-25h10Z" fill="#526e67" opacity=".8"/><path d="M38 112l-18 36h10l-17 25h20v25h10v-25h20l-17-25h10Z" fill="#526e67" opacity=".8"/><path d="M76 177Q62 209 117 216Q174 214 165 177L145 146H99Z" fill="#b86632"/><path d="M69 107L62 48 103 78Q120 69 138 78L179 48 171 111 151 160 121 181 89 161Z" fill="#e99449"/><path d="M70 64L78 102 94 83ZM167 64L158 103 145 83Z" fill="#654535"/><path d="M73 116L111 130 121 165 131 130 167 116 149 156 121 179 92 157Z" fill="#fff1cb"/><path d="M109 151Q121 144 133 151L121 165Z" fill="#25342f"/><path d="M88 112l17 5M139 117l17-5" stroke="#24362f" stroke-width="6" stroke-linecap="round"/></svg><b>COMMON</b><small>PACK</small></span><span class="simplePackPrice">🟡 250 Coins</span></button>
@@ -1264,7 +1264,14 @@ function weightedAnimal(pool,weights){
 // LEGENDARY_PACK_LEVEL_GATE_V1: use player level, not individual card levels.
 function packUnlockLevel(tier){return tier==="legendary"?20:1;}
 function packIsUnlocked(tier){return (Number(save.level)||1)>=packUnlockLevel(tier);}
+function legendaryPacksSinceCard(){return Math.min(19,Math.max(0,Math.floor(Number(save.legendaryPacksSinceCard)||0)));}
 function renderPackLocks(){
+  const screen=document.getElementById("packsScreen");
+  if(screen&&!document.getElementById("legendaryPackOdds")){
+    const odds=document.createElement("p");odds.id="legendaryPackOdds";odds.className="small";
+    odds.textContent="Legendary odds: 80% for 2–4 shards, 15% for 5–7 shards, 5% for a complete card. 20 matching shards unlock a Legendary. A complete card is guaranteed on your 20th Legendary pack without a full-card pull; any full-card pull resets that counter. Full cards favour unowned Legendaries; shards can target any Legendary.";
+    screen.appendChild(odds);
+  }
   document.querySelectorAll(".chestBtn").forEach(btn=>{
     const tier=btn.dataset.chest,locked=!packIsUnlocked(tier);
     btn.disabled=locked;
@@ -1273,15 +1280,69 @@ function renderPackLocks(){
     if(tier==="legendary"){
       let label=btn.querySelector(".packUnlockLabel");
       if(!label){label=document.createElement("span");label.className="packUnlockLabel";btn.appendChild(label);}
-      label.textContent=locked?"🔒 Unlocks at player level 20":"✓ Player level 20 unlocked";
+      label.textContent=locked?"🔒 Unlocks at player level 20":`Full card guaranteed within ${20-legendaryPacksSinceCard()} packs`;
     }
   });
+}
+
+// LEGENDARY_SHARD_PACKS_V1: saved per-slot pity; shard unlocks do not reset full-card pity.
+function openLegendaryPack(){
+  const cfg=chestConfig.legendary;
+  if(!packIsUnlocked("legendary")||save.metaCoins<cfg.cost)return;
+  const all=Object.keys(animals).filter(k=>animals[k].rarity==="Legendary");
+  if(!all.length){alert("No Legendary cards are available in this pack yet.");return;}
+  const missed=legendaryPacksSinceCard(),guaranteed=missed>=19;
+  const roll=guaranteed?1:Math.random(),fullCard=guaranteed||roll>=.95;
+  const unowned=all.filter(k=>!save.unlocked.includes(k));
+  const pool=fullCard&&unowned.length?unowned:all;
+  const key=pool[Math.floor(Math.random()*pool.length)],a=animals[key];
+  const shardGain=fullCard?0:(roll<.8?2:5)+Math.floor(Math.random()*3);
+  save.metaCoins-=cfg.cost;
+  save.totalPacksOpened=Math.max(0,Number(save.totalPacksOpened)||0)+1;
+  save.legendaryPacksSinceCard=fullCard?0:missed+1;
+  save.levels=save.levels||{};save.cardLevels=save.cardLevels||{};
+  save.cardXP=save.cardXP||{};save.shards=save.shards||{};
+  let description="",cardAwarded=false;
+  if(fullCard){
+    cardAwarded=true;
+    if(!save.unlocked.includes(key)){
+      save.unlocked.push(key);save.levels[key]=save.levels[key]||1;
+      save.cardLevels[key]=save.cardLevels[key]||1;save.cardXP[key]=save.cardXP[key]||0;
+      description="New Legendary card unlocked!";
+    }else if(fullCollectionOwned()){
+      const reward=postCollectionPackReward(key,"Legendary");
+      description=`+${reward.shardGain} ${a.name} Mastery Shards • ${masteryRewardText(key)}${reward.mythic?" • +1 Mythic Shard":""}`;
+    }else{
+      save.shards[key]=(Number(save.shards[key])||0)+1;
+      description=`Duplicate converted to 1 ${a.name} shard.`;
+    }
+    description=(guaranteed?"20-pack guarantee! ":"Full-card pull! ")+description;
+  }else if(fullCollectionOwned()){
+    addMasteryShards(key,shardGain);
+    description=`+${shardGain} ${a.name} Mastery Shards • ${masteryRewardText(key)}`;
+  }else{
+    save.shards[key]=(Number(save.shards[key])||0)+shardGain;
+    if(!save.unlocked.includes(key)&&save.shards[key]>=20){
+      save.unlocked.push(key);save.levels[key]=save.levels[key]||1;
+      save.cardLevels[key]=save.cardLevels[key]||1;save.cardXP[key]=save.cardXP[key]||0;
+      cardAwarded=true;
+      description=`+${shardGain} ${a.name} shards — 20-shard requirement reached! New Legendary unlocked.`;
+    }else{
+      description=`+${shardGain} ${a.name} shards • ${save.shards[key]}/20${save.unlocked.includes(key)?" • Card already owned":""}`;
+    }
+  }
+  if(cardAwarded)save.totalCardsCollected=Math.max(0,Number(save.totalCardsCollected)||0)+1;
+  packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent=a.emoji;
+  packTitle.textContent=fullCard||cardAwarded?`🌟 LEGENDARY • ${a.name}!`:`🌟 ${a.name} Shards!`;
+  packDesc.textContent=description+` • Full card guaranteed within ${20-save.legendaryPacksSinceCard} packs.`;
+  packModal.classList.add("show");persist();renderCards();renderHome();
 }
 
 document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
   if(!packIsUnlocked(btn.dataset.chest)){alert(`Legendary packs unlock at player level ${packUnlockLevel(btn.dataset.chest)}.`);renderPackLocks();return}
   const cfg=chestConfig[btn.dataset.chest];
   if(save.metaCoins<cfg.cost){alert(`You need ${cfg.cost} Coins for this pack. Earn more by completing levels.`);return}
+  if(btn.dataset.chest==="legendary"){openLegendaryPack();return;}
   save.metaCoins-=cfg.cost;
   const chestTier={common:"Common",uncommon:"Uncommon",epic:"Rare",legendary:"Legendary"}[btn.dataset.chest];
   const allowedPool=Object.keys(animals).filter(k=>animals[k].rarity===chestTier);
