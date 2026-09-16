@@ -237,6 +237,53 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
 .region-hero.coral{background:linear-gradient(135deg,#073d5b,#0d91a8 55%,#ddb967);border-color:#58dbe4}
 .stage-thumb.coral{background:linear-gradient(145deg,#1aaec4,#50d8dc 52%,#edcd7a);color:#fff;text-shadow:0 2px 5px #06475d}
 </style>
+<style id="jungle-menu-theme">
+/* Jungle menus: reuse the home screen's vine artwork without animation. */
+#collectionScreen .hero,#questScreen .hero,#packsScreen .hero,#saveScreen .hero,.sheet,.sanctuary-shell,
+#questScreen .info-box,#collectionCards .card,#collectionDeck .deckslot{
+ background-color:#10291d;background-image:url("assets/critter-clash-card-vine-border.png");
+ background-size:140% 117%;background-position:center;background-repeat:no-repeat;
+ border:1px solid #6a8040;box-shadow:inset 0 0 0 2px #152b1b,0 3px 8px #0004;
+}
+#collectionScreen .hero,#questScreen .hero{padding:18px 24px}
+#packsScreen .hero{padding:24px}
+#questScreen .info-box{padding:18px 24px}
+.sheet{padding:24px}
+#collectionScreen h1,#questScreen h1,#packsScreen h1,.sheet h2{color:#ffdc70}
+#questScreen .hero>div:first-child{display:none}
+#collectionScreen .hero h1,#questScreen .hero h1{font-size:23px;margin:0 0 4px}
+#collectionScreen .hero p,#questScreen .hero p{font-size:12px;line-height:1.4}
+#collectionScreen .section-title{margin:10px 3px 5px;font-size:16px}
+#collectionDeck{gap:6px;margin:5px 0}
+#collectionDeck .deckslot{min-height:62px;padding:8px 5px;font-size:10px}
+#collectionDeck .mini-portrait{width:32px;height:32px;margin:0 auto 2px}
+#collectionCards{gap:8px;align-items:start}
+#collectionCards .card{padding:15px 16px 13px;min-height:0;border-radius:16px;cursor:pointer}
+#collectionCards .card.selected{outline:2px solid #ffdc70;transform:none}
+#collectionCards .rarity{position:static;display:block;width:fit-content;margin:0 auto 4px;font-size:8px;padding:2px 5px;color:#ffe5a2}
+#collectionCards .animal-portrait{width:48px;height:48px;margin:2px auto 4px;border-radius:12px}
+#collectionCards h3{text-align:center;font-size:14px;margin:3px 0;line-height:1.2}
+#collectionCards .statrow{justify-content:center;gap:3px;margin:5px 0;font-size:10px}
+#collectionCards .statrow span{padding:3px 4px}
+#collectionCards .cardXP{text-align:center;font-size:10px;color:#cbdcbb}
+#collectionCards .cardDetails{font-size:11px;color:#cbdcbb;cursor:default}
+#collectionCards .cardDetails summary{cursor:pointer;text-align:center;min-height:32px;padding:9px 0 4px;color:#ffe5a2}
+#collectionCards .cardDetails p{margin:5px 0;line-height:1.4}
+#collectionCards .deckToggle{width:100%;min-height:32px;padding:5px;font-size:10px;margin-top:5px}
+.collectionTools{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;margin:8px 0}
+.collectionTools input,.collectionTools select{width:100%;min-width:0;min-height:40px;border:1px solid #748949;border-radius:10px;background:#122d20;color:#ffe5a2;padding:8px;font:inherit;font-size:16px}
+#collectionCount{margin:4px 2px 7px;font-size:11px}
+#questScreen button,#saveSlotList button,.sheet button,#collectionCards .deckToggle{border:2px solid #769343;border-radius:12px;box-shadow:inset 0 0 0 1px #243d19;background:linear-gradient(#2f5933,#133923);color:#ffdf7a}
+#questScreen button.primary,.sheet button.primary{background:linear-gradient(#ffdf71,#dba92f);color:#352700;border-color:#b99a40}
+#questScreen .questTabs{gap:4px!important;margin:10px 0!important}
+#questScreen .questTab{padding:10px 2px;font-size:11px;min-height:42px}
+#questScreen .questTab.active{border-color:#ffdc70;background:#345327;color:#fff0aa}
+#questScreen button:disabled{opacity:.6}
+#questScreen .info-box b{font-size:13px}
+#questScreen .questClaim{min-height:36px;padding:7px 11px;font-size:12px}
+.collectionTools :focus-visible,#collectionCards :focus-visible{outline:2px solid #ffdc70;outline-offset:2px}
+@media(max-width:360px){#collectionCards .card{padding:14px 12px 12px}#collectionCards h3{font-size:13px}}
+</style>
 </head>
 <body>
 <div id="app">
@@ -336,6 +383,8 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
     <div class="section-title">Your deck <span class="small">(choose 4)</span></div>
     <div class="deckbar" id="collectionDeck"></div>
     <div class="section-title">Cards</div>
+    <div class="collectionTools"><input id="collectionSearch" type="search" aria-label="Search animals" placeholder="Find an animal…"><select id="collectionFilter" aria-label="Filter cards"><option value="all">All cards</option><option value="owned">Owned</option><option value="deck">In deck</option><option value="locked">Locked</option><option>Common</option><option>Uncommon</option><option>Rare</option><option>Epic</option><option>Legendary</option></select></div>
+    <div id="collectionCount" class="small" role="status"></div>
     <div class="cards" id="collectionCards"></div>
   </section>
 
@@ -885,17 +934,29 @@ function renderDecks(){
   });
 }
 function renderCollection(){
-  collectionCards.innerHTML="";
-  Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).forEach(([k,a])=>{
-    const unlocked=save.unlocked.includes(k), d=document.createElement("div"); d.className="card "+(!unlocked?"locked":"")+(save.deck.includes(k)?" selected":"");
-    const shardNeed=shardRequirement(a), lvl=cardLevel(k), lvlCost=cardLevelCost(k), dmgNow=cardBaseDamage(k), rangeNow=cardBaseRange(k), maxed=lvl>=MAX_CARD_LEVEL;
-    d.innerHTML=`<span class="rarity">${a.rarity==="Legendary"?"🌟 LEGENDARY":a.rarity==="Epic"?"🟣 EPIC":a.rarity==="Rare"?"💎 RARE":a.rarity==="Uncommon"?"🟩 UNCOMMON":a.rarity==="Common"?"⚪ COMMON":a.rarity}</span>${animalVisual(k,"animal-portrait")}<h3>${a.name}</h3><div class="small">${unlocked?a.desc:`🔒 Locked • Collect ${shardNeed} shards to unlock. 🧩 ${save.shards[k]||0}/${shardNeed}`}</div>${unlocked?`<div class="statrow"><span>⭐ Card Lv ${lvl}/${MAX_CARD_LEVEL}</span><span>⚔️ ${Math.round(dmgNow*10)/10}</span><span>🎯 ${Math.round(rangeNow*10)/10}</span><span>✨ XP ${(save.cardXP[k]||0)}/${cardLevel(k)>=MAX_CARD_LEVEL?"MAX":cardXpNeeded(k)}</span><span>⭐ M ${masteryLevel(k)}/${MASTERY_MAX}</span></div><button class="secondary cardLevelBtn" style="width:100%;margin-top:8px;padding:8px;font-size:11px" data-key="${k}" ${maxed?'disabled':''}>${maxed?'⭐ MAX LEVEL':`⬆️ Level Up • 🧩 ${lvlCost}`}</button>`:`<div class="statrow"><span>🔒 Not unlocked</span><span>⚔️ ${a.dmg}</span><span>🎯 ${a.range}</span></div>`}`;
-    if(unlocked)d.onclick=()=>toggleDeck(k);
-    collectionCards.appendChild(d);
-    const levelBtn=d.querySelector(".cardLevelBtn");
-    if(levelBtn){levelBtn.disabled=true;levelBtn.style.opacity=".8";levelBtn.textContent=maxed?"MAX LEVEL":`EXP ${save.cardXP[k]||0}/${cardXpNeeded(k)}`;}
+  const query=(document.getElementById('collectionSearch')?.value||'').trim().toLowerCase();
+  const filter=document.getElementById('collectionFilter')?.value||'all';
+  const entries=Object.entries(animals).sort((a,b)=>rarityOrder[a[1].rarity]-rarityOrder[b[1].rarity]).filter(([k,a])=>{
+    const owned=save.unlocked.includes(k);
+    return a.name.toLowerCase().includes(query)&&(filter==='all'||filter==='owned'&&owned||filter==='locked'&&!owned||filter==='deck'&&save.deck.includes(k)||filter===a.rarity);
   });
+  collectionCards.innerHTML="";
+  document.getElementById('collectionCount').textContent=`${entries.length} cards • ${save.unlocked.length} owned`;
+  entries.forEach(([k,a])=>{
+    const unlocked=save.unlocked.includes(k),selected=save.deck.includes(k),d=document.createElement('div');
+    d.className='card '+(!unlocked?'locked':'')+(selected?' selected':'');
+    const lvl=cardLevel(k),shardNeed=shardRequirement(a),xp=save.cardXP[k]||0;
+    d.innerHTML=`<span class="rarity">${a.rarity.toUpperCase()}</span>${animalVisual(k,'animal-portrait')}<h3>${a.name}</h3><div class="statrow"><span>⚔️ ${Math.round((unlocked?cardBaseDamage(k):a.dmg)*10)/10}</span><span>🎯 ${Math.round((unlocked?cardBaseRange(k):a.range)*10)/10}</span>${unlocked?`<span>Lv ${lvl}</span>`:''}</div><div class="cardXP">${unlocked?lvl>=MAX_CARD_LEVEL?'MAX LEVEL':`XP ${xp}/${cardXpNeeded(k)}`:`🔒 Shards ${save.shards[k]||0}/${shardNeed}`}</div><details class="cardDetails"><summary>Details</summary><p>${a.desc}</p><p>${unlocked?`Card level ${lvl}/${MAX_CARD_LEVEL} • Mastery ${masteryLevel(k)}/${MASTERY_MAX}`:`Collect ${shardNeed} shards to unlock.`}</p></details>${unlocked?`<button class="secondary deckToggle" aria-pressed="${selected}" aria-label="${selected?'Remove':'Add'} ${a.name} ${selected?'from':'to'} deck">${selected?'✓ In deck · Remove':'+ Add to deck'}</button>`:''}`;
+    if(unlocked)d.onclick=()=>toggleDeck(k);
+    d.querySelector('details').onclick=e=>e.stopPropagation();
+    const button=d.querySelector('.deckToggle');
+    if(button)button.onclick=e=>{e.stopPropagation();toggleDeck(k)};
+    collectionCards.appendChild(d);
+  });
+  if(!entries.length)collectionCards.innerHTML='<p class="small">No matching animals. Try another search or filter.</p>';
 }
+document.getElementById('collectionSearch').addEventListener('input',renderCollection);
+document.getElementById('collectionFilter').addEventListener('change',renderCollection);
 function levelUpCard(k){return;}
 function toggleDeck(k){
   if(save.deck.includes(k)){ if(save.deck.length<=1)return; save.deck=save.deck.filter(x=>x!==k);}
