@@ -703,7 +703,8 @@ const defaults = {
   deck:["monkey","frog","owl","snake"]
 };
 let save;
-try { save={...defaults,...JSON.parse(localStorage.getItem("wildwatchSave")||"{}")}; } catch { save={...defaults}; }
+function freshSave(){return JSON.parse(JSON.stringify(defaults));}
+try { save={...freshSave(),...JSON.parse(localStorage.getItem("wildwatchSave")||"{}")}; } catch { save=freshSave(); }
 save.shards={...defaults.shards,...save.shards};
 save.cardLevels={...defaults.cardLevels,...save.cardLevels};
 save.cardXP=save.cardXP||{};
@@ -839,7 +840,9 @@ const WEEKLY_QUEST_POOL=[
  {id:'wEliteDefence',name:'Elite Defence',icon:'💎',text:'Complete 3 maps using only Rare-or-better cards',goal:3,reward:500,type:'rarePlusWins'}
 ];
 
+let saveSlotSwitching=false;
 function persist(){
+  if(saveSlotSwitching)return;
   localStorage.setItem("wildwatchSave",JSON.stringify(save));
   const active=localStorage.getItem(ACTIVE_SLOT_KEY);
   if(active){const old=getSlotRecord(active);const name=old?.name||`Save ${active}`;localStorage.setItem(SAVE_SLOT_PREFIX+active,JSON.stringify({version:2,name,savedAt:new Date().toISOString(),save}));}
@@ -847,7 +850,7 @@ renderMeta();renderSaveSlots();
 }
 function setSaveStatus(msg){const el=document.getElementById("saveStatus");if(el)el.textContent=msg;}
 function slotSummary(rec,slot){
-  if(!rec)return `<b>＋ Create Save ${slot}</b><span>Tap to name this save and keep your current progress.</span>`;
+  if(!rec)return `<b>＋ Create Save ${slot}</b><span>Start a fresh adventure with the starter cards.</span>`;
   const sv=rec.save||{};const forest=sv.forestPinesUnlocked||1;const desert=sv.desertDunesUnlocked||0;const haunted=sv.hauntedWoodsUnlocked||0;const tundra=sv.tundraFallsUnlocked||0;const where=tundra>0?`Tundra ${tundra}`:haunted>0?`Haunted ${haunted}`:desert>0?`Desert ${desert}`:`Forest ${forest}`;
   const when=rec.savedAt?new Date(rec.savedAt).toLocaleString():"Saved";
   return `<b>💾 ${rec.name||`Save ${slot}`}</b><span>⭐ Level ${sv.level||1} • 🟡 ${sv.metaCoins||0} • ${where}</span><small>${when}</small>`;
@@ -864,7 +867,7 @@ function createSlot(slot){
   modal.className="modal show";
   modal.innerHTML=`<div class="sheet" style="max-width:430px">
     <h2 style="margin-bottom:8px">Create Save ${slot}</h2>
-    <div class="small" style="margin-bottom:10px">Give this save a name. Your progress will autosave to this slot while you play.</div>
+    <div class="small" style="margin-bottom:10px">Start fresh with 250 Coins, the four starter cards and the first map. Your other saves will be kept.</div>
     <input id="createSaveName" maxlength="24" value="Adventure ${slot}" autocomplete="off" style="width:100%;padding:13px 12px;border-radius:12px;border:1px solid #46705e;background:#0b1d16;color:#f4fff8;font:inherit;font-size:16px;outline:none" />
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="secondary" id="cancelCreateSave" style="flex:1">Cancel</button>
@@ -875,13 +878,33 @@ function createSlot(slot){
   const input=modal.querySelector("#createSaveName");
   const close=()=>modal.remove();
   const confirmCreate=()=>{
+    if(saveSlotSwitching)return;
     const name=((input.value||"").trim()||`Save ${slot}`).slice(0,24);
-    localStorage.setItem(SAVE_SLOT_PREFIX+slot,JSON.stringify({version:2,name,savedAt:new Date().toISOString(),save}));
-    localStorage.setItem(ACTIVE_SLOT_KEY,String(slot));
+    if(getSlotRecord(slot)){alert("This slot already contains a save. Choose an empty slot to start fresh.");return;}
+    const fresh=freshSave();
+    const keys=[SAVE_SLOT_PREFIX+slot,BATTLE_SAVE_PREFIX+slot,"wildwatchSave",ACTIVE_SLOT_KEY];
+    const previous=keys.map(key=>[key,localStorage.getItem(key)]);
+    try{
+      // Checkpoint the current adventure before switching the active slot.
+      persist();
+      saveBattleState();
+      localStorage.setItem("wildwatchSafetyBackup",JSON.stringify({savedAt:new Date().toISOString(),save}));
+      saveSlotSwitching=true;
+      localStorage.setItem(SAVE_SLOT_PREFIX+slot,JSON.stringify({version:2,name,savedAt:new Date().toISOString(),save:fresh}));
+      // An explicit empty battle prevents legacy battle migration into a fresh slot.
+      localStorage.setItem(BATTLE_SAVE_PREFIX+slot,JSON.stringify({started:false,ended:true}));
+      localStorage.setItem("wildwatchSave",JSON.stringify(fresh));
+      localStorage.setItem(ACTIVE_SLOT_KEY,String(slot));
+      sessionStorage.removeItem("critterAutoContinueFromSlot");
+    }catch(error){
+      for(const [key,value] of previous){try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}catch{}}
+      saveSlotSwitching=false;
+      alert("The new save could not be created. Your current adventure is still open. Free some browser storage and try again.");
+      return;
+    }
+    cancelAnimationFrame(raf);
     close();
-    renderSaveSlots();
-    setSaveStatus(`${name} created from your current progress. Autosave is on.`);
-    showScreen("homeScreen");
+    location.reload();
   };
   modal.querySelector("#cancelCreateSave").addEventListener("click",close);
   modal.querySelector("#confirmCreateSave").addEventListener("click",confirmCreate);
@@ -897,7 +920,10 @@ Level ${rec.save?.level||1} • ${rec.save?.metaCoins||0} Coins
 
 Your current autosave will be protected before switching.`))return;
   localStorage.setItem("wildwatchSafetyBackup",JSON.stringify({savedAt:new Date().toISOString(),save}));
+  persist();
   saveBattleState();
+  saveSlotSwitching=true;
+  cancelAnimationFrame(raf);
   localStorage.setItem(ACTIVE_SLOT_KEY,String(slot));
   sessionStorage.setItem("critterAutoContinueFromSlot","1");
   localStorage.setItem("wildwatchSave",JSON.stringify(rec.save));
@@ -921,6 +947,7 @@ setTimeout(()=>{
   renderSaveSlots();
 },0);
 function saveBattleState(){
+  if(saveSlotSwitching)return;
   if(!battle?.started || battle.ended)return;
   localStorage.setItem(battleSaveKey(),JSON.stringify({...battle,mapNumber:currentMap,mapSeries:currentSeries,shots:[]}));
   continueBtn.style.display="inline-block";
