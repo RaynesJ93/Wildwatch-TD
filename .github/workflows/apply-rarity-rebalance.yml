@@ -14,101 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch card pack rarity system
+      - name: Update rarity level gates
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-          start=s.find('const chestConfig={')
-          end=s.find('closePack.onclick=()=>packModal.classList.remove("show");', start)
-          if start < 0 or end < 0:
-              raise SystemExit('Could not locate current card-pack logic')
-          end += len('closePack.onclick=()=>packModal.classList.remove("show");')
-          new=r'''// RARITY_REBALANCE_V1 — mixed rarity packs, Legendary pity and duplicate protection.
-const chestConfig={
-  common:{name:"Common Pack",cost:250,rarities:{Common:75,Uncommon:20,Rare:4.75,Legendary:.25}},
-  uncommon:{name:"Uncommon Pack",cost:500,rarities:{Common:45,Uncommon:40,Rare:13.5,Legendary:1.5}},
-  epic:{name:"Rare Pack",cost:750,rarities:{Common:20,Uncommon:35,Rare:40,Legendary:5}},
-  legendary:{name:"Legendary Pack",cost:1500,rarities:{Common:10,Uncommon:25,Rare:50,Legendary:15},legendary:true}
-};
-function rarityRoll(weights){
-  let entries=Object.entries(weights),total=entries.reduce((n,[,w])=>n+w,0),r=Math.random()*total;
-  for(const [rarity,w] of entries){r-=w;if(r<=0)return rarity}
-  return entries[entries.length-1][0];
-}
-function eligiblePackPool(rarity){
-  // Progress gating uses player progression already stored in saves. Existing owned cards are never removed.
-  const minLevel={Common:1,Uncommon:1,Rare:3,Legendary:6}[rarity]||1;
-  if((save.level||1)<minLevel)return [];
-  return Object.keys(animals).filter(k=>animals[k].rarity===rarity);
-}
-function legendaryChanceWithPity(base){
-  const misses=Math.max(0,Number(save.legendaryPity||0));
-  if(misses>=99)return 100;
-  if(misses<50)return base;
-  const soft=Math.floor((misses-50)/5+1)*.5;
-  return Math.min(50,base+soft);
-}
-function rollPackRarity(cfg){
-  const weights={...cfg.rarities};
-  if(weights.Legendary){
-    const boosted=legendaryChanceWithPity(weights.Legendary);
-    const extra=boosted-weights.Legendary;
-    weights.Legendary=boosted;
-    const donors=['Common','Uncommon','Rare'];
-    let donorTotal=donors.reduce((n,k)=>n+(weights[k]||0),0);
-    donors.forEach(k=>{if(weights[k])weights[k]=Math.max(0,weights[k]-extra*(weights[k]/donorTotal));});
-  }
-  // Do not roll a rarity that has no cards or has not reached its progression gate.
-  Object.keys(weights).forEach(r=>{if(!eligiblePackPool(r).length)weights[r]=0});
-  return rarityRoll(weights);
-}
-function choosePackCard(rarity){
-  const pool=eligiblePackPool(rarity);
-  if(!pool.length)return null;
-  const locked=pool.filter(k=>!(save.unlocked||[]).includes(k));
-  // Legendary pulls strongly favour a new Legendary until the available set is complete.
-  if(rarity==='Legendary'&&locked.length&&Math.random()<.85)return locked[Math.floor(Math.random()*locked.length)];
-  const source=(locked.length&&rarity!=='Legendary')?locked:pool;
-  return source[Math.floor(Math.random()*source.length)];
-}
-
-document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
-  const cfg=chestConfig[btn.dataset.chest];
-  if(save.metaCoins<cfg.cost){alert(`You need ${cfg.cost} Coins for this pack. Earn more by completing levels.`);return}
-  save.metaCoins-=cfg.cost;
-  save.legendaryPity=Math.max(0,Number(save.legendaryPity||0));
-  let rarity=rollPackRarity(cfg);
-  let key=choosePackCard(rarity);
-  if(!key){save.metaCoins+=cfg.cost;alert('No eligible cards are available in this pack yet. Keep progressing to unlock higher rarities.');return}
-  const a=animals[key],fresh=!(save.unlocked||[]).includes(key);
-  save.totalPacksOpened=Math.max(0,Number(save.totalPacksOpened||0))+1;
-  save.totalCardsCollected=Math.max(0,Number(save.totalCardsCollected||0))+1;
-  save.levels=save.levels||{};save.cardXP=save.cardXP||{};save.shards=save.shards||{};
-  if(rarity==='Legendary')save.legendaryPity=0;else save.legendaryPity++;
-  if(fresh){
-    save.unlocked.push(key);
-    save.cardLevels[key]=save.cardLevels[key]||1;
-    save.cardXP[key]=save.cardXP[key]||0;
-    save.shards[key]=save.shards[key]||0;
-  }else{
-    // Duplicates remain useful for mastery; higher rarities award more mastery shards.
-    const shardGain={Common:1,Uncommon:2,Rare:4,Legendary:8}[a.rarity]||1;
-    save.shards[key]=(save.shards[key]||0)+shardGain;
-    a._lastPackShardGain=shardGain;
-  }
-  packEmoji.className="reward";packEmoji.style.backgroundImage="none";packEmoji.style.backgroundPosition="";packEmoji.textContent=a.emoji;
-  const rarityLabel=a.rarity==="Legendary"?"🌟 LEGENDARY • ":a.rarity==="Rare"?"💎 RARE • ":a.rarity==="Uncommon"?"🟩 UNCOMMON • ":"⚪ COMMON • ";
-  packTitle.textContent=`${rarityLabel}${fresh?"New ":""}${a.name}!`;
-  if(fresh)packDesc.textContent=`You pulled a ${a.rarity} card from your ${cfg.name}!`;
-  else {const n=a._lastPackShardGain||1;packDesc.textContent=`Duplicate ${a.name} converted to ${n} Mastery Shard${n===1?'':'s'}. Legendary pity: ${save.legendaryPity}/100.`;delete a._lastPackShardGain;}
-  packModal.classList.add("show");persist();renderCards();renderHome();
-});
-closePack.onclick=()=>packModal.classList.remove("show");'''
-          s=s[:start]+new+s[end:]
-          # Update shop copy so it no longer claims packs contain a guaranteed matching rarity.
-          s=s.replace('Every pack contains 1 card from its matching rarity.', 'Higher-tier packs give better odds for Rare and Legendary cards. Legendary pulls have bad-luck protection, and higher rarities unlock as you progress.')
+          old='const minLevel={Common:1,Uncommon:1,Rare:3,Legendary:6}[rarity]||1;'
+          new='const minLevel={Common:1,Uncommon:1,Rare:10,Legendary:20}[rarity]||1;'
+          if old in s:
+              s=s.replace(old,new)
+          elif new not in s:
+              raise SystemExit('Could not locate rarity level gates')
           p.write_text(s)
           PY
       - name: Commit update
@@ -117,5 +34,5 @@ closePack.onclick=()=>packModal.classList.remove("show");'''
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "Rebalance Rare and Legendary card acquisition"
+          git commit -m "Lock Rare cards at level 10 and Legendary at level 20"
           git push
