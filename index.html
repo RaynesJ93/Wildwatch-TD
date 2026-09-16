@@ -2778,7 +2778,7 @@ function finishWave(){
   battle.shots=(battle.shots||[]).filter(s=>s.type!=="hedgehogNeedles");
   save.bestWave=Math.max(save.bestWave,clearedWave);
   addQuestProgress("waves",1);
-  addWeeklyProgress("weeklyWaves",1);
+  addWeeklyProgress("waves",1);
   save.totalWaves=Math.max(0,Number(save.totalWaves||0))+1;
   if(battle.lives===(battle.waveStartLives??battle.lives))addQuestProgress("noLossWaves",1);
   if(speed===3){addQuestProgress("speedWaves",1);addChallengeProgress("challengeSpeedWaves",1);}
