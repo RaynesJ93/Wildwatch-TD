@@ -1,4 +1,4 @@
-// REGIONS_8_10_UI_V3
+// REGIONS_8_10_UI_V4
 (()=>{
  const names={8:'Lost Jungle',9:'Enchanted Wilds',10:'Sky Highlands'};
  const icons={8:'🌿',9:'🍄',10:'🌩️'};
@@ -30,6 +30,7 @@
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installHomeProgressArtwork);else installHomeProgressArtwork();
  new MutationObserver(installHomeProgressArtwork).observe(document.getElementById('homeScreen')||document.body,{childList:true,subtree:true});
+ const attackBatch=document.createElement('script');attackBatch.src='attack-batch-1.js?v=1';document.body.appendChild(attackBatch);
  // Dedicated testing slot is additive: Slots 1–3 are never overwritten or removed.
  const debugSaveScript=document.createElement('script');debugSaveScript.src='bug-test-save.js?v=1';document.body.appendChild(debugSaveScript);
 })();
