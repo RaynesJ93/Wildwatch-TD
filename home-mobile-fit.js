@@ -1,4 +1,4 @@
-// HOME_MOBILE_FIT_V1 — compact the Home screen so its main content fits above the fixed nav on phones.
+// HOME_MOBILE_FIT_V2 — compact Home + lower-cost mobile battle rendering.
 (()=>{
  const css=`
 @media (max-width:600px){
@@ -47,5 +47,25 @@
  const style=document.createElement('style');style.id='home-mobile-fit-style';style.textContent=css;document.head.appendChild(style);
  function sync(){document.body.classList.toggle('home-fit',document.getElementById('homeScreen')?.classList.contains('active'));}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync);else sync();
- new MutationObserver(sync).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
+ // Observe only screen class changes, not every descendant mutation.
+ const screens=[...document.querySelectorAll('.screen')];
+ const observer=new MutationObserver(sync);screens.forEach(el=>observer.observe(el,{attributes:true,attributeFilter:['class']}));
+
+ // MOBILE_BATTLE_RENDER_THROTTLE_V1
+ // Keep simulation/update running at requestAnimationFrame speed, but cap expensive
+ // full-canvas painting to ~30 FPS on phone-sized screens. This does NOT alter
+ // enemy speed, tower cooldowns, damage, wave timing or the 1x/2x/3x speed setting.
+ if(window.matchMedia('(max-width:600px)').matches && typeof draw==='function'){
+   const fullDraw=draw;
+   let lastPaint=0;
+   draw=function(){
+     const active=(typeof battle!=='undefined'&&battle&&battle.started&&document.getElementById('battleScreen')?.classList.contains('active'));
+     if(active){
+       const now=performance.now();
+       if(now-lastPaint<32)return;
+       lastPaint=now;
+     }
+     return fullDraw();
+   };
+ }
 })();
