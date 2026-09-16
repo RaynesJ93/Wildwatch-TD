@@ -694,7 +694,7 @@ function cardXpNeeded(k){
 }
 function addCardXp(k,amount){
   if(!save.unlocked.includes(k)||cardLevel(k)>=MAX_CARD_LEVEL)return;
-  save.cardXP[k]=(save.cardXP[k]||0)+Math.max(0,Math.floor(amount));
+  save.cardXP[k]=(save.cardXP[k]||0)+Math.max(0,Math.floor(amount*masteryXpMult(k)));
   while(cardLevel(k)<MAX_CARD_LEVEL){
     const need=cardXpNeeded(k);
     if(save.cardXP[k]<need)break;
@@ -726,7 +726,7 @@ function awardMapDeckXp(){
 function awardUsedCardXp(completed){return 0;}
 function cardBaseDamage(k){const a=animals[k];return a.dmg*(1+(cardLevel(k)-1)*.06)*masteryDamageMult(k);}
 function cardBaseRange(k){const a=animals[k];return a.range*(1+(cardLevel(k)-1)*.035)*masteryRangeMult(k);}
-function cardRate(k){const a=animals[k];return a.rate*Math.pow(.98,Math.floor(cardLevel(k)/5));}
+function cardRate(k){const a=animals[k];return a.rate*Math.pow(.98,Math.floor(cardLevel(k)/5))/masteryAttackSpeedMult(k);}
 function towerDamage(t){
   const base=cardBaseDamage(t.key);
   if(t.level>=10){
@@ -946,7 +946,7 @@ function renderCollection(){
     const unlocked=save.unlocked.includes(k),selected=save.deck.includes(k),d=document.createElement('div');
     d.className='card '+(!unlocked?'locked':'')+(selected?' selected':'');
     const lvl=cardLevel(k),shardNeed=shardRequirement(a),xp=save.cardXP[k]||0;
-    d.innerHTML=`<span class="rarity">${a.rarity.toUpperCase()}</span>${animalVisual(k,'animal-portrait')}<h3>${a.name}</h3><div class="statrow"><span>⚔️ ${Math.round((unlocked?cardBaseDamage(k):a.dmg)*10)/10}</span><span>🎯 ${Math.round((unlocked?cardBaseRange(k):a.range)*10)/10}</span>${unlocked?`<span>Lv ${lvl}</span>`:''}</div><div class="cardXP">${unlocked?lvl>=MAX_CARD_LEVEL?'MAX LEVEL':`XP ${xp}/${cardXpNeeded(k)}`:`🔒 Shards ${save.shards[k]||0}/${shardNeed}`}</div><details class="cardDetails"><summary>Details</summary><p>${a.desc}</p><p>${unlocked?`Card level ${lvl}/${MAX_CARD_LEVEL} • Mastery ${masteryLevel(k)}/${MASTERY_MAX}`:`Collect ${shardNeed} shards to unlock.`}</p></details>${unlocked?`<button class="secondary deckToggle" aria-pressed="${selected}" aria-label="${selected?'Remove':'Add'} ${a.name} ${selected?'from':'to'} deck">${selected?'✓ In deck · Remove':'+ Add to deck'}</button>`:''}`;
+    d.innerHTML=`<span class="rarity">${a.rarity.toUpperCase()}</span>${animalVisual(k,'animal-portrait')}<h3>${a.name}</h3><div class="statrow"><span>⚔️ ${Math.round((unlocked?cardBaseDamage(k):a.dmg)*10)/10}</span><span>🎯 ${Math.round((unlocked?cardBaseRange(k):a.range)*10)/10}</span>${unlocked?`<span>Lv ${lvl}</span>`:''}</div><div class="cardXP">${unlocked?lvl>=MAX_CARD_LEVEL?'MAX LEVEL':`XP ${xp}/${cardXpNeeded(k)}`:`🔒 Shards ${save.shards[k]||0}/${shardNeed}`}</div><details class="cardDetails"><summary>Details</summary><p>${a.desc}</p><p>${unlocked?`Card level ${lvl}/${MAX_CARD_LEVEL} • ${masteryRewardText(k)}`:`Collect ${shardNeed} shards to unlock.`}</p></details>${unlocked?`<button class="secondary deckToggle" aria-pressed="${selected}" aria-label="${selected?'Remove':'Add'} ${a.name} ${selected?'from':'to'} deck">${selected?'✓ In deck · Remove':'+ Add to deck'}</button>`:''}`;
     if(unlocked)d.onclick=()=>toggleDeck(k);
     d.querySelector('details').onclick=e=>e.stopPropagation();
     const button=d.querySelector('.deckToggle');
@@ -1116,12 +1116,25 @@ function addMasteryShards(k,n){
   }
   if(masteryLevel(k)>=MASTERY_MAX)save.masteryShards[k]=Math.max(0,save.masteryShards[k]||0);
 }
+// MASTERY_REWARDS_V2 — high-value mastery progression; M10 ability intentionally reserved for later.
 function masteryRewardText(k){
-  const lv=masteryLevel(k),skin=lv>=10?' • 🥇 Golden skin':lv>=5?' • 🥉 Bronze skin':'';
-  return `⭐ Mastery ${lv}/${MASTERY_MAX}${skin}`;
+  const lv=masteryLevel(k), rewards=[];
+  if(lv>=1)rewards.push('+5% DMG');
+  if(lv>=2)rewards.push('+5% ATK SPD','Mastery border');
+  if(lv>=3)rewards.push('+5% RNG');
+  if(lv>=4)rewards.push('+5% DMG','Enhanced attack VFX');
+  if(lv>=5)rewards.push('Bronze skin','+10% Card XP');
+  if(lv>=6)rewards.push('+5% ATK SPD','Placement VFX');
+  if(lv>=7)rewards.push('+10% DMG','Upgraded attack VFX');
+  if(lv>=8)rewards.push('+10% RNG','Animated mastery frame');
+  if(lv>=9)rewards.push('+10% DMG','+10% ATK SPD');
+  if(lv>=10)rewards.push('Golden Evolution','Golden attacks','Animated card');
+  return `⭐ Mastery ${lv}/${MASTERY_MAX}${rewards.length?' • '+rewards.join(' • '):''}`;
 }
-function masteryDamageMult(k){const lv=masteryLevel(k);return 1+(lv>=3?.02:0)+(lv>=9?.03:0);}
-function masteryRangeMult(k){return masteryLevel(k)>=7?1.02:1;}
+function masteryDamageMult(k){const lv=masteryLevel(k);return 1+(lv>=1?.05:0)+(lv>=4?.05:0)+(lv>=7?.10:0)+(lv>=9?.10:0);}
+function masteryRangeMult(k){const lv=masteryLevel(k);return 1+(lv>=3?.05:0)+(lv>=8?.10:0);}
+function masteryAttackSpeedMult(k){const lv=masteryLevel(k);return 1+(lv>=2?.05:0)+(lv>=6?.05:0)+(lv>=9?.10:0);}
+function masteryXpMult(k){return masteryLevel(k)>=5?1.10:1;}
 function mythicChanceForChest(tier){return tier==='Legendary'?.03:tier==='Rare'?.02:.01;}
 function postCollectionPackReward(key,chestTier){
   ensureMastery();
