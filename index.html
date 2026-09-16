@@ -359,6 +359,11 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
 #sanctuaryStageGrid .stage-card .stage-name{overflow-wrap:anywhere}
 @media(max-width:430px){#sanctuaryStageGrid .stage-card{grid-template-columns:34px minmax(0,1fr) auto;gap:6px;padding:11px 8px}#sanctuaryStageGrid .stage-thumb{width:34px;height:52px;font-size:24px}}
 </style>
+<style id="pack-level-locks">
+#packsScreen .packUnlockLabel{display:block;max-width:100%;font-size:12px;line-height:1.35;color:#ffe38d;text-align:center;white-space:normal}
+#packsScreen .chestBtn.levelLocked{cursor:not-allowed}
+#packsScreen .chestBtn.levelLocked .simplePackArt{filter:grayscale(.7);opacity:.55}
+</style>
 </head>
 <body>
 <div id="app">
@@ -1010,6 +1015,7 @@ function loadBattleState(){
 }
 
 function renderMeta(){
+  renderPackLocks();
   metaCoins.textContent=save.metaCoins;
   playerLevel.textContent=save.level;
   bestWave.textContent=save.bestWave;
@@ -1131,6 +1137,7 @@ function startSanctuaryStage(stage){
 
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>showScreen(b.dataset.screen));
 function showScreen(id){
+  if(id==="packsScreen")renderPackLocks();
   const battleScreen=document.getElementById("battleScreen");
   const choosingMap=id==="battleScreen" && (!battle?.started || battle.ended);
 
@@ -1254,7 +1261,25 @@ function weightedAnimal(pool,weights){
   for(const x of weighted){roll-=x.w;if(roll<=0)return x.k}
   return weighted[weighted.length-1].k;
 }
+// LEGENDARY_PACK_LEVEL_GATE_V1: use player level, not individual card levels.
+function packUnlockLevel(tier){return tier==="legendary"?20:1;}
+function packIsUnlocked(tier){return (Number(save.level)||1)>=packUnlockLevel(tier);}
+function renderPackLocks(){
+  document.querySelectorAll(".chestBtn").forEach(btn=>{
+    const tier=btn.dataset.chest,locked=!packIsUnlocked(tier);
+    btn.disabled=locked;
+    btn.classList.toggle("levelLocked",locked);
+    btn.setAttribute("aria-disabled",String(locked));
+    if(tier==="legendary"){
+      let label=btn.querySelector(".packUnlockLabel");
+      if(!label){label=document.createElement("span");label.className="packUnlockLabel";btn.appendChild(label);}
+      label.textContent=locked?"🔒 Unlocks at player level 20":"✓ Player level 20 unlocked";
+    }
+  });
+}
+
 document.querySelectorAll(".chestBtn").forEach(btn=>btn.onclick=()=>{
+  if(!packIsUnlocked(btn.dataset.chest)){alert(`Legendary packs unlock at player level ${packUnlockLevel(btn.dataset.chest)}.`);renderPackLocks();return}
   const cfg=chestConfig[btn.dataset.chest];
   if(save.metaCoins<cfg.cost){alert(`You need ${cfg.cost} Coins for this pack. Earn more by completing levels.`);return}
   save.metaCoins-=cfg.cost;
