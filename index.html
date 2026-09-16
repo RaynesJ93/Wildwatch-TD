@@ -388,6 +388,26 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
 #questScreen .questDrop summary:focus-visible{outline:2px solid #8cd58a;outline-offset:4px;border-radius:4px}
 @media(min-width:600px){#questScreen .info-box{padding-top:26px;padding-bottom:26px}}
 </style>
+
+<style id="collection-vine-only-frames">
+/* Keep vine artwork and existing spacing; hide the extra gold/olive UI borders. */
+#collectionScreen .hero,
+#collectionDeck .deckslot,
+#collectionCards .card,
+#collectionScreen .collectionTools input,
+#collectionScreen .collectionTools select,
+#collectionCards .deckToggle{
+  border-color:transparent;
+  box-shadow:none;
+}
+#collectionCards .card.selected{outline:none}
+/* Keyboard focus remains visible without a gold border. */
+#collectionScreen :focus-visible,
+#collectionCards .card.selected:focus-visible{
+  outline:2px solid #b9d3c4;
+  outline-offset:2px;
+}
+</style>
 </head>
 <body>
 <div id="app">
