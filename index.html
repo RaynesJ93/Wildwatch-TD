@@ -353,6 +353,12 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
 #sanctuaryStageGrid .stage-card>div{position:relative;z-index:1}
 #sanctuaryStageGrid .stage-card.cleared{border-color:transparent;box-shadow:0 4px 9px #0005}
 #sanctuaryStageGrid .stage-card.locked{border-color:transparent;background:var(--region-bg,#122b1b);opacity:.62;filter:saturate(.45)}
+/* Unfinished Hard maps remain playable; only their artwork and frame are muted. */
+#sanctuaryStageGrid .stage-card.hard-uncleared{filter:grayscale(.9);background:#17201c}
+#sanctuaryStageGrid .stage-card.hard-uncleared::before{opacity:.38}
+#sanctuaryStageGrid .stage-card.hard-uncleared .stage-thumb{opacity:.5}
+#sanctuaryStageGrid .stage-card.hard-uncleared .stage-stars{color:#819087}
+#sanctuaryStageGrid .stage-card.hard-uncleared .stage-status{color:#c0cbc4}
 #sanctuaryStageGrid .stage-card:focus-visible{outline:2px solid #ffdf78;outline-offset:2px}
 #sanctuaryStageGrid .stage-card .stage-thumb{border-color:var(--region-ink,#89bf52);background:radial-gradient(ellipse at top,#ffffff18,transparent 65%),var(--region-bg,#122b1b)}
 #sanctuaryStageGrid .stage-card .stage-num{color:var(--region-ink,#cce5ab)}
@@ -1190,10 +1196,10 @@ function renderMapSanctuary(){
     const modeLocked=mapMenuDifficulty==='hard'&&!normalDone;
     const inaccessible=locked||modeLocked;
     const cleared=mapMenuDifficulty==='hard'?hardDone:normalDone;
-    const stars=hardDone?3:normalDone?2:0;
+    const stars=mapMenuDifficulty==='hard'?(hardDone?3:0):(hardDone?3:normalDone?2:0);
     const starText=[0,1,2].map(x=>x<stars?'★':'☆').join('<br>');
-    let status=locked?'Locked':modeLocked?'Clear Normal first':cleared?'Cleared • 15/15 waves':`Unlocked • 15 waves`;
-    return `<button class="stage-card ${cleared?'cleared':''} ${inaccessible?'locked':''}" data-stage="${n}" ${inaccessible?'disabled':''}><div class="stage-thumb ${meta.className}">${sanctuaryStageIcon(mapMenuSeries,n)}</div><div class="stage-copy"><div class="stage-num">${mapMenuSeries}-${n}</div><div class="stage-name">${name}</div><div class="stage-status">${status}</div></div><div>${inaccessible?'<div class="stage-lock">🔒</div>':`<div class="stage-stars">${starText}</div>`}</div></button>`;
+    let status=locked?'Locked':modeLocked?'Clear Normal first':cleared?'Cleared • 15/15 waves':mapMenuDifficulty==='hard'?'Not cleared • 15 waves':`Unlocked • 15 waves`;
+    return `<button class="stage-card ${cleared?'cleared':''} ${inaccessible?'locked':''} ${mapMenuDifficulty==='hard'&&!hardDone?'hard-uncleared':''}" data-stage="${n}" ${inaccessible?'disabled':''}><div class="stage-thumb ${meta.className}">${sanctuaryStageIcon(mapMenuSeries,n)}</div><div class="stage-copy"><div class="stage-num">${mapMenuSeries}-${n}</div><div class="stage-name">${name}</div><div class="stage-status">${status}</div></div><div>${inaccessible?'<div class="stage-lock">🔒</div>':`<div class="stage-stars">${starText}</div>`}</div></button>`;
   }).join('');
   grid.querySelectorAll('.stage-card:not(.locked)').forEach(btn=>btn.onclick=()=>startSanctuaryStage(+btn.dataset.stage));
   renderEpicEntry();
@@ -4253,9 +4259,9 @@ function questWeeklyKey(now=new Date()){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 </script>
-<script src="coral-coast.js?v=2"></script>
+<script src="coral-coast.js?v=3"></script>
 <script src="quest-expansion.js"></script>
-<script src="coral-coast-visuals.js?v=25"></script>
+<script src="coral-coast-visuals.js?v=26"></script>
 </body>
 </html>
 

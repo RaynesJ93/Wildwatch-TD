@@ -115,6 +115,6 @@
  function auditLiveBattle(){if(typeof battle==='undefined'||!battle)return;if(n(battle.totalPlaced)>=8&&battle._questEightPlacedWave==null)battle._questEightPlacedWave=n(battle.wave);}
 
  draw=function(){coreDraw();auditLiveBattle();processMapCompletion();};
- const s=document.createElement('script');s.src='regions-8-10.js?v=24';s.onload=()=>{const u=document.createElement('script');u.src='regions-8-10-ui.js?v=24';document.body.appendChild(u)};document.body.appendChild(s);
+ const s=document.createElement('script');s.src='regions-8-10.js?v=24';s.onload=()=>{const u=document.createElement('script');u.src='regions-8-10-ui.js?v=25';document.body.appendChild(u)};document.body.appendChild(s);
  const homeFit=document.createElement('script');homeFit.src='home-mobile-fit.js?v=3';document.body.appendChild(homeFit);
 })();
