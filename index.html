@@ -1582,7 +1582,7 @@ function resetBattle(){
     started:true,
     epicMode,
     hardMode,
-    coins:hardMode?110:130,
+    coins:epicMode?300:hardMode?110:130,
     lives:hardMode?15:20,
     mapStartLives:hardMode?15:20,
     wave:1,
@@ -1596,7 +1596,7 @@ function resetBattle(){
   if(typeof speedBtn!=="undefined"&&speedBtn)speedBtn.textContent="⏩ Speed: 1×";
   if(typeof autoWaveBtn!=="undefined"&&autoWaveBtn){autoWaveBtn.textContent="▶️ Auto: OFF";autoWaveBtn.classList.remove("primary");autoWaveBtn.classList.add("secondary");}
   if(typeof startWave!=="undefined"&&startWave)startWave.textContent="Start wave";
-  if(typeof message!=="undefined"&&message)message.textContent="Choose an animal card, then tap anywhere on the grass to place it.";
+  if(typeof message!=="undefined"&&message)message.textContent=epicMode?"⚔️ Epic Mode: 300 starting battle currency • 2× currency per kill. Choose a card, then tap the grass to place it.":"Choose an animal card, then tap anywhere on the grass to place it.";
   if(typeof renderDecks==="function")renderDecks();
   if(typeof updateHud==="function")updateHud();
   if(typeof updateDifficultyUI==="function")updateDifficultyUI();
@@ -1983,10 +1983,11 @@ function moveEnemy(e,dt){
   }
   if(e.seg>=path.length-1&&!e.dead){e.dead=true;battle.lives--; if(battle.lives<=0)gameOver();updateHud()}
 }
-function killEnemy(e){if(e.dead)return;e.dead=true;const killCash=Math.max(0,Math.round(Number(e.reward)||0));const coinReward=battleCoinReward(e.coinRewardKind);battle.coins+=killCash+coinReward;battle.mapKills=(battle.mapKills||0)+1;
+function killEnemy(e){if(e.dead)return;e.dead=true;const killCash=Math.max(0,Math.round(Number(e.reward)||0));const coinReward=battleCoinReward(e.coinRewardKind);const earnedCash=(killCash+coinReward)*(epicMode?2:1);battle.coins+=earnedCash;battle.mapKills=(battle.mapKills||0)+1;
   battle.waveKills=(battle.waveKills||0)+1;addQuestProgress("kills",1);addWeeklyProgress("kills",1);
   const killer=battle.lastAttackingTower||null;if(killer){const mode=killer.targetMode||"first";if(mode==="first"){addQuestProgress("firstKills",1);addWeeklyProgress("firstKills",1);}else if(mode==="strongest"){addQuestProgress("strongestKills",1);addWeeklyProgress("strongestKills",1);}}
-  if(coinReward){addQuestProgress("battleCurrency",coinReward);addWeeklyProgress("battleCurrency",coinReward);}updateHud()}
+  const questCash=epicMode?earnedCash:coinReward;
+  if(questCash){addQuestProgress("battleCurrency",questCash);addWeeklyProgress("battleCurrency",questCash);}updateHud()}
 function towerTickCore(t,dt){
   battle.lastAttackingTower=t;
   t.cd-=dt;if(t.cd>0)return;

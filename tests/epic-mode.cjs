@@ -18,3 +18,17 @@ for(let r=1;r<=10;r++){
 assert(!events.includes('hardMaps'));assert(!events.includes('normalMaps'));
 ctx.epicMode=ctx.hardMode=false;ctx.currentSeries=1;ctx.currentMap=1;ctx.battle={wave:15,shots:[],lives:20};ctx.finishWave();assert(ctx.battle.ended);assert(events.includes('normalMaps'));assert.equal(ctx.battleWaveLimit(),15);
 console.log('PASS: all 10 regions, missing Normal/Hard gate, all 20 waves, bosses 10/20, resume at wave 16, separate Epic completion, Normal still ends at 15.');
+// Epic boosts only spendable battle cash; replayed kill callbacks cannot pay twice.
+for(const n of ['resetBattle','killEnemy'])vm.runInContext(fn(n),ctx);
+for(const [epic,hard,start] of [[false,false,130],[false,true,110],[true,true,300]]){
+ ctx.epicMode=epic;ctx.hardMode=hard;ctx.resetBattle();assert.equal(ctx.battle.coins,start);
+ const permanent=ctx.save.metaCoins;
+ for(const kind of ['normal','elite','boss']){
+  ctx.battleCoinReward=k=>({normal:0,elite:36,boss:99})[k]||0;
+  const enemy={reward:17,coinRewardKind:kind};const before=ctx.battle.coins;
+  ctx.killEnemy(enemy);assert.equal(ctx.battle.coins-before,(17+ctx.battleCoinReward(kind))*(epic?2:1));
+  const paid=ctx.battle.coins;ctx.killEnemy(enemy);assert.equal(ctx.battle.coins,paid);
+ }
+ assert.equal(ctx.save.metaCoins,permanent);
+}
+console.log('PASS: Normal 130 / Hard 110 / Epic 300 start, Epic-only double kill cash, no duplicate payouts or permanent coin changes.');
