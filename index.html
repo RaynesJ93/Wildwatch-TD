@@ -1760,6 +1760,10 @@ function bossForSeriesMap(){
   return {...roster[Math.max(0,Math.min(9,currentMap-1))]};
 }
 
+// Epic has its own elite schedule; Normal and Hard retain waves 5 and 10.
+function waveEliteCount(){
+  return epicMode?({3:3,7:6,15:10}[battle.wave]||0):(battle.wave===5?2:battle.wave===10?6:0);
+}
 function finalMapBossForWave(){
   if(!(epicMode?(battle.wave===10||battle.wave===20):battle.wave===15) || battle.finalBossSpawned)return null;
   return bossForSeriesMap();
@@ -1788,8 +1792,10 @@ function spawnEnemy(){
   e.hp=Math.round(e.hp*seriesDifficulty);
   if(hardMode){e.hp=Math.round(e.hp*1.75);e.speed*=1.15;}
   if(epicMode){e.hp=Math.round(e.hp*(1.25+(battle.wave-1)*.025));e.speed*=1.05;}
-  // REPAIR_ELITES_SUMMARY_V1: 2 elites on Wave 5 and 6 elites on Wave 10.
-  const eliteTarget=epicMode?(battle.wave%5===0?4:0):(battle.wave===5?2:battle.wave===10?6:0);
+  // Double only the final Epic boss after existing regional and difficulty scaling.
+  if(epicMode&&boss&&battle.wave===20)e.hp*=2;
+  // Elite count is shared with the wave spawner so no extra elites are lost.
+  const eliteTarget=waveEliteCount();
   battle.elitesSpawned=Number(battle.elitesSpawned||0);
   if(!boss && eliteTarget>0 && battle.elitesSpawned<eliteTarget){
     e.hp*=3;
@@ -1864,7 +1870,7 @@ startWave.onclick=()=>{
   const normalWaveCount=Math.ceil((6+battle.wave*2)*(epicMode?1.45:hardMode?1.25:1));
   const previousWaveCount=Math.ceil((6+(battle.wave-1)*2)*(epicMode?1.45:hardMode?1.25:1));
   const bossEscortCount=Math.max(8,Math.ceil(previousWaveCount*.55));
-  const bonusEliteCount=epicMode?(battle.wave%5===0?4:0):(battle.wave===5?2:battle.wave===10?6:0);
+  const bonusEliteCount=waveEliteCount();
   battle.spawnLeft=isBossWave?1+bossEscortCount:normalWaveCount+bonusEliteCount;
   battle.spawnTimer=0;
   spawnEnemy();
