@@ -400,7 +400,21 @@ body.battle-map-menu #battleScreen.screen.active.map-select-mode #mapSanctuary{d
   border-color:transparent;
   box-shadow:none;
 }
-#collectionCards .card.selected{outline:none}
+#collectionCards .card.selected{
+  outline:none;background-color:#24543b;
+}
+#collectionCards .deckBadge{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  padding:2px 9px;border-radius:0 0 8px 8px;background:#9bf2bd;color:#092c1b;
+  font-size:9px;font-weight:900;line-height:12px;letter-spacing:.35px;
+  white-space:nowrap;pointer-events:none;
+}
+#collectionCards .card.selected .animal-portrait{
+  box-shadow:0 0 0 2px #9bf2bd,0 4px 12px #0005;
+}
+#collectionCards .card.selected .deckToggle{
+  background:#9bf2bd;color:#092c1b;border-color:transparent;
+}
 /* Keyboard focus remains visible without a gold border. */
 #collectionScreen :focus-visible,
 #collectionCards .card.selected:focus-visible{
@@ -1098,7 +1112,7 @@ function renderCollection(){
     const unlocked=save.unlocked.includes(k),selected=save.deck.includes(k),d=document.createElement('div');
     d.className='card '+(!unlocked?'locked':'')+(selected?' selected':'');
     const lvl=cardLevel(k),shardNeed=shardRequirement(a),xp=save.cardXP[k]||0;
-    d.innerHTML=`<span class="rarity">${a.rarity.toUpperCase()}</span>${animalVisual(k,'animal-portrait')}<h3>${a.name}</h3><div class="statrow"><span>⚔️ ${Math.round((unlocked?cardBaseDamage(k):a.dmg)*10)/10}</span><span>🎯 ${Math.round((unlocked?cardBaseRange(k):a.range)*10)/10}</span>${unlocked?`<span>Lv ${lvl}</span>`:''}</div><div class="cardXP">${unlocked?lvl>=MAX_CARD_LEVEL?'MAX LEVEL':`XP ${xp}/${cardXpNeeded(k)}`:`🔒 Shards ${save.shards[k]||0}/${shardNeed}`}</div><details class="cardDetails"><summary>Details</summary><p>${a.desc}</p><p>${unlocked?`Card level ${lvl}/${MAX_CARD_LEVEL} • ${masteryRewardText(k)}`:`Collect ${shardNeed} shards to unlock.`}</p></details>${unlocked?`<button class="secondary deckToggle" aria-pressed="${selected}" aria-label="${selected?'Remove':'Add'} ${a.name} ${selected?'from':'to'} deck">${selected?'✓ In deck · Remove':'+ Add to deck'}</button>`:''}`;
+    d.innerHTML=`${selected?'<span class="deckBadge">✓ IN DECK</span>':''}<span class="rarity">${a.rarity.toUpperCase()}</span>${animalVisual(k,'animal-portrait')}<h3>${a.name}</h3><div class="statrow"><span>⚔️ ${Math.round((unlocked?cardBaseDamage(k):a.dmg)*10)/10}</span><span>🎯 ${Math.round((unlocked?cardBaseRange(k):a.range)*10)/10}</span>${unlocked?`<span>Lv ${lvl}</span>`:''}</div><div class="cardXP">${unlocked?lvl>=MAX_CARD_LEVEL?'MAX LEVEL':`XP ${xp}/${cardXpNeeded(k)}`:`🔒 Shards ${save.shards[k]||0}/${shardNeed}`}</div><details class="cardDetails"><summary>Details</summary><p>${a.desc}</p><p>${unlocked?`Card level ${lvl}/${MAX_CARD_LEVEL} • ${masteryRewardText(k)}`:`Collect ${shardNeed} shards to unlock.`}</p></details>${unlocked?`<button class="secondary deckToggle" aria-pressed="${selected}" aria-label="${selected?'Remove':'Add'} ${a.name} ${selected?'from':'to'} deck">${selected?'✓ In deck · Remove':'+ Add to deck'}</button>`:''}`;
     if(unlocked)d.onclick=()=>toggleDeck(k);
     d.querySelector('details').onclick=e=>e.stopPropagation();
     const button=d.querySelector('.deckToggle');
