@@ -99,8 +99,8 @@
    if(!battle._questMapCompletionTracked){
      battle._questMapCompletionTracked=true;
      const used=[...new Set(battle.usedCards||[])],perfect=battle.lives===(battle.mapStartLives??battle.lives);
-     if(typeof addWeeklyProgress==='function'){addWeeklyProgress('maps',1);if(perfect)addWeeklyProgress('flawlessMaps',1);if(hardMode)addWeeklyProgress('hardMaps',1);}
-     if(hardMode)save.totalHardMaps=n(save.totalHardMaps)+1;if(perfect)save.totalFlawlessMaps=n(save.totalFlawlessMaps)+1;
+     if(typeof addWeeklyProgress==='function'){addWeeklyProgress('maps',1);if(perfect)addWeeklyProgress('flawlessMaps',1);if(hardMode&&!epicMode)addWeeklyProgress('hardMaps',1);}
+     if(hardMode&&!epicMode)save.totalHardMaps=n(save.totalHardMaps)+1;if(perfect)save.totalFlawlessMaps=n(save.totalFlawlessMaps)+1;
      if(typeof ensureWeeklyQuests==='function'){
        ensureWeeklyQuests();save.weeklyQuests.winningCardsSeen=Array.isArray(save.weeklyQuests.winningCardsSeen)?save.weeklyQuests.winningCardsSeen:[];used.forEach(k=>{if(!save.weeklyQuests.winningCardsSeen.includes(k))save.weeklyQuests.winningCardsSeen.push(k)});weeklySet('winningCards',save.weeklyQuests.winningCardsSeen.length);
        save.weeklyQuests.regionsSeen=Array.isArray(save.weeklyQuests.regionsSeen)?save.weeklyQuests.regionsSeen:[];if(!save.weeklyQuests.regionsSeen.includes(currentSeries))save.weeklyQuests.regionsSeen.push(currentSeries);weeklySet('regions',save.weeklyQuests.regionsSeen.length);
@@ -115,6 +115,6 @@
  function auditLiveBattle(){if(typeof battle==='undefined'||!battle)return;if(n(battle.totalPlaced)>=8&&battle._questEightPlacedWave==null)battle._questEightPlacedWave=n(battle.wave);}
 
  draw=function(){coreDraw();auditLiveBattle();processMapCompletion();};
- const s=document.createElement('script');s.src='regions-8-10.js?v=24';s.onload=()=>{const u=document.createElement('script');u.src='regions-8-10-ui.js?v=23';document.body.appendChild(u)};document.body.appendChild(s);
+ const s=document.createElement('script');s.src='regions-8-10.js?v=24';s.onload=()=>{const u=document.createElement('script');u.src='regions-8-10-ui.js?v=24';document.body.appendChild(u)};document.body.appendChild(s);
  const homeFit=document.createElement('script');homeFit.src='home-mobile-fit.js?v=3';document.body.appendChild(homeFit);
 })();

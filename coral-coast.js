@@ -51,6 +51,7 @@ renderMapSanctuary=function(){
   const grid=document.getElementById('sanctuaryStageGrid');
   grid.innerHTML=meta.stages.map((name,i)=>{const n=i+1,key=`${mapMenuSeries}-${n}`,locked=n>unlocked,normalDone=!!save.normalCompleted?.[key],hardDone=!!save.hardCompleted?.[key],modeLocked=mapMenuDifficulty==='hard'&&!normalDone,inaccessible=locked||modeLocked,cleared=mapMenuDifficulty==='hard'?hardDone:normalDone,stars=hardDone?3:normalDone?2:0,starText=[0,1,2].map(x=>x<stars?'★':'☆').join('<br>'),status=locked?'Locked':modeLocked?'Clear Normal first':cleared?'Cleared • 15/15 waves':'Unlocked • 15 waves';return `<button class="stage-card ${cleared?'cleared':''} ${inaccessible?'locked':''}" data-stage="${n}" ${inaccessible?'disabled':''}><div class="stage-thumb ${meta.className}">${sanctuaryStageIcon(mapMenuSeries,n)}</div><div class="stage-copy"><div class="stage-num">${mapMenuSeries}-${n}</div><div class="stage-name">${name}</div><div class="stage-status">${status}</div></div><div>${inaccessible?'<div class="stage-lock">🔒</div>':`<div class="stage-stars">${starText}</div>`}</div></button>`}).join('');
   grid.querySelectorAll('.stage-card:not(.locked)').forEach(btn=>btn.onclick=()=>startSanctuaryStage(+btn.dataset.stage));
+  renderEpicEntry();
 };
 
 applyMap=function(series,n){

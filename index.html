@@ -819,6 +819,24 @@ for(let m=1;m<(save.forestPinesUnlocked||1);m++)save.normalCompleted[`1-${m}`]=t
 if((save.desertDunesUnlocked||0)>0)save.normalCompleted["1-10"]=true;
 for(let m=1;m<(save.desertDunesUnlocked||0);m++)save.normalCompleted[`2-${m}`]=true;
 let hardMode=save.battleDifficulty==="hard";
+let epicMode=false;
+function epicProgress(series){
+  let normal=0,hard=0;
+  for(let n=1;n<=10;n++){normal+=!!save.normalCompleted?.[`${series}-${n}`];hard+=!!save.hardCompleted?.[`${series}-${n}`];}
+  return {normal,hard,unlocked:normal===10&&hard===10};
+}
+function battleWaveLimit(){return epicMode?20:15;}
+function renderEpicEntry(){
+  const grid=document.getElementById('sanctuaryStageGrid');if(!grid)return;
+  document.getElementById('epicModeEntry')?.remove();
+  const progress=epicProgress(mapMenuSeries),meta=SANCTUARY_META[mapMenuSeries];
+  const button=document.createElement('button');button.id='epicModeEntry';
+  button.className=`stage-card ${progress.unlocked?'':'locked'}`;
+  button.style.gridColumn='1 / -1';button.disabled=!progress.unlocked;
+  button.innerHTML=`<div class="stage-thumb ${meta.className}">⚔️</div><div class="stage-copy"><div class="stage-num">REGION BONUS</div><div class="stage-name">Epic Mode</div><div class="stage-status">${progress.unlocked?(save.epicCompleted?.[mapMenuSeries]?'✓ Cleared • Replay 20 waves':'20 waves • Beyond Hard'): `🔒 Normal ${progress.normal}/10 • Hard ${progress.hard}/10`}</div></div>`;
+  button.onclick=()=>startSanctuaryStage(10,true);grid.appendChild(button);
+}
+
 const MAX_CARD_LEVEL=50;
 function cardLevel(k){return Math.max(1,Math.min(MAX_CARD_LEVEL,save.cardLevels[k]||1));}
 function cardLevelCost(k){return 0;}
@@ -1049,7 +1067,8 @@ function loadBattleState(){
     }
     if(!raw)return false;
     const b=JSON.parse(raw); if(!b?.started||b.ended)return false;
-    cancelAnimationFrame(raf);hardMode=!!b.hardMode;save.battleDifficulty=hardMode?"hard":"normal";if(b.mapNumber){currentSeries=b.mapSeries||1;currentMap=b.mapNumber;applyMap(currentSeries,currentMap);}battle=b;
+    if(b.epicMode&&!epicProgress(b.mapSeries||1).unlocked)return false;
+    cancelAnimationFrame(raf);epicMode=!!b.epicMode;hardMode=epicMode||!!b.hardMode;save.battleDifficulty=hardMode?"hard":"normal";if(b.mapNumber){currentSeries=b.mapSeries||1;currentMap=b.mapNumber;applyMap(currentSeries,currentMap);}battle=b;
     // BATTLE_RUNTIME_STATE_FIX: normalize every transient battle collection.
     battle.enemies=Array.isArray(battle.enemies)?battle.enemies:[];
     battle.towers=Array.isArray(battle.towers)?battle.towers:[];
@@ -1177,10 +1196,13 @@ function renderMapSanctuary(){
     return `<button class="stage-card ${cleared?'cleared':''} ${inaccessible?'locked':''}" data-stage="${n}" ${inaccessible?'disabled':''}><div class="stage-thumb ${meta.className}">${sanctuaryStageIcon(mapMenuSeries,n)}</div><div class="stage-copy"><div class="stage-num">${mapMenuSeries}-${n}</div><div class="stage-name">${name}</div><div class="stage-status">${status}</div></div><div>${inaccessible?'<div class="stage-lock">🔒</div>':`<div class="stage-stars">${starText}</div>`}</div></button>`;
   }).join('');
   grid.querySelectorAll('.stage-card:not(.locked)').forEach(btn=>btn.onclick=()=>startSanctuaryStage(+btn.dataset.stage));
+  renderEpicEntry();
 }
-function startSanctuaryStage(stage){
-  if(!applyMap(mapMenuSeries,stage))return;
-  hardMode=mapMenuDifficulty==='hard';
+function startSanctuaryStage(stage,epic=false){
+  if(epic&&!epicProgress(mapMenuSeries).unlocked)return;
+  if(!applyMap(mapMenuSeries,epic?10:stage))return;
+  epicMode=epic;
+  hardMode=epic||mapMenuDifficulty==='hard';
   save.battleDifficulty=hardMode?'hard':'normal';
   const battleScreen=document.getElementById('battleScreen');battleScreen?.classList.remove('map-select-mode');
   document.body.classList.add('battle-mode');
@@ -1232,6 +1254,8 @@ continueBtn.onclick=()=>{document.querySelectorAll(".screen").forEach(s=>s.class
 function hardModeUnlockedForSeries(series=currentSeries){return !!save.normalCompleted?.[`${series}-10`];}
 function updateDifficultyUI(){
   if(!difficultyBtn)return;
+  difficultyBtn.disabled=epicMode;prevMap.disabled=epicMode||currentSeries===1&&currentMap===1;
+  if(epicMode){difficultyBtn.textContent="⚔️ Epic Mode";mapLabel.textContent=`${currentSeries} • EPIC`;nextMap.disabled=true;return;}
   const hardUnlocked=hardModeUnlockedForSeries(currentSeries);
   difficultyBtn.textContent=hardMode?"🔥 Hard":hardUnlocked?"🌿 Normal":"🔒 Hard Locked";
   difficultyBtn.style.borderColor=hardMode?"#ff8a4c":hardUnlocked?"#4b8469":"#6b6b6b";
@@ -1239,6 +1263,7 @@ function updateDifficultyUI(){
   if(typeof mapLabel!=="undefined")mapLabel.textContent=`${currentSeries}-${currentMap}${hardMode?" • 🔥 HARD":""}`;
 }
 difficultyBtn.onclick=()=>{
+  if(epicMode)return;
   if(!hardMode && !hardModeUnlockedForSeries(currentSeries)){
     alert(`Complete map ${currentSeries}-10 on Normal Mode to unlock Hard Mode for every map in this series.`);
     message.textContent=`🔒 Hard Mode locked — complete ${currentSeries}-10 on Normal first.`;
@@ -1537,11 +1562,11 @@ function applyMap(series,n){
   nextMap.disabled=(currentMap>=seriesUnlocked && !(currentMap===10&&currentSeries<6&&seriesUnlockedCount(currentSeries+1)>0));
   return true;
 }
-prevMap.onclick=()=>{
+prevMap.onclick=()=>{if(epicMode)return;
   if(currentMap>1){clearBattleState();applyMap(currentSeries,currentMap-1);resetBattle();draw();return;}
   if(currentSeries>1){clearBattleState();applyMap(currentSeries-1,10);resetBattle();draw();draw();}
 };
-nextMap.onclick=()=>{
+nextMap.onclick=()=>{if(epicMode)return;
   if(currentMap<10){
     if(currentMap<currentSeriesUnlocked()){clearBattleState();applyMap(currentSeries,currentMap+1);resetBattle();draw();}
     return;
@@ -1551,9 +1576,11 @@ nextMap.onclick=()=>{
 
 // GLOBAL_MAP_RESET_FIX: restore shared battle initialisation used by every map.
 function resetBattle(){
+  if(epicMode&&!epicProgress(currentSeries).unlocked){epicMode=false;hardMode=false;}
   cancelAnimationFrame(raf);raf=0;
   battle={
     started:true,
+    epicMode,
     hardMode,
     coins:hardMode?110:130,
     lives:hardMode?15:20,
@@ -1582,7 +1609,7 @@ function resetBattle(){
 function updateHud(){
   battleCoins.textContent=Math.floor(battle.coins);
   lives.textContent=battle.lives;
-  wave.textContent=`${Math.min(battle.wave,15)}/15`;
+  wave.textContent=`${Math.min(battle.wave,battleWaveLimit())}/${battleWaveLimit()}`;
   document.querySelectorAll(".battle-card").forEach(b=>{
     const key=b.dataset.key;
     const unaffordable=!!animals[key] && animals[key].cost>battle.coins;
@@ -1734,7 +1761,7 @@ function bossForSeriesMap(){
 }
 
 function finalMapBossForWave(){
-  if(battle.wave!==15 || battle.finalBossSpawned)return null;
+  if(!(epicMode?(battle.wave===10||battle.wave===20):battle.wave===15) || battle.finalBossSpawned)return null;
   return bossForSeriesMap();
 }
 // COIN_REWARDS_V2: fixed battle rewards with regional multipliers.
@@ -1760,8 +1787,9 @@ function spawnEnemy(){
   const seriesDifficulty=currentSeries===1?1:currentSeries===2?1.20:currentSeries===3?1.45:currentSeries===4?1.60:currentSeries===5?1.75:1.90;
   e.hp=Math.round(e.hp*seriesDifficulty);
   if(hardMode){e.hp=Math.round(e.hp*1.75);e.speed*=1.15;}
+  if(epicMode){e.hp=Math.round(e.hp*(1.25+(battle.wave-1)*.025));e.speed*=1.05;}
   // REPAIR_ELITES_SUMMARY_V1: 2 elites on Wave 5 and 6 elites on Wave 10.
-  const eliteTarget=battle.wave===5?2:battle.wave===10?6:0;
+  const eliteTarget=epicMode?(battle.wave%5===0?4:0):(battle.wave===5?2:battle.wave===10?6:0);
   battle.elitesSpawned=Number(battle.elitesSpawned||0);
   if(!boss && eliteTarget>0 && battle.elitesSpawned<eliteTarget){
     e.hp*=3;
@@ -1777,6 +1805,9 @@ function spawnEnemy(){
 startWave.onclick=()=>{
   // START_WAVE_ERROR_GUARD: the animation-loop guard below will expose any
   // runtime failure on screen instead of leaving the battle apparently crashed.
+  if(epicMode&&battle.ended&&battle.mapComplete){
+    clearBattleState();battle={};epicMode=false;hardMode=false;showScreen("battleScreen");return;
+  }
   if(battle.ended && battle.mapComplete){
     battle.mapComplete=false;
     clearBattleState();
@@ -1823,17 +1854,17 @@ startWave.onclick=()=>{
   battle.eliteSpawned=false;
   battle.elitesSpawned=0;
   battle.finalBossSpawned=false;
-  const isBossWave=battle.wave===15;
+  const isBossWave=epicMode?(battle.wave===10||battle.wave===20):battle.wave===15;
   if(isBossWave){
     const boss=bossForSeriesMap();
     message.textContent=`⚠️ BOSS WAVE — ${boss.name.toUpperCase()}!`;
   }
   // BOSS_WAVE_ESCORTS_V1: Wave 15 spawns the boss plus a reduced escort group.
   // Escort size is about 55% of Wave 14, so the boss wave stays busy without being as crowded as the previous round.
-  const normalWaveCount=Math.ceil((6+battle.wave*2)*(hardMode?1.25:1));
-  const previousWaveCount=Math.ceil((6+(battle.wave-1)*2)*(hardMode?1.25:1));
+  const normalWaveCount=Math.ceil((6+battle.wave*2)*(epicMode?1.45:hardMode?1.25:1));
+  const previousWaveCount=Math.ceil((6+(battle.wave-1)*2)*(epicMode?1.45:hardMode?1.25:1));
   const bossEscortCount=Math.max(8,Math.ceil(previousWaveCount*.55));
-  const bonusEliteCount=battle.wave===5?2:battle.wave===10?6:0;
+  const bonusEliteCount=epicMode?(battle.wave%5===0?4:0):(battle.wave===5?2:battle.wave===10?6:0);
   battle.spawnLeft=isBossWave?1+bossEscortCount:normalWaveCount+bonusEliteCount;
   battle.spawnTimer=0;
   spawnEnemy();
@@ -2770,7 +2801,7 @@ function showMapSummary(cardXp){
   }
   const seriesName=seriesDisplayName(currentSeries);
   const rewardRates=hardMode?'20/wave • 36/elite • 99/boss':'12/wave • 22/elite • 60/boss';
-  modal.querySelector('#mapSummarySubtitle').textContent=`${seriesName} ${currentMap} • ${hardMode?'Hard':'Normal'} • ${rewardRates}`;
+  modal.querySelector('#mapSummarySubtitle').textContent=`${seriesName} ${currentMap} • ${epicMode?'Epic Mode • 20 waves':hardMode?'Hard':'Normal'} • ${rewardRates}`;
   modal.querySelector('#mapSummaryKills').textContent=String(battle.mapKills||0);
   modal.querySelector('#mapSummaryCoins').textContent=`🟡 ${battle.mapCoinsEarned||0}`;
   modal.querySelector('#mapSummaryTower').innerHTML=strongestHtml;
@@ -2803,11 +2834,20 @@ function finishWave(){
   battle.mapCoinsEarned=(battle.mapCoinsEarned||0)+permanentWaveCoins;
   const waveCardXp=awardWaveUsedKillXp();
   battle.waveKills=0;
-  if(autoWave && clearedWave<15 && !battle.ended){
+  if(autoWave && clearedWave<battleWaveLimit() && !battle.ended){
     clearTimeout(autoWaveTimer);
     autoWaveTimer=setTimeout(()=>{if(autoWave && !battle.waveActive && !battle.ended)startWave.click();},900);
   }
-  if(clearedWave>=15){
+  if(epicMode&&clearedWave>=20){
+    save.epicCompleted=save.epicCompleted||{};save.epicCompleted[currentSeries]=true;
+    const cardXp=awardMapDeckXp();
+    battle.ended=true;battle.mapComplete=true;
+    levelCheck();persist();clearBattleState();
+    startWave.textContent="Return to regions";
+    message.textContent=`🏆 ${seriesDisplayName(currentSeries)} Epic Mode complete! All 20 waves defeated.`;
+    setTimeout(()=>showMapSummary(cardXp),120);updateHud();return;
+  }
+  if(!epicMode&&clearedWave>=15){
     addQuestProgress(hardMode?"hardMaps":"normalMaps",1);
     evaluateMapChallenges();
     const cardXp=awardMapDeckXp();
@@ -4206,9 +4246,9 @@ function questWeeklyKey(now=new Date()){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 </script>
-<script src="coral-coast.js"></script>
+<script src="coral-coast.js?v=2"></script>
 <script src="quest-expansion.js"></script>
-<script src="coral-coast-visuals.js?v=24"></script>
+<script src="coral-coast-visuals.js?v=25"></script>
 </body>
 </html>
 
