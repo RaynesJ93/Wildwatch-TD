@@ -1995,7 +1995,7 @@ function moveEnemy(e,dt){
   }
   if(e.seg>=path.length-1&&!e.dead){e.dead=true;battle.lives--; if(battle.lives<=0)gameOver();updateHud()}
 }
-function killEnemy(e){if(e.dead)return;e.dead=true;const killCash=Math.max(0,Math.round(Number(e.reward)||0));const coinReward=battleCoinReward(e.coinRewardKind);const earnedCash=(killCash+coinReward)*(epicMode?2:1);battle.coins+=earnedCash;battle.mapKills=(battle.mapKills||0)+1;
+function killEnemy(e){if(e.dead)return;e.dead=true;if(typeof recordExpandedChallengeKill==="function")recordExpandedChallengeKill(e);const killCash=Math.max(0,Math.round(Number(e.reward)||0));const coinReward=battleCoinReward(e.coinRewardKind);const earnedCash=(killCash+coinReward)*(epicMode?2:1);battle.coins+=earnedCash;battle.mapKills=(battle.mapKills||0)+1;
   battle.waveKills=(battle.waveKills||0)+1;addQuestProgress("kills",1);addWeeklyProgress("kills",1);
   const killer=battle.lastAttackingTower||null;if(killer){const mode=killer.targetMode||"first";if(mode==="first"){addQuestProgress("firstKills",1);addWeeklyProgress("firstKills",1);}else if(mode==="strongest"){addQuestProgress("strongestKills",1);addWeeklyProgress("strongestKills",1);}}
   const questCash=epicMode?earnedCash:coinReward;
@@ -2829,6 +2829,7 @@ function gameOver(){
 }
 function finishWave(){
   const clearedWave=battle.wave;
+  if(typeof recordExpandedChallengeWave==="function")recordExpandedChallengeWave(clearedWave);
   battle.waveActive=false;
   // Hedgehog needle stacks only last for the current wave.
   battle.needles=[];
@@ -2852,6 +2853,7 @@ function finishWave(){
     autoWaveTimer=setTimeout(()=>{if(autoWave && !battle.waveActive && !battle.ended)startWave.click();},900);
   }
   if(epicMode&&clearedWave>=20){
+    if(typeof recordExpandedChallengeWin==="function")recordExpandedChallengeWin();
     save.epicCompleted=save.epicCompleted||{};save.epicCompleted[currentSeries]=true;
     const cardXp=awardMapDeckXp();
     battle.ended=true;battle.mapComplete=true;
@@ -2863,6 +2865,7 @@ function finishWave(){
   if(!epicMode&&clearedWave>=15){
     addQuestProgress(hardMode?"hardMaps":"normalMaps",1);
     evaluateMapChallenges();
+    if(typeof recordExpandedChallengeWin==="function")recordExpandedChallengeWin();
     const cardXp=awardMapDeckXp();
     setTimeout(()=>showMapSummary(cardXp),120);
     if(hardMode)save.hardCompleted[`${currentSeries}-${currentMap}`]=true;
@@ -4261,6 +4264,7 @@ function questWeeklyKey(now=new Date()){
 </script>
 <script src="coral-coast.js?v=3"></script>
 <script src="quest-expansion.js"></script>
+<script src="epic-challenges.js?v=1"></script>
 <script src="coral-coast-visuals.js?v=26"></script>
 </body>
 </html>
